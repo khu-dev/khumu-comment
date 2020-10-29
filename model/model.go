@@ -34,21 +34,38 @@ type KhumuUser struct {
 	CreatedAt time.Time
 }
 
+func (*KhumuUser) TableName() string {
+    return "user_khumuuser"
+}
+
 func (m *KhumuUser) prettyPrint() {
 	s, _ := json.MarshalIndent(m, "", "    ")
     fmt.Print(string(s))
 }
 
-func (*KhumuUser) TableName() string {
+type SimpleKhumuUser struct{
+	//상속받기보단 필요한 필드만 명시하는 게 나을 듯
+	Username *string `gorm:"primaryKey" json:"username"`
+	Type string `gorm:"-" json:"type"`
+	//Email string
+	//IsActive bool
+	//Nickname string
+	//StudentNumber string
+	//Memo string
+	//CreatedAt time.Time
+}
+
+func (*SimpleKhumuUser) TableName() string {
     return "user_khumuuser"
 }
+
 
 type Article struct {
 	ArticleID uint `gorm:"column:id"`
 	BoardID uint
 	Board Board `gorm:"foreignKey:BoardID"`
 	Title string
-	AuthorUsername string
+	AuthorUsername string `gorm:"column:author_id"`
 	Author KhumuUser `gorm:"foreignKey:AuthorUsername"`
 	Content string
 	CreatedAt time.Time
@@ -73,15 +90,17 @@ func (*Board) TableName() string{
 }
 
 type Comment struct {
-	ID uint `gorm:"column:id"`
-	AuthorID string `gorm:"column:author_id"`
-	ArticleID uint `gorm:"column:article_id"`
+	ID uint `gorm:"column:id" json:"id"`
+	Author *SimpleKhumuUser `gorm:"foreignKey:AuthorUsername" json:"author"`
+	AuthorUsername string `gorm:"column:author_id" json:"Author"`
+	ArticleID uint `gorm:"column:article_id" json:"article"`
 	//Article Article `gorm:"foreignKey:ArticleID"`
-	Content string
-	Type string `gorm:"-"`
-	ParentID uint `gorm:"column:parent_id"`
+	Content string `json:"content"`
+	Type string `gorm:"-" json:"type"`
+	ParentID uint `gorm:"column:parent_id" json:"parent"`
 	//Parent *Comment `gorm:"foreignKey:ParentID"`
-	CreatedAt time.Time
+	Children []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (*Comment) TableName() string{

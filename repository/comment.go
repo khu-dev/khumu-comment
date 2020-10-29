@@ -14,6 +14,7 @@ func (r *CommentRepositorySQLite3) List(opt *CommentQueryOption) []*model.Commen
 	log.Println("CommentRepositorySQLite3 List")
 	var comments []*model.Comment
 	r.DB.Where(opt).Find(&comments)
+	r.DB.Preload("Children").Preload("Author").Find(&comments) // Has-Many 관계
 	return comments
 }
 
