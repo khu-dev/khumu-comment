@@ -90,6 +90,7 @@ func (*Board) TableName() string{
 }
 
 type Comment struct {
+	URL string `gorm:"-" json:"url"`
 	ID uint `gorm:"column:id" json:"id"`
 	Author *SimpleKhumuUser `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
 	AuthorUsername string `gorm:"column:author_id" json:"-"`

@@ -10,19 +10,15 @@ import (
   "log"
 )
 
-var Config *config.KhumuConfig
 
-func init(){
-  Config = config.Load()
-}
 
 func main(){
   Run()
 }
 
 func Run(){
-  log.Println("Connecting DB to " + Config.DB.SQLite3.FilePath)
-  db, err := gorm.Open(sqlite.Open(Config.DB.SQLite3.FilePath), &gorm.Config{})
+  log.Println("Connecting DB to " + config.Config.DB.SQLite3.FilePath)
+  db, err := gorm.Open(sqlite.Open(config.Config.DB.SQLite3.FilePath), &gorm.Config{})
   if err != nil {
     panic("failed to connect database")
   }
@@ -33,7 +29,7 @@ func Run(){
   e := http.NewEcho(commentUC)
 
   e.Logger.Print("Started Server")
-  e.Logger.Fatal(e.Start(Config.Host+":"+Config.Port))
+  e.Logger.Fatal(e.Start(config.Config.Host+":"+config.Config.Port))
 }
 
 func tmp(){

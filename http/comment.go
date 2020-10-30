@@ -13,6 +13,12 @@ func NewCommentRouter(parent *echo.Group, uc *usecase.CommentUseCase) *CommentRo
 	group.GET("/:id", commentRouter.GetComment)
 	return commentRouter
 }
+
+type CommentResponse struct{
+	StatusCode int `json:"statusCode"`
+	Comments interface{} `json:"comments"` //this contains any format of comments
+}
+
 type CommentRouter struct{
 	*echo.Group
 	UC *usecase.CommentUseCase
@@ -23,7 +29,7 @@ func (r *CommentRouter) ListComment(c echo.Context) error {
 
 	comments := r.UC.List(c)
 	//return c.JSON(200, model.String(comments[0]))
-	return c.JSON(200, comments)
+	return c.JSON(200, CommentResponse{200, comments})
 }
 
 func (r *CommentRouter) GetComment(c echo.Context) error {

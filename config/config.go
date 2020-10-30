@@ -33,6 +33,7 @@ func Load() *KhumuConfig{
 
 type KhumuConfig struct {
     Host string `yaml:"host"`
+    RestRootEndpoint string `yaml:"restRootEndpoint"`
     Port string
     DB struct{
     	Type string
@@ -40,4 +41,10 @@ type KhumuConfig struct {
     		FilePath string `yaml:"filePath"`
 		} `yaml:"sqlite3"`
 	}
+}
+
+var Config *KhumuConfig
+
+func init(){
+  Config = Load()
 }
