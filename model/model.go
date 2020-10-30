@@ -91,14 +91,13 @@ func (*Board) TableName() string{
 
 type Comment struct {
 	ID uint `gorm:"column:id" json:"id"`
-	Author *SimpleKhumuUser `gorm:"foreignKey:AuthorUsername" json:"author"`
-	AuthorUsername string `gorm:"column:author_id" json:"Author"`
+	Author *SimpleKhumuUser `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
+	AuthorUsername string `gorm:"column:author_id" json:"-"`
 	ArticleID uint `gorm:"column:article_id" json:"article"`
 	//Article Article `gorm:"foreignKey:ArticleID"`
 	Content string `json:"content"`
 	Type string `gorm:"-" json:"type"`
 	ParentID uint `gorm:"column:parent_id" json:"parent"`
-	//Parent *Comment `gorm:"foreignKey:ParentID"`
 	Children []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	CreatedAt time.Time `json:"created_at"`
 }

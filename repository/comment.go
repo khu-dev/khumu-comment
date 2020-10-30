@@ -13,8 +13,10 @@ type CommentRepositorySQLite3 struct {
 func (r *CommentRepositorySQLite3) List(opt *CommentQueryOption) []*model.Comment{
 	log.Println("CommentRepositorySQLite3 List")
 	var comments []*model.Comment
-	r.DB.Where(opt).Find(&comments)
-	r.DB.Preload("Children").Preload("Author").Find(&comments) // Has-Many 관계
+	r.DB.Preload("Author").
+		Preload("Children.Author"). // nested preload
+		Preload("Children.Children").
+		Find(&comments)
 	return comments
 }
 
