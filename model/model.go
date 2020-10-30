@@ -43,7 +43,16 @@ func (m *KhumuUser) prettyPrint() {
     fmt.Print(string(s))
 }
 
-type SimpleKhumuUser struct{
+type KhumuUserAuth struct{
+	Username string `gorm:"primaryKey"`
+	Password string `gorm:"password"`
+}
+
+func (*KhumuUserAuth) TableName() string {
+    return "user_khumuuser"
+}
+
+type KhumuUserSimple struct{
 	//상속받기보단 필요한 필드만 명시하는 게 나을 듯
 	Username *string `gorm:"primaryKey" json:"username"`
 	Type string `gorm:"-" json:"type"`
@@ -55,7 +64,7 @@ type SimpleKhumuUser struct{
 	//CreatedAt time.Time
 }
 
-func (*SimpleKhumuUser) TableName() string {
+func (*KhumuUserSimple) TableName() string {
     return "user_khumuuser"
 }
 
@@ -90,9 +99,8 @@ func (*Board) TableName() string{
 }
 
 type Comment struct {
-	URL string `gorm:"-" json:"url"`
 	ID uint `gorm:"column:id" json:"id"`
-	Author *SimpleKhumuUser `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
+	Author *KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
 	AuthorUsername string `gorm:"column:author_id" json:"-"`
 	ArticleID uint `gorm:"column:article_id" json:"article"`
 	//Article Article `gorm:"foreignKey:ArticleID"`

@@ -6,12 +6,12 @@ import (
 	"log"
 )
 
-type CommentRepositorySQLite3 struct {
+type CommentRepositoryGorm struct {
 	DB *gorm.DB
 }
 
-func (r *CommentRepositorySQLite3) List(opt *CommentQueryOption) []*model.Comment{
-	log.Println("CommentRepositorySQLite3 List")
+func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment{
+	log.Println("CommentRepositoryGorm List")
 	var comments []*model.Comment
 	r.DB.Preload("Author").
 		Preload("Children.Author"). // nested preload
@@ -20,8 +20,8 @@ func (r *CommentRepositorySQLite3) List(opt *CommentQueryOption) []*model.Commen
 	return comments
 }
 
-func (r *CommentRepositorySQLite3) Get(id string) *model.Comment{
-	log.Println("CommentRepositorySQLite3 Get")
+func (r *CommentRepositoryGorm) Get(id string) *model.Comment{
+	log.Println("CommentRepositoryGorm Get")
 	//var comment *model.Comment
 	//idInt, _ := strconv.Atoi(id)
 	var tmp *model.Comment = &model.Comment{}
@@ -30,8 +30,8 @@ func (r *CommentRepositorySQLite3) Get(id string) *model.Comment{
 }
 
 /*
-func (r *CommentRepositorySQLite3) Get(id string) *model.Comment{
-	log.Println("CommentRepositorySQLite3 Get")
+func (r *CommentRepositoryGorm) Get(id string) *model.Comment{
+	log.Println("CommentRepositoryGorm Get")
 	//var comment *model.Comment
 	//idInt, _ := strconv.Atoi(id)
 	var tmp *model.Comment = &model.Comment{}

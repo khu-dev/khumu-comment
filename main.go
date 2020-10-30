@@ -22,11 +22,12 @@ func Run(){
   if err != nil {
     panic("failed to connect database")
   }
-  commentRepository := &repository.CommentRepositorySQLite3{DB: db}
+  userRepository := &repository.UserRepositoryGorm{DB: db}
+  commentRepository := &repository.CommentRepositoryGorm{DB: db}
   commentUC := &usecase.CommentUseCase{
     Repository: commentRepository,
   }
-  e := http.NewEcho(commentUC)
+  e := http.NewEcho(userRepository, commentUC)
 
   e.Logger.Print("Started Server")
   e.Logger.Fatal(e.Start(config.Config.Host+":"+config.Config.Port))

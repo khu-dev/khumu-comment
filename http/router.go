@@ -1,13 +1,19 @@
 package http
 
 import (
+	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
-func NewEcho(commentUC *usecase.CommentUseCase) *echo.Echo{
+func NewEcho(userRepository repository.UserRepository, commentUC *usecase.CommentUseCase) *echo.Echo{
 	e := echo.New()
+	e.Use(middleware.JWTWithConfig(KhumuJWTConfig))
 
+	// basic auth
+	// authenticator := &Authenticator{UserRepository: userRepository}
+	// e.Use(middleware.BasicAuth(authenticator.KhumuBasicAuth))
 	e.GET("", func(c echo.Context) error {return c.Redirect(301, "/api")})
 
 	apiRouterGroup := e.Group("/api")
