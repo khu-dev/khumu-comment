@@ -9,6 +9,7 @@ import (
 type CommentRepositoryInterface interface {
 	List(opt *CommentQueryOption) []*model.Comment
 	Get(id int) *model.Comment
+	Create(comment *model.Comment) error
 }
 
 type CommentRepositoryGorm struct {
@@ -46,6 +47,12 @@ func (r *CommentRepositoryGorm) Get(id int) *model.Comment {
 	var tmp *model.Comment = &model.Comment{}
 	r.DB.First(tmp)
 	return tmp
+}
+
+func (r *CommentRepositoryGorm) Create(comment *model.Comment) error{
+	err := r.DB.Create(comment).Error
+
+	return err
 }
 
 /*

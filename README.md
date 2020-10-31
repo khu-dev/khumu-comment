@@ -20,8 +20,9 @@ khumu API 서버 중 article을 제공하는 서버와 comment를 제공하는 �
         * Model
         * container에서 이러한 의존성을 주입한 뒤 앱을 실행할 수 있도록해준다.
         
-
-
+* Test Driven까지는 아니어도 Test를 꽤 이용해보는 방향으로 개발하고 있음.
+    * Test 할 때 의존성 주입을 편하게 하기 위해 concrete struct가 아닌 abstract한 interface를 사용함.
+    * 그러면 Test 할 때 Mock interface를 이용할 수 있기 때문에 의존성 주입이 편하고, 테스트 하고자하는 계층이 독립된다. 
 ## 설정
 
 `config/default.yaml` 을 통해 필요한 설정을 수행한다.

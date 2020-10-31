@@ -4,4 +4,5 @@ port: "9000"
 db:
   type: sqlite3
   sqlite3:
-    filePath: "/home/jinsu/git/khumu/khumu-command-center/db.sqlite3"
+#    filePath: "/home/jinsu/git/khumu/khumu-command-center/db.sqlite3"
+    filePath: "/home/jinsu/git/khumu/khumu-comment/test.sqlite3"

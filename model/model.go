@@ -53,15 +53,8 @@ func (*KhumuUserAuth) TableName() string {
 }
 
 type KhumuUserSimple struct {
-	//상속받기보단 필요한 필드만 명시하는 게 나을 듯
-	Username *string `gorm:"primaryKey" json:"username"`
-	Type     string  `gorm:"-" json:"type"`
-	//Email string
-	//IsActive bool
-	//Nickname string
-	//StudentNumber string
-	//Memo string
-	//CreatedAt time.Time
+	Username string `gorm:"primaryKey" json:"username"`
+	Type     string `gorm:"-" json:"type"`
 }
 
 func (*KhumuUserSimple) TableName() string {
@@ -99,13 +92,13 @@ func (*Board) TableName() string {
 
 type Comment struct {
 	ID             uint             `gorm:"column:id" json:"id"`
+	Kind           string           `gorm:"column:kind" json:"kind"`
 	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
 	ArticleID      uint             `gorm:"column:article_id" json:"article"`
 	//Article Article `gorm:"foreignKey:ArticleID"`
 	Content   string     `json:"content"`
-	Type      string     `gorm:"-" json:"type"`
-	ParentID  uint       `gorm:"column:parent_id" json:"parent"`
+	ParentID  *uint       `gorm:"column:parent_id;default:null" json:"parent"`
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	CreatedAt time.Time  `json:"created_at"`
 }

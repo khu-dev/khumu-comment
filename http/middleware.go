@@ -25,10 +25,24 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 	// 괜찮으면 받았던 handlerFunc를 수행
 	// 안괜찮으면 error로 응답하는 handlerFunc를 수행하는 방식
 	return func(context echo.Context) error {
-		fmt.Println("1 Inner")
 		if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Bearer") {
 			fmt.Println("JWT 인증")
-			return middleware.JWTWithConfig(KhumuJWTConfig)(handlerFunc)(context)
+			return middleware.JWTWithConfig(KhumuJWTConfig)(
+				// 토큰 속의 유저가 존재하는 유저인지 확인해서 분기하는 http Handler 끼워넣기
+				func(context echo.Context) error {
+					if token, ok := context.Get(KhumuJWTConfig.ContextKey).(*jwt.Token); ok {
+						if mapClaim, ok := token.Claims.(jwt.MapClaims); ok && mockCheckUserExists(mapClaim["user_id"].(string)) {
+							context.Set("user_id", mapClaim["user_id"])
+							//여기까지 왔으면 존재하는 유저의 토큰
+							return handlerFunc(context)
+						}
+					}
+					return context.JSON(401, map[string]interface{}{
+						"statusCode": 401,
+						"body":       "Request with a non-existing user.",
+					})
+
+				})(context)
 		} else if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Basic") {
 			fmt.Println("Basic 인증")
 			return middleware.BasicAuth(a.KhumuBasicAuth)(handlerFunc)(context)
@@ -64,4 +78,13 @@ func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context
 		log.Println("Authentication result: ", found, username)
 		return found, err
 	}
+}
+
+func mockCheckUserExists(username string) bool {
+	if username == "jinsu" {
+		return true
+	} else {
+		return false
+	}
+
 }
