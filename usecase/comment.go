@@ -4,12 +4,17 @@ import (
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/labstack/echo/v4"
 	"log"
+	"strconv"
 )
 import "github.com/khu-dev/khumu-comment/model"
 
+type CommentUseCaseInterface interface {
+	List(c echo.Context) []*model.Comment
+	Get(c echo.Context) *model.Comment
+}
 
-type CommentUseCase struct{
-	Repository repository.CommentRepository
+type CommentUseCase struct {
+	Repository repository.CommentRepositoryInterface
 }
 
 func (uc *CommentUseCase) List(c echo.Context) []*model.Comment {
@@ -17,20 +22,14 @@ func (uc *CommentUseCase) List(c echo.Context) []*model.Comment {
 	comments := uc.Repository.List(&repository.CommentQueryOption{})
 	parents := uc.listParentWithChildren(comments)
 
-	// Do Something
-	//for _, parent := range parents{
-	//	for _, child := range parent.Children{
-	//
-	//	}
-	//}
 	return parents
 }
 
-func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) []*model.Comment{
+func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) []*model.Comment {
 	var parents []*model.Comment
 
-	for _, comment := range allComments{
-		if comment.ParentID == 0{
+	for _, comment := range allComments {
+		if comment.ParentID == 0 {
 			parents = append(parents, comment)
 		}
 	}
@@ -40,6 +39,10 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 
 func (uc *CommentUseCase) Get(c echo.Context) *model.Comment {
 	log.Println("CommentUseCase Get")
-	comment := uc.Repository.Get(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Panic(err)
+	}
+	comment := uc.Repository.Get(id)
 	return comment
 }

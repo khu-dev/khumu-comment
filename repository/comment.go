@@ -6,24 +6,43 @@ import (
 	"log"
 )
 
+type CommentRepositoryInterface interface {
+	List(opt *CommentQueryOption) []*model.Comment
+	Get(id int) *model.Comment
+}
+
 type CommentRepositoryGorm struct {
 	DB *gorm.DB
 }
 
-func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment{
+type CommentQueryOption struct {
+	ArticleID uint
+	AuthorID  string
+}
+
+func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 	log.Println("CommentRepositoryGorm List")
+	conditions := make(map[string]interface{})
+	if opt.ArticleID != 0 {
+		conditions["article_id"] = opt.ArticleID
+	}
+	if opt.AuthorID != "" {
+		conditions["author_id"] = opt.AuthorID
+	}
 	var comments []*model.Comment
-	r.DB.Preload("Author").
+	preloaded := r.DB.Preload("Author").
 		Preload("Children.Author"). // nested preload
-		Preload("Children.Children").
-		Find(&comments)
+		Preload("Children.Children")
+	if len(conditions) == 0 {
+		preloaded.Find(&comments)
+	} else {
+		preloaded.Find(&comments, conditions)
+	}
 	return comments
 }
 
-func (r *CommentRepositoryGorm) Get(id string) *model.Comment{
+func (r *CommentRepositoryGorm) Get(id int) *model.Comment {
 	log.Println("CommentRepositoryGorm Get")
-	//var comment *model.Comment
-	//idInt, _ := strconv.Atoi(id)
 	var tmp *model.Comment = &model.Comment{}
 	r.DB.First(tmp)
 	return tmp

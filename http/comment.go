@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func NewCommentRouter(parent *echo.Group, uc *usecase.CommentUseCase) *CommentRouter{
+func NewCommentRouter(parent *echo.Group, uc usecase.CommentUseCaseInterface) *CommentRouter {
 	group := parent.Group("/comments")
 	commentRouter := &CommentRouter{group, uc}
 	group.GET("", commentRouter.ListComment)
@@ -14,14 +14,14 @@ func NewCommentRouter(parent *echo.Group, uc *usecase.CommentUseCase) *CommentRo
 	return commentRouter
 }
 
-type CommentResponse struct{
-	StatusCode int `json:"statusCode"`
-	Comments interface{} `json:"comments"` //this contains any format of comments
+type CommentResponse struct {
+	StatusCode int         `json:"statusCode"`
+	Comments   interface{} `json:"comments"` //this contains any format of comments
 }
 
-type CommentRouter struct{
+type CommentRouter struct {
 	*echo.Group
-	UC *usecase.CommentUseCase
+	UC usecase.CommentUseCaseInterface
 }
 
 func (r *CommentRouter) ListComment(c echo.Context) error {

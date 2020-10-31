@@ -6,21 +6,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func NewEcho(userRepository repository.UserRepository, commentUC *usecase.CommentUseCase) *echo.Echo{
+func NewEcho(userRepository repository.UserRepository, commentUC *usecase.CommentUseCase) *echo.Echo {
 	e := echo.New()
 
 	authenticator := &Authenticator{UserRepository: userRepository}
 	e.Use(authenticator.Authenticate)
 
-	e.GET("", func(c echo.Context) error {return c.Redirect(301, "/api")})
+	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 
 	apiRouterGroup := e.Group("/api")
 	apiRouterGroup.GET("", serveHome)
 
 	_ = NewCommentRouter(apiRouterGroup, commentUC)
 
-
-  	return e
+	return e
 }
 
 func serveHome(c echo.Context) error {
