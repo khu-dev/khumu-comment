@@ -116,3 +116,13 @@ func (m *Comment) toString() string {
 	s, _ := json.MarshalIndent(m, "", "    ")
 	return string(s)
 }
+
+type LikeComment struct{
+	ID int `gorm:"primaryKey"`
+	CommentID int `gorm:"column:comment_id" json:"comment"`
+	Username string `gorm:"column:user_id" json:"username"`
+}
+
+func (*LikeComment) TableName() string {
+	return "comment_likecomment"
+}

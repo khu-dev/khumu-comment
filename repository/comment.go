@@ -3,13 +3,17 @@ package repository
 import (
 	"github.com/khu-dev/khumu-comment/model"
 	"gorm.io/gorm"
-	"log"
 )
 
 type CommentRepositoryInterface interface {
 	Create(comment *model.Comment) error
 	List(opt *CommentQueryOption) []*model.Comment
 	Get(id int) *model.Comment
+}
+
+type LikeCommentRepositoryInterface interface{
+	Create(like *model.LikeComment) (*model.LikeComment, error)
+	//List(opt *LikeCommentQueryOption) []*model.LikeComment
 }
 
 type CommentRepositoryGorm struct {
@@ -21,8 +25,17 @@ type CommentQueryOption struct {
 	AuthorID  string
 }
 
+type LikeCommentRepositoryGorm struct{
+	DB *gorm.DB
+}
+type LikeCommentQueryOption struct{}
+
 func NewCommentRepositoryGorm(db *gorm.DB) CommentRepositoryInterface{
 	return &CommentRepositoryGorm{DB: db}
+}
+
+func NewLikeCommentRepositoryGorm(db *gorm.DB) LikeCommentRepositoryInterface{
+	return &LikeCommentRepositoryGorm{DB: db}
 }
 
 func (r *CommentRepositoryGorm) Create(comment *model.Comment) error {
@@ -32,7 +45,6 @@ func (r *CommentRepositoryGorm) Create(comment *model.Comment) error {
 }
 
 func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
-	log.Println("CommentRepositoryGorm List")
 	conditions := make(map[string]interface{})
 	if opt.ArticleID != 0 {
 		conditions["article_id"] = opt.ArticleID
@@ -53,10 +65,14 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 }
 
 func (r *CommentRepositoryGorm) Get(id int) *model.Comment {
-	log.Println("CommentRepositoryGorm Get")
 	var tmp *model.Comment = &model.Comment{}
 	r.DB.First(tmp)
 	return tmp
+}
+
+func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.LikeComment, error) {
+	err := r.DB.Save(like).Error
+	return like, err
 }
 
 /*

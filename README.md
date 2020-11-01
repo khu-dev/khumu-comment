@@ -1,6 +1,6 @@
 # KHUMU Comment API Server
 
-khumu API 서버 중 article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 아키텍쳐를 구성.
+khumu의 comment 관련 API를 제공하는 서버. khumu API 서버 중 khumu-command-center 가 article을 비롯한 대부분의 API를 제공하는데 이때, article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 아키텍쳐를 구성하고자 khumu-comment 서버를 분리시킴.
 
 ## 개발 방향성 및 원칙
 
