@@ -2,16 +2,18 @@
 
 khumu API 서버 중 article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 아키텍쳐를 구성.
 
+## 개발 방향성 및 원칙
+
 * Golang의 Echo라는 Web framework를 이용해 REST API 구축
 
 * clean architecture를 적절하고 간단하게 Go의 문법으로 적용시켜봄.
 
-    * 인증은 middleware 단에서 담당
-    * 인가(권한)에 대한 것은 http의 router 혹은 middleware에서 담당
-    * http는 주로 http나 권한에 대한 로직, usecase는 도메인 로직(? 정확히 도메인이 뭔지 잘 모르겠음)
-    * repository는 단순히 정의된 Operation을 DB를 통해 수행
-    * model은 gorm에서 사용할 model들을 정의
-    * container는 의존성 주입을 담당. 의존성 주입 패키지를 쓰는 것은 너무 과할 것 같아 일단 수작업으로 진행
+    * 인증은 `http/middleware` 단에서 담당
+    * 인가(권한)에 대한 것은 `http`의 `router` 혹은 `middleware` 에서 담당
+    * `http` 는 주로 http나 권한에 대한 로직, `usecase` 는 도메인 로직(? 정확히 도메인이 뭔지 잘 모르겠음)
+    * `repository` 는 단순히 정의된 Operation을 DB를 통해 수행
+    * `model` 은 `gorm` 에서 사용할 model들을 정의
+    * `container` 는 의존성 주입을 담당. Contianer에 Provide하여 Container가 어떠한 의존성을 가질 지 명시하고 Build 함으로써 해당 컨테이너를 생성.
     * **의존 순서**
         * Http
         * Usecase
@@ -27,6 +29,44 @@ khumu API 서버 중 article을 제공하는 서버와 comment를 제공하는 �
     * IoC container를 이용하면 test를 짤 때에도 main과 동일하게 container만 만들고 뽑아쓰면 되기 때문에 편리하다.
       Mock은 줄줄이 dependency를 주입하지 않고도 가볍게 짤 수 있었지만 method를 다 mock해야하기도 하고, 정확도가 떨어진다.  
 
+## API Examples
+
+### List comments
+
+_author 쪽은 아직 미정_
+```json
+{
+  "statusCode": 200,
+  "comments": [
+    {
+      "id": 1,
+      "kind": "anonymous",
+      "author": {
+         "username": "jinsu",
+         "type": ""
+      },
+      "article": 1,
+      "content": "Lorem Ipsum passages, and ",
+      "parent": null,
+      "children": [
+        {
+          "id": 2,
+          "kind": "named",
+          "author": {
+            "username": "jinsu",
+            "type": ""
+          },
+          "article": 1,
+          "content": "more recently with desktop ",
+          "parent": null,
+          "children": [],
+          "created_at": "2020-11-01T14:10:40.016958Z"
+        }
+      ]
+    }
+  ]
+}
+```
 ## 설정
 
 `config/default.yaml` 을 통해 필요한 설정을 작성한다.
