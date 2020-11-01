@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/labstack/echo/v4"
@@ -31,14 +30,17 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 				// 토큰 속의 유저가 존재하는 유저인지 확인해서 분기하는 http Handler 끼워넣기
 				func(context echo.Context) error {
 					if token, ok := context.Get(KhumuJWTConfig.ContextKey).(*jwt.Token); ok {
-						if mapClaim, ok := token.Claims.(jwt.MapClaims); ok && mockCheckUserExists(mapClaim["user_id"].(string)) {
-							context.Set("user_id", mapClaim["user_id"])
-							//여기까지 왔으면 존재하는 유저의 토큰
-							log.Println("Pass JWT Authentication. user_id: ", mapClaim["user_id"])
-							return handlerFunc(context)
+						if mapClaim, ok := token.Claims.(jwt.MapClaims); ok{
+							username := mapClaim["user_id"].(string)
+							user := a.UserRepository.GetUserForAuth(username)
+							if user != nil {
+								context.Set("user_id", username)
+								//여기까지 왔으면 존재하는 유저의 토큰
+								log.Println("Pass JWT Authentication. user_id: ", mapClaim["user_id"])
+								return handlerFunc(context)
+							}
 						}
 					}
-
 					log.Println("JWT Authentication failed")
 					return context.JSON(401, map[string]interface{}{
 						"statusCode": 401,
@@ -47,7 +49,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 
 				})(context)
 		} else if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Basic") {
-			fmt.Println("Basic 인증")
+			log.Println("Try Basic Authentication")
 			return middleware.BasicAuth(a.KhumuBasicAuth)(handlerFunc)(context)
 		} else {
 			return context.JSON(401, map[string]interface{}{
@@ -73,12 +75,11 @@ var KhumuJWTConfig middleware.JWTConfig = middleware.JWTConfig{
 
 func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context) (bool, error) {
 	user := a.UserRepository.GetUserForAuth(username)
-	log.Println("Try Authenticating ", username)
 	if user == nil {
 		return false, nil
 	} else {
 		found, err := hashers.CheckPassword(password, user.Password)
-		log.Println("Authentication result: ", found, username)
+		c.Set("user_id", username)
 		return found, err
 	}
 }

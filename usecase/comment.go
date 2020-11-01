@@ -28,6 +28,7 @@ func (uc *CommentUseCase) List(c echo.Context) []*model.Comment {
 	parents := uc.listParentWithChildren(comments)
 	userID, ok := c.Get("user_id").(string)
 	if !ok {
+		log.Panic("No use_id in echo.Context")
 		return nil
 	}
 
