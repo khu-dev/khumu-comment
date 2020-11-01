@@ -6,11 +6,11 @@ import (
 	"log"
 )
 
-func NewCommentRouter(parent *echo.Group, uc usecase.CommentUseCaseInterface) *CommentRouter {
-	group := parent.Group("/comments")
+func NewCommentRouter(root *RootRouter, uc usecase.CommentUseCaseInterface) *CommentRouter {
+	group := root.Group.Group("/comments")
 	commentRouter := &CommentRouter{group, uc}
-	group.GET("", commentRouter.ListComment)
-	group.GET("/:id", commentRouter.GetComment)
+	group.GET("", commentRouter.List)
+	group.GET("/:id", commentRouter.Get)
 	return commentRouter
 }
 
@@ -24,7 +24,7 @@ type CommentRouter struct {
 	UC usecase.CommentUseCaseInterface
 }
 
-func (r *CommentRouter) ListComment(c echo.Context) error {
+func (r *CommentRouter) List(c echo.Context) error {
 	log.Println("CommentRouter List")
 
 	comments := r.UC.List(c)
@@ -32,7 +32,7 @@ func (r *CommentRouter) ListComment(c echo.Context) error {
 	return c.JSON(200, CommentResponse{200, comments})
 }
 
-func (r *CommentRouter) GetComment(c echo.Context) error {
+func (r *CommentRouter) Get(c echo.Context) error {
 	log.Println("CommentRouter Get")
 
 	comment := r.UC.Get(c)

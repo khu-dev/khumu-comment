@@ -2,11 +2,8 @@ package main
 
 import (
 	"github.com/khu-dev/khumu-comment/config"
-	"github.com/khu-dev/khumu-comment/http"
-	"github.com/khu-dev/khumu-comment/repository"
-	"github.com/khu-dev/khumu-comment/usecase"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/khu-dev/khumu-comment/container"
+	"github.com/labstack/echo/v4"
 	"log"
 )
 
@@ -15,18 +12,12 @@ func main() {
 }
 
 func Run() {
-	log.Println("Connecting DB to " + config.Config.DB.SQLite3.FilePath)
-	db, err := gorm.Open(sqlite.Open(config.Config.DB.SQLite3.FilePath), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
+	cont := container.Build()
+	err := cont.Invoke(func(e *echo.Echo){
+		e.Logger.Print("Started Server")
+		e.Logger.Fatal(e.Start(config.Config.Host + ":" + config.Config.Port))
+	})
+	if err != nil{
+		log.Panic(err)
 	}
-	userRepository := &repository.UserRepositoryGorm{DB: db}
-	commentRepository := &repository.CommentRepositoryGorm{DB: db}
-	commentUC := &usecase.CommentUseCase{
-		Repository: commentRepository,
-	}
-	e := http.NewEcho(userRepository, commentUC)
-
-	e.Logger.Print("Started Server")
-	e.Logger.Fatal(e.Start(config.Config.Host + ":" + config.Config.Port))
 }

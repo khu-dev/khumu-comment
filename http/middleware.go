@@ -13,7 +13,7 @@ import (
 )
 
 type Authenticator struct {
-	UserRepository repository.UserRepository
+	UserRepository repository.UserRepositoryInterface
 }
 
 func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
@@ -26,7 +26,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 	// 안괜찮으면 error로 응답하는 handlerFunc를 수행하는 방식
 	return func(context echo.Context) error {
 		if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Bearer") {
-			fmt.Println("JWT 인증")
+			log.Println("Try JWT Authentication")
 			return middleware.JWTWithConfig(KhumuJWTConfig)(
 				// 토큰 속의 유저가 존재하는 유저인지 확인해서 분기하는 http Handler 끼워넣기
 				func(context echo.Context) error {
@@ -34,9 +34,12 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 						if mapClaim, ok := token.Claims.(jwt.MapClaims); ok && mockCheckUserExists(mapClaim["user_id"].(string)) {
 							context.Set("user_id", mapClaim["user_id"])
 							//여기까지 왔으면 존재하는 유저의 토큰
+							log.Println("Pass JWT Authentication. user_id: ", mapClaim["user_id"])
 							return handlerFunc(context)
 						}
 					}
+
+					log.Println("JWT Authentication failed")
 					return context.JSON(401, map[string]interface{}{
 						"statusCode": 401,
 						"body":       "Request with a non-existing user.",

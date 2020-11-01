@@ -6,13 +6,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository interface {
+type UserRepositoryInterface interface {
 	Get(username string) *model.KhumuUser
 	GetUserForAuth(username string) *model.KhumuUserAuth
 }
 
 type UserRepositoryGorm struct {
 	DB *gorm.DB
+}
+
+func NewUserRepositoryGorm(db *gorm.DB) UserRepositoryInterface {
+	return &UserRepositoryGorm{db}
 }
 
 func (r *UserRepositoryGorm) Get(username string) *model.KhumuUser {

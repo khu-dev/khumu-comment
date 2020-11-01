@@ -98,7 +98,7 @@ type Comment struct {
 	ArticleID      uint             `gorm:"column:article_id" json:"article"`
 	//Article Article `gorm:"foreignKey:ArticleID"`
 	Content   string     `json:"content"`
-	ParentID  *uint       `gorm:"column:parent_id;default:null" json:"parent"`
+	ParentID  *uint      `gorm:"column:parent_id;default:null" json:"parent"`
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	CreatedAt time.Time  `json:"created_at"`
 }

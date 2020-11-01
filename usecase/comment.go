@@ -17,7 +17,12 @@ type CommentUseCase struct {
 	Repository repository.CommentRepositoryInterface
 }
 
+func NewCommentUseCase(r repository.CommentRepositoryInterface) CommentUseCaseInterface {
+	return &CommentUseCase{Repository: r}
+}
+
 func (uc *CommentUseCase) List(c echo.Context) []*model.Comment {
+
 	log.Println("CommentUseCase List")
 	comments := uc.Repository.List(&repository.CommentQueryOption{})
 	parents := uc.listParentWithChildren(comments)
