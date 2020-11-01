@@ -49,7 +49,6 @@ func Load() {
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Printf("Default Config: %#v\n", *Config)
 }
 
 func LoadTestConfig() {
@@ -59,7 +58,6 @@ func LoadTestConfig() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Test Config: %#v\n", *Config)
 }
 
 type KhumuConfig struct {
