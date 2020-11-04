@@ -43,7 +43,12 @@ func readConfigFileFromKhumuHome(relPath string) *[]byte {
 	return &yamlFileData
 }
 func Load() {
-	yamlDataPtr := readConfigFileFromKhumuHome("config/default.yaml")
+	var configRelPath string = "config/local.yaml" // 기본은 local.yaml
+	if os.Getenv("KHUMU_ENVIRONMENT") == "DEV"{
+		// KHUMU_HOME을 기준으로한 대한 상대 경로
+		configRelPath = "config/dev.yaml"
+	}
+	yamlDataPtr := readConfigFileFromKhumuHome(configRelPath)
 	Config = &KhumuConfig{}
 	err := yaml.Unmarshal(*yamlDataPtr, Config)
 	if err != nil {
@@ -65,9 +70,16 @@ type KhumuConfig struct {
 	RestRootEndpoint string `yaml:"restRootEndpoint"`
 	Port             string
 	DB               struct {
-		Type    string
+		Kind    string `yaml:"kind"`
 		SQLite3 struct {
 			FilePath string `yaml:"filePath"`
 		} `yaml:"sqlite3"`
+		MySQL struct{
+			Host string `yaml:"host"`
+			Port int `yaml:"port"`
+			DatabaseName string `yaml:"databaseName"`
+			User string `yaml:"user"`
+			Password string `yaml:"password"`
+		}
 	}
 }

@@ -12,16 +12,17 @@ type RootRouter struct{*echo.Group}
 func NewEcho(userRepository repository.UserRepositoryInterface, commentUC usecase.CommentUseCaseInterface) *echo.Echo {
 	e := echo.New()
 
-	authenticator := &Authenticator{UserRepository: userRepository}
-	e.Use(authenticator.Authenticate)
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
-	root := NewRootRouter(e)
+	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
+	root := NewRootRouter(e, userRepository)
 	_ = NewCommentRouter(root, commentUC)
 	return e
 }
 
-func NewRootRouter(echoServer *echo.Echo) *RootRouter{
+func NewRootRouter(echoServer *echo.Echo, userRepository repository.UserRepositoryInterface) *RootRouter{
 	g := RootRouter{Group: echoServer.Group("/api")}
+	authenticator := &Authenticator{UserRepository: userRepository}
+	g.Use(authenticator.Authenticate)
 	g.GET("/", serveHome)
 	return &g
 }
