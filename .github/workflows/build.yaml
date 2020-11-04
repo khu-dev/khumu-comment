@@ -41,6 +41,7 @@ jobs:
           tags: |
             umi0410/khumu-comment:latest
             umi0410/khumu-comment:${{ github.run_id }}
+
       - name: 🏗️ Push images
         run: |
           docker push umi0410/khumu-comment:latest
