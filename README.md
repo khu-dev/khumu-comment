@@ -113,3 +113,5 @@ $ go test ./repository/ -run TestInit TestLikeCommentRepositoryGorm_Create -v
 ## 개발 팁
 
 * go test 대신 [gotest](https://github.com/rakyll/gotest)를 이용하면 좀 더 가시성 좋게 test를 진행할 수 있다.
+
+* `{"message": "Not Found"}` 응답의 경우 해당 경로에 대해 route 할 수 없을 때 발생하는데, 주로 `/` 의 차이인듯한데, 이 레포의 컨벤션은 맨 뒤에 `/` 를 제거하는 것을 기본으로한다.
