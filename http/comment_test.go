@@ -33,7 +33,7 @@ func (uc *CommentUseCaseMock) Get(c echo.Context) *model.Comment {
 
 func TestInit(t *testing.T) {
 	cont := dig.New()
-	err := cont.Provide(repository.NewGorm)
+	err := cont.Provide(repository.NewTestGorm)
 	assert.Nil(t, err)
 
 	err = cont.Provide(repository.NewCommentRepositoryGorm)
@@ -59,6 +59,7 @@ func TestCommentRouter_List(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	context := e.NewContext(req, rec)
+	context.Set("user_id", "admin")
 	err := commentRouter.List(context)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)

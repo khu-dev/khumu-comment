@@ -6,12 +6,8 @@ package usecase
 import (
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
-	"log"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -44,7 +40,7 @@ func (r *CommentRepositoryMock) Get(id int) *model.Comment {
 func TestInit(t *testing.T) {
 	// build container
 	cont := dig.New()
-	err := cont.Provide(repository.NewGorm)
+	err := cont.Provide(repository.NewTestGorm)
 	assert.Nil(t, err)
 
 	err = cont.Provide(repository.NewCommentRepositoryGorm)
@@ -62,31 +58,32 @@ func TestInit(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestCommentUseCase_List(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	context := e.NewContext(req, nil)
-	context.Set("user_id", "jinsu")
-	resultComments := commentUseCase.List(context)
-	log.Println(resultComments)
-	t.Run("My anonymous comment", func(t *testing.T) {
-		c := resultComments[0]
-		assert.Equal(t, c.Kind, "anonymous")
-		assert.Equal(t, "jinsu", c.Author.Username)
-	})
-	t.Run("My named comment", func(t *testing.T) {
-		c := resultComments[1]
-		assert.Equal(t, "named", c.Kind)
-		assert.Equal(t, "jinsu", c.Author.Username)
-	})
-	t.Run("Others anonymous comment", func(t *testing.T) {
-		c := resultComments[2]
-		assert.Equal(t, "anonymous", c.Kind)
-		assert.Equal(t, "익명", c.Author.Username)
-		assert.Equal(t, "someone", c.AuthorUsername)
-	})
 
-}
+
+//func TestCommentUseCase_List(t *testing.T) {
+//	e := echo.New()
+//	req := httptest.NewRequest(http.MethodGet, "/", nil)
+//	context := e.NewContext(req, nil)
+//	context.Set("user_id", "jinsu")
+//	resultComments := commentUseCase.List(context)
+//	log.Println(resultComments)
+//	t.Run("My anonymous comment", func(t *testing.T) {
+//		c := resultComments[0]
+//		assert.Equal(t, c.Kind, "anonymous")
+//		assert.Equal(t, "jinsu", c.Author.Username)
+//	})
+//	t.Run("My named comment", func(t *testing.T) {
+//		c := resultComments[1]
+//		assert.Equal(t, "named", c.Kind)
+//		assert.Equal(t, "jinsu", c.Author.Username)
+//	})
+//	t.Run("Others anonymous comment", func(t *testing.T) {
+//		c := resultComments[2]
+//		assert.Equal(t, "anonymous", c.Kind)
+//		assert.Equal(t, "익명", c.Author.Username)
+//		assert.Equal(t, "someone", c.AuthorUsername)
+//	})
+//}
 
 func _mockup(t *testing.T){
 	var id uint = 1

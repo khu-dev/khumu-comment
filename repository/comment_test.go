@@ -1,12 +1,10 @@
 package repository
 
 import (
-	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
-	"io/ioutil"
 	"testing"
 )
 
@@ -20,16 +18,9 @@ var (
 
 // 그냥 Init하는데, 이때에도 테스트 적용
 func TestInit(t *testing.T) {
-	// 원본 test db를 카피해서 작업
-	config.Load()
-	originalDataPath := config.Config.DB.SQLite3.FilePath
-	config.LoadTestConfig()
-	testDataPath := config.Config.DB.SQLite3.FilePath
-	copyBackupData(originalDataPath, testDataPath, t)
-
 	// container build
 	cont := dig.New()
-	err := cont.Provide(NewGorm)
+	err := cont.Provide(NewTestGorm)
 	assert.Nil(t, err)
 
 	err = cont.Provide(NewCommentRepositoryGorm)
@@ -50,19 +41,6 @@ func TestInit(t *testing.T) {
 	})
 
 	assert.Nil(t, err)
-}
-
-func TestCommentRepositoryGorm_List(t *testing.T) {
-	comments := commentRepository.List(&CommentQueryOption{})
-	assert.NotEmpty(t, comments)
-	commentID = int(comments[0].ID)
-	comments = commentRepository.List(&CommentQueryOption{AuthorID: authorIDForList})
-	assert.Len(t, comments, 0)
-}
-
-func TestCommentRepositoryGorm_Get(t *testing.T) {
-	comment := commentRepository.Get(commentID)
-	assert.NotNil(t, comment)
 }
 
 func TestCommentRepositoryGorm_Create(t *testing.T) {
@@ -101,10 +79,15 @@ func TestLikeCommentRepositoryGorm_Create(t *testing.T) {
 	assert.Equal(t, likeBefore.Username, likeAfter.Username)
 }
 
+func TestCommentRepositoryGorm_Get(t *testing.T) {
+	comment := commentRepository.Get(commentID)
+	assert.NotNil(t, comment)
+}
 
-func copyBackupData(src, dest string, t *testing.T) {
-	input, err := ioutil.ReadFile(src)
-	assert.Nil(t, err)
-	err = ioutil.WriteFile(dest, input, 0644)
-	assert.Nil(t, err)
+func TestCommentRepositoryGorm_List(t *testing.T) {
+	comments := commentRepository.List(&CommentQueryOption{})
+	assert.NotEmpty(t, comments)
+	commentID = int(comments[0].ID)
+	comments = commentRepository.List(&CommentQueryOption{AuthorID: authorIDForList})
+	assert.Len(t, comments, 0)
 }

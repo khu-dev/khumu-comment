@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
+	"github.com/khu-dev/khumu-comment/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -35,5 +36,16 @@ func NewGorm() *gorm.DB{
 		}
 		db = conn
 	}
+	return db
+}
+
+func NewTestGorm() *gorm.DB{
+	var db *gorm.DB
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil{log.Panic(err)}
+
+	err = db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
+	if err != nil{log.Panic(err)}
+
 	return db
 }

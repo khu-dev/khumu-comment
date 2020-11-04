@@ -12,7 +12,7 @@ func main() {
 }
 
 func Run() {
-	log.Println("Default config. %#v", config.Config)
+	log.Printf("Default config. %#v\n", config.Config)
 	cont := container.Build()
 	err := cont.Invoke(func(e *echo.Echo){
 		e.Logger.Print("Started Server")

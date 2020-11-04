@@ -1,4 +1,0 @@
-db:
-  kind: sqlite3
-  sqlite3:
-    filePath: "/home/jinsu/git/khumu/khumu-comment/test.sqlite3"

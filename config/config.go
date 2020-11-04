@@ -56,15 +56,6 @@ func Load() {
 	}
 }
 
-func LoadTestConfig() {
-	yamlDataPtr := readConfigFileFromKhumuHome("config/test.yaml")
-
-	err := yaml.Unmarshal(*yamlDataPtr, Config)
-	if err != nil {
-		panic(err)
-	}
-}
-
 type KhumuConfig struct {
 	Host             string `yaml:"host"`
 	RestRootEndpoint string `yaml:"restRootEndpoint"`
