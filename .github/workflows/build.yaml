@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  cicd:
     runs-on: ubuntu-latest
     steps:
       - name: 🛎️ Checkout
@@ -19,7 +19,12 @@ jobs:
           go-version: '^1.14' # The Go version to download (if necessary) and use.
 
       - name: Unit test
-        run: KHUMU_HOME=$(pwd) go test ./...
+        run: KHUMU_HOME=$(pwd) go test ./... -v
+
+      - name: Build Go
+        run: |
+          go mod download
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o khumu-comment main.go
 
       - name: 🍦 Login to DockerHub
         uses: docker/login-action@v1
