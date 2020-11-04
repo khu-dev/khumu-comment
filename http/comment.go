@@ -9,7 +9,7 @@ import (
 func NewCommentRouter(root *RootRouter, uc usecase.CommentUseCaseInterface) *CommentRouter {
 	group := root.Group.Group("/comments")
 	commentRouter := &CommentRouter{group, uc}
-	group.GET("", commentRouter.List)
+	group.GET("/", commentRouter.List)
 	group.GET("/:id", commentRouter.Get)
 	return commentRouter
 }

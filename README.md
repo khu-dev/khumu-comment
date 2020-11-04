@@ -73,6 +73,12 @@ _author 쪽은 아직 미정_
 
 `config/test.yaml` 을 통해 테스트할 때 사용할 설정을 작성한다.
 
+`KHUMU_HOME` 환경변수를 통해 루트 경로를 설정한다. 예를 들어 config는 `$KHUMU_HOME/config/local.yaml` 과 같이 작동한다.
+
+`KHUMU_SECRET` 환경변수를 통해 jwt를 verify할 secret을 설정한다.
+
+
+
 ## How to test
 
 ### 전체 프로젝트에 대한 유닛 테스트
