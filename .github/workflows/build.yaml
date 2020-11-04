@@ -1,0 +1,62 @@
+name: Build
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v2.3.1 # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
+
+      - name: 🍦 Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: 🏗️ Build images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false # buildkit을 쓰면 auto push가 안되는듯?
+          tags: |
+            umi0410/khumu-comment:latest
+            umi0410/khumu-comment:${{ github.run_id }}
+      - name: 🏗️ Push images
+        run: |
+          docker push umi0410/khumu-comment:latest
+          docker push umi0410/khumu-comment:${{ github.run_id }}
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: "3.8.6"
+
+      - name: 🛎 Clone the devops repository
+        uses: actions/checkout@v2
+        with:
+          repository: khu-dev/khumu-devops
+          token: ${{ secrets.PUSH_TO_OTHER_REPO }}
+          path: 'khumu-devops'
+
+      - name: Edit Kustomization.yaml
+        working-directory: khumu-devops/khumu-comment
+        run: |
+          kustomize version
+          kustomize edit set image umi0410/khumu-comment=umi0410/khumu-comment:${{ github.run_id }}
+
+      - name: Push to another repository
+        uses: cpina/github-action-push-to-another-repository@master
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.PUSH_TO_OTHER_REPO }}
+        with:
+          source-directory: khumu-devops
+          destination-github-username: 'khu-dev'
+          destination-repository-name: 'khumu-devops'
