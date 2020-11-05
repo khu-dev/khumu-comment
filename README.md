@@ -1,7 +1,7 @@
 # KHUMU Comment API Server
 
-**khumu-comment**는 MSA로 개발중인 khumu의 comment 관련 API를 제공하는 서버이고, `Echo` 라는 Golang의 웹프렘워크를 바탕으로 구현됐습니다.
-khumu API 서버 중 khumu-command-center 가 article을 비롯한 대부분의 API를 하고, article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 형태로 개발하고자 
+**khumu-comment**는 MSA로 개발중인 khumu의 comment 관련 API를 제공하는 서버이고, `Echo` 라는 Golang의 웹프렘워크를 바탕으로 개발 중입니다.
+khumu API 서버 중 khumu-command-center 가 article을 비롯한 대부분의 API를 제공하고있으며, article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 형태로 개발하고자 
 khumu-comment 서버를 이렇게 따로 개발하고 있습니다.
 
 
