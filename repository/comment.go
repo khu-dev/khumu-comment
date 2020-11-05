@@ -6,7 +6,7 @@ import (
 )
 
 type CommentRepositoryInterface interface {
-	Create(comment *model.Comment) error
+	Create(comment *model.Comment) (*model.Comment, error)
 	List(opt *CommentQueryOption) []*model.Comment
 	Get(id int) *model.Comment
 }
@@ -38,10 +38,22 @@ func NewLikeCommentRepositoryGorm(db *gorm.DB) LikeCommentRepositoryInterface{
 	return &LikeCommentRepositoryGorm{DB: db}
 }
 
-func (r *CommentRepositoryGorm) Create(comment *model.Comment) error {
-	err := r.DB.Create(comment).Error
+// Comment를 Create 할 때에는 AuthorUsername field가 비어있고, Author field에
+// Author에 대한 정보가 담겨있다. AuthorUsername은 json 통신할 때에도 사용하지 않기때문에
+// 입력받을 수 없다. 하지만 리턴할 때에는 상위 계층이 잘 사용할 수 있게끔 해당 값도 입력해서 전달해줄 것이다.
+// 따라서 입력받을 땐 AuthorUsername은 비어있고 Author에만 유효한 값이 들어있고, 리턴할 땐 둘 다 유효한 값이 들어있다.
+func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, error) {
+	// Author field가 남아있으면 그걸 기준으로 Author 필드의 데이터도 업데이트시키려고하기때문에
+	// 단순히 foreignKey field만 남긴다.
+	// 리턴할 땐 다시 그 정보 복
+	comment.AuthorUsername = comment.Author.Username
+	tmpStoreUser := comment.Author
+	comment.Author = nil
+	err := r.DB.Save(comment).Error
+	if err != nil{return nil, err}
 
-	return err
+	comment.Author = tmpStoreUser
+	return comment, err
 }
 
 func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
@@ -74,21 +86,3 @@ func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.Like
 	err := r.DB.Save(like).Error
 	return like, err
 }
-
-/*
-func (r *CommentRepositoryGorm) Get(id string) *model.Comment{
-	log.Println("CommentRepositoryGorm Get")
-	//var comment *model.Comment
-	//idInt, _ := strconv.Atoi(id)
-	var tmp *model.Comment = &model.Comment{}
-	r.DB.First(tmp)
-	return tmp
-}
-이슈
-
-var tmp *model.Comment = &model.Comment{}
-하면 되는데
-var tmp *model.Comment로 하면 안 됨.
-이유는 nil pointer 이기때문.
-
-*/

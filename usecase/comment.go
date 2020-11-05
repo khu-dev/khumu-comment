@@ -2,15 +2,14 @@ package usecase
 
 import (
 	"github.com/khu-dev/khumu-comment/repository"
-	"github.com/labstack/echo/v4"
 	"log"
-	"strconv"
 )
 import "github.com/khu-dev/khumu-comment/model"
 
 type CommentUseCaseInterface interface {
-	List(c echo.Context) []*model.Comment
-	Get(c echo.Context) *model.Comment
+	Create(comment *model.Comment) (*model.Comment, error)
+	List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error)
+	Get(id int, opt *repository.CommentQueryOption) (*model.Comment, error)
 }
 
 type CommentUseCase struct {
@@ -21,25 +20,27 @@ func NewCommentUseCase(r repository.CommentRepositoryInterface) CommentUseCaseIn
 	return &CommentUseCase{Repository: r}
 }
 
-func (uc *CommentUseCase) List(c echo.Context) []*model.Comment {
+func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
+	log.Println("CommentUseCase_Create")
+	newComment, err := uc.Repository.Create(comment)
+	if err!=nil{return newComment, err}
+	return newComment, nil
+}
+
+func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
 
 	log.Println("CommentUseCase List")
 	comments := uc.Repository.List(&repository.CommentQueryOption{})
 	parents := uc.listParentWithChildren(comments)
-	userID, ok := c.Get("user_id").(string)
-	if !ok {
-		log.Panic("No use_id in echo.Context")
-		return nil
-	}
 
 	for _, p := range parents {
 		for _, c := range p.Children {
-			uc.hideAuthor(c, userID)
+			uc.hideAuthor(c, username)
 		}
-		uc.hideAuthor(p, userID)
+		uc.hideAuthor(p, username)
 	}
 
-	return parents
+	return parents, nil
 }
 
 func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) []*model.Comment {
@@ -60,12 +61,8 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, requestUsername string) {
 	}
 }
 
-func (uc *CommentUseCase) Get(c echo.Context) *model.Comment {
-	log.Println("CommentUseCase Get")
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		log.Panic(err)
-	}
+func (uc *CommentUseCase) Get(id int, opt *repository.CommentQueryOption) (*model.Comment, error) {
+	log.Println("CommentUseCase_Get")
 	comment := uc.Repository.Get(id)
-	return comment
+	return comment, nil
 }

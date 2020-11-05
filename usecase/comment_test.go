@@ -6,36 +6,37 @@ package usecase
 import (
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
+	"github.com/khu-dev/khumu-comment/test"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
+	"gorm.io/gorm"
 	"testing"
 )
 
+// 언젠가 모킹을 사용할 것이라면 이 타입을 구현. 메소드는 현재 사용하지 않으므로 주석처리했다.
 type CommentRepositoryMock struct{}
+//func (r *CommentRepositoryMock) Create(comment *model.Comment) error {
+//	commentsData = append(commentsData, comment)
+//	return nil
+//}
+//
+//// QyeryOption기능은 제외하고 mock
+//func (r *CommentRepositoryMock) List(opt *repository.CommentQueryOption) []*model.Comment {
+//	return commentsData
+//}
+//
+//func (r *CommentRepositoryMock) Get(id int) *model.Comment {
+//	for _, comment := range commentsData {
+//		if int(comment.ArticleID) == id {
+//			return comment
+//		}
+//	}
+//	return nil
+//}
 
 var (
-	commentsMock   []*model.Comment
 	commentUseCase CommentUseCaseInterface
 )
-
-func (r *CommentRepositoryMock) Create(comment *model.Comment) error {
-	commentsMock = append(commentsMock, comment)
-	return nil
-}
-
-// QyeryOption기능은 제외하고 mock
-func (r *CommentRepositoryMock) List(opt *repository.CommentQueryOption) []*model.Comment {
-	return commentsMock
-}
-
-func (r *CommentRepositoryMock) Get(id int) *model.Comment {
-	for _, comment := range commentsMock {
-		if int(comment.ArticleID) == id {
-			return comment
-		}
-	}
-	return nil
-}
 
 func TestInit(t *testing.T) {
 	// build container
@@ -55,64 +56,86 @@ func TestInit(t *testing.T) {
 	err = cont.Invoke(func(uc CommentUseCaseInterface) {
 		commentUseCase = uc
 	})
+
 	assert.Nil(t, err)
+
+	t.Run("Create a user jinsu to preload in list comment", func(t *testing.T) {
+		user := &model.KhumuUserSimple{Username: "jinsu", Type: "active"}
+		err = cont.Invoke(func(db *gorm.DB){
+			dbErr := db.Create(&user).Error
+			assert.Nil(t, dbErr)
+			assert.Equal(t, "jinsu", user.Username)
+		})
+		assert.Nil(t, err)
+	})
+
+	t.Run("Create a user somebody who is not me to preload in list comment", func(t *testing.T) {
+		user := &model.KhumuUserSimple{Username: "somebody", Type: "active"}
+		err = cont.Invoke(func(db *gorm.DB){
+			dbErr := db.Create(&user).Error
+			assert.Nil(t, dbErr)
+			assert.Equal(t, "somebody", user.Username)
+		})
+		assert.Nil(t, err)
+	})
+
+	// 내가 사용할 원본 데이터가 잘 만들어져있는가
+	assert.GreaterOrEqual(t, len(test.CommentsData), 3) // e1 >= 3
+}
+
+func createCommentData(t *testing.T){
+	assert.Len(t, test.CommentsData, 3)
+}
+
+func TestCommentUseCase_Create(t *testing.T){
+	t.Run("My anonymous comment", func(t *testing.T){
+		c := test.CommentsData[0] // 0 번 인덱스는 익명 댓글
+		newComment, err := commentUseCase.Create(c)
+		assert.Nil(t, err)
+		assert.NotNil(t, newComment)
+		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.Content, newComment.Content)
+	})
+
+	t.Run("My named comment", func(t *testing.T){
+		c := test.CommentsData[1] // 1번 인덱스는 기명 댓글
+		newComment, err := commentUseCase.Create(c)
+		assert.Nil(t, err)
+		assert.NotNil(t, newComment)
+		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.Content, newComment.Content)
+	})
+
+	t.Run("Others anonymous comment", func(t *testing.T){
+		c := test.CommentsData[2] // 1번 인덱스는 기명 댓글
+		newComment, err := commentUseCase.Create(c)
+		assert.Nil(t, err)
+		assert.NotNil(t, newComment)
+		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.Content, newComment.Content)
+	})
+}
+
+func TestCommentUseCase_List(t *testing.T) {
+
+	resultComments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{})
+	assert.Nil(t, err)
+
+	t.Run("My anonymous comment", func(t *testing.T) {
+		c := resultComments[0]
+		assert.Equal(t, c.Kind, "anonymous")
+		assert.Equal(t, "jinsu", c.Author.Username)
+	})
+	t.Run("My named comment", func(t *testing.T) {
+		c := resultComments[1]
+		assert.Equal(t, "named", c.Kind)
+		assert.Equal(t, "jinsu", c.Author.Username)
+	})
+	t.Run("Others anonymous comment", func(t *testing.T) {
+		c := resultComments[2]
+		assert.Equal(t, "anonymous", c.Kind)
+		assert.Equal(t, "익명", c.Author.Username)
+	})
 }
 
 
-
-//func TestCommentUseCase_List(t *testing.T) {
-//	e := echo.New()
-//	req := httptest.NewRequest(http.MethodGet, "/", nil)
-//	context := e.NewContext(req, nil)
-//	context.Set("user_id", "jinsu")
-//	resultComments := commentUseCase.List(context)
-//	log.Println(resultComments)
-//	t.Run("My anonymous comment", func(t *testing.T) {
-//		c := resultComments[0]
-//		assert.Equal(t, c.Kind, "anonymous")
-//		assert.Equal(t, "jinsu", c.Author.Username)
-//	})
-//	t.Run("My named comment", func(t *testing.T) {
-//		c := resultComments[1]
-//		assert.Equal(t, "named", c.Kind)
-//		assert.Equal(t, "jinsu", c.Author.Username)
-//	})
-//	t.Run("Others anonymous comment", func(t *testing.T) {
-//		c := resultComments[2]
-//		assert.Equal(t, "anonymous", c.Kind)
-//		assert.Equal(t, "익명", c.Author.Username)
-//		assert.Equal(t, "someone", c.AuthorUsername)
-//	})
-//}
-
-func _mockup(t *testing.T){
-	var id uint = 1
-	myAnonymousComment := &model.Comment{
-		Kind:           "anonymous",
-		AuthorUsername: "jinsu",
-		ArticleID:      1,
-		Content:        "테스트로 작성한 jinsu의 익명 코멘트",
-		ParentID:       nil,
-	}
-	id++
-	myNamedComment := &model.Comment{
-		Kind:           "named",
-		AuthorUsername: "jinsu",
-		ArticleID:      1,
-		Content:        "테스트로 작성한 jinsu의 기명 코멘트",
-		ParentID:       nil,
-	}
-	id++
-	othersAnonymousComment := &model.Comment{
-		Kind:           "anonymous",
-		AuthorUsername: "somebody",
-		ArticleID:      1,
-		Content:        "테스트로 작성한 somebody의 익명 코멘트",
-		ParentID:       nil,
-	}
-	commentsMock = append(commentsMock, myAnonymousComment)
-	commentsMock = append(commentsMock, myNamedComment)
-	commentsMock = append(commentsMock, othersAnonymousComment)
-
-	assert.Len(t, commentsMock, 3)
-}
