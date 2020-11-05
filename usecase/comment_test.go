@@ -94,6 +94,7 @@ func TestCommentUseCase_Create(t *testing.T){
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
 		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
 		assert.Equal(t, c.Content, newComment.Content)
 	})
 
@@ -103,6 +104,7 @@ func TestCommentUseCase_Create(t *testing.T){
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
 		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
 		assert.Equal(t, c.Content, newComment.Content)
 	})
 
@@ -112,6 +114,7 @@ func TestCommentUseCase_Create(t *testing.T){
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
 		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
 		assert.Equal(t, c.Content, newComment.Content)
 	})
 }
@@ -124,16 +127,19 @@ func TestCommentUseCase_List(t *testing.T) {
 	t.Run("My anonymous comment", func(t *testing.T) {
 		c := resultComments[0]
 		assert.Equal(t, c.Kind, "anonymous")
+		assert.Equal(t, "jinsu", c.AuthorUsername)
 		assert.Equal(t, "jinsu", c.Author.Username)
 	})
 	t.Run("My named comment", func(t *testing.T) {
 		c := resultComments[1]
 		assert.Equal(t, "named", c.Kind)
+		assert.Equal(t, "jinsu", c.AuthorUsername)
 		assert.Equal(t, "jinsu", c.Author.Username)
 	})
 	t.Run("Others anonymous comment", func(t *testing.T) {
 		c := resultComments[2]
 		assert.Equal(t, "anonymous", c.Kind)
+		assert.Equal(t, "익명", c.AuthorUsername)
 		assert.Equal(t, "익명", c.Author.Username)
 	})
 }

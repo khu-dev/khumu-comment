@@ -57,6 +57,7 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 
 func (uc *CommentUseCase) hideAuthor(c *model.Comment, requestUsername string) {
 	if c.Kind == "anonymous" && c.AuthorUsername != requestUsername {
+		c.AuthorUsername = "익명"
 		c.Author.Username = "익명"
 	}
 }
