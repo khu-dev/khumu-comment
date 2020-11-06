@@ -19,11 +19,17 @@ func Build() *dig.Container{
 	err = c.Provide(repository.NewCommentRepositoryGorm)
 	if err != nil {log.Panic(err)}
 
+	err = c.Provide(repository.NewLikeCommentRepositoryGorm)
+	if err != nil {log.Panic(err)}
+
 	err = c.Provide(repository.NewUserRepositoryGorm)
 	if err != nil {log.Panic(err)}
 
 	// Provide usecases
 	err = c.Provide(usecase.NewCommentUseCase)
+	if err != nil {log.Panic(err)}
+
+	err = c.Provide(usecase.NewLikeCommentUseCase)
 	if err != nil {log.Panic(err)}
 
 	// Provide Echo and routers

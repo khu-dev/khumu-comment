@@ -6,27 +6,40 @@ import (
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
 	"log"
+	"net/http"
 	"strconv"
 )
 
+type CommentRouter struct {
+	*echo.Group
+	UC usecase.CommentUseCaseInterface
+}
+
+type LikeCommentRouter struct{
+	*echo.Group
+	UC usecase.LikeCommentUseCaseInterface
+}
+
 func NewCommentRouter(root *RootRouter, uc usecase.CommentUseCaseInterface) *CommentRouter {
 	group := root.Group.Group("/comments")
-	commentRouter := &CommentRouter{group, uc}
-	group.POST("", commentRouter.Create)
-	group.GET("", commentRouter.List)
-	group.GET("/:id", commentRouter.Get)
-	return commentRouter
+	router := &CommentRouter{group, uc}
+	group.POST("", router.Create)
+	group.GET("", router.List)
+	group.GET("/:id", router.Get)
+	return router
+}
+
+func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterface) *LikeCommentRouter {
+	group := root.Group.Group("/like-comments")
+	router := &LikeCommentRouter{group, uc}
+	group.POST("", router.Create)
+	return router
 }
 
 type CommentResponse struct {
 	StatusCode int         `json:"statusCode"`
 	Comments   interface{} `json:"comments,omitempty"` //this contains any format of comments
 	Comment interface{} `json:"comment,omitempty"`
-}
-
-type CommentRouter struct {
-	*echo.Group
-	UC usecase.CommentUseCaseInterface
 }
 
 func (r *CommentRouter) Create(c echo.Context) error {
@@ -69,6 +82,19 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	if err != nil {return err}
 
 	comment, err := r.UC.Get(id, &repository.CommentQueryOption{})
-	//return c.JSON(200, model.String(comments[0]))
+	if err != nil {return err}
+
 	return c.JSON(200, comment)
+}
+
+func (r *LikeCommentRouter) Create(c echo.Context) error {
+	log.Println("LikeCommentRouter_Create")
+	var likeComment *model.LikeComment = &model.LikeComment{}
+	err := c.Bind(likeComment)
+	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
+
+	newLike, err := r.UC.Create(likeComment)
+	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
+
+	return c.JSON(200, newLike)
 }

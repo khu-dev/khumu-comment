@@ -1,8 +1,10 @@
+// 아직 뭘 넣어야할지 모르겠다.
 package http
 
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,30 +15,28 @@ var(
 )
 
 func TestNewEcho(t *testing.T) {
-	// userRepository나 commentUC를 사용할 일이 없으므로 nil을 전달해도 된다.
-	e = NewEcho(nil, nil)
-	t.Run("Find /api/comments route handler", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/comments", nil)
+}
+
+func handlerFuncMock(c echo.Context) error{
+	return c.String(200, "found route")
+}
+
+func generatePathExistsTest(t *testing.T, target, method string, body io.Reader) func(t * testing.T){
+	return func(t *testing.T){
+		req := httptest.NewRequest(method, target, body)
 		rec := httptest.NewRecorder()
-		_ = e.NewContext(req, rec)
+		context := e.NewContext(req, rec)
+		_ = handlerFuncMock(context)
 		assert.NotEqual(t, http.StatusNotFound, rec.Code)
+	}
+}
 
-		req = httptest.NewRequest(http.MethodGet, "/api/comments", nil)
-		rec = httptest.NewRecorder()
-		_ = e.NewContext(req, rec)
-		assert.NotEqual(t, http.StatusNotFound, rec.Code)
-
-		req = httptest.NewRequest(http.MethodGet, "/api/comments/1", nil)
-		rec = httptest.NewRecorder()
-		_ = e.NewContext(req, rec)
-		assert.NotEqual(t, http.StatusNotFound, rec.Code)
-	})
-
-	t.Run("Health check for /healthz", func(t *testing.T){
-		req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+func generatePathNotExistsTest(t *testing.T, target, method string, body io.Reader) func(t * testing.T){
+	return func(t *testing.T){
+		req := httptest.NewRequest(method, target, body)
 		rec := httptest.NewRecorder()
-		_ = e.NewContext(req, rec)
-
-		assert.Equal(t, http.StatusOK, rec.Code)
-	})
+		context := e.NewContext(req, rec)
+		_ = handlerFuncMock(context)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	}
 }

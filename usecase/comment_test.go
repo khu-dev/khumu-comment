@@ -36,6 +36,7 @@ type CommentRepositoryMock struct{}
 
 var (
 	commentUseCase CommentUseCaseInterface
+	likeCommentUseCase LikeCommentUseCaseInterface
 )
 
 func TestInit(t *testing.T) {
@@ -47,36 +48,37 @@ func TestInit(t *testing.T) {
 	err = cont.Provide(repository.NewCommentRepositoryGorm)
 	assert.Nil(t, err)
 
+	err = cont.Provide(repository.NewLikeCommentRepositoryGorm)
+	assert.Nil(t, err)
+
 	err = cont.Provide(repository.NewUserRepositoryGorm)
 	assert.Nil(t, err)
 
 	err = cont.Provide(NewCommentUseCase)
 	assert.Nil(t, err)
-
 	err = cont.Invoke(func(uc CommentUseCaseInterface) {
 		commentUseCase = uc
 	})
-
 	assert.Nil(t, err)
 
-	t.Run("Create a user jinsu to preload in list comment", func(t *testing.T) {
-		user := &model.KhumuUserSimple{Username: "jinsu", Type: "active"}
-		err = cont.Invoke(func(db *gorm.DB){
-			dbErr := db.Create(&user).Error
-			assert.Nil(t, dbErr)
-			assert.Equal(t, "jinsu", user.Username)
-		})
-		assert.Nil(t, err)
+	err = cont.Provide(NewLikeCommentUseCase)
+	assert.Nil(t, err)
+	err = cont.Invoke(func(uc LikeCommentUseCaseInterface) {
+		likeCommentUseCase = uc
 	})
+	assert.Nil(t, err)
 
-	t.Run("Create a user somebody who is not me to preload in list comment", func(t *testing.T) {
-		user := &model.KhumuUserSimple{Username: "somebody", Type: "active"}
-		err = cont.Invoke(func(db *gorm.DB){
-			dbErr := db.Create(&user).Error
-			assert.Nil(t, dbErr)
-			assert.Equal(t, "somebody", user.Username)
-		})
-		assert.Nil(t, err)
+	t.Run("Create sample users to preload in list comment", func(t *testing.T) {
+		for _, user := range test.UsersData{
+			username := user.Username
+			t.Log("Create a user named ", username)
+			err = cont.Invoke(func(db *gorm.DB){
+				dbErr := db.Create(&user).Error
+				assert.Nil(t, dbErr)
+				assert.Equal(t, username, user.Username)
+			})
+			assert.Nil(t, err)
+		}
 	})
 
 	// 내가 사용할 원본 데이터가 잘 만들어져있는가
@@ -89,7 +91,7 @@ func createCommentData(t *testing.T){
 
 func TestCommentUseCase_Create(t *testing.T){
 	t.Run("My anonymous comment", func(t *testing.T){
-		c := test.CommentsData[0] // 0 번 인덱스는 익명 댓글
+		c := test.CommentsData["AnonymousJinsuComment"] // 0 번 인덱스는 익명 댓글
 		newComment, err := commentUseCase.Create(c)
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
@@ -99,7 +101,7 @@ func TestCommentUseCase_Create(t *testing.T){
 	})
 
 	t.Run("My named comment", func(t *testing.T){
-		c := test.CommentsData[1] // 1번 인덱스는 기명 댓글
+		c := test.CommentsData["NamedJinsuComment"] // 1번 인덱스는 기명 댓글
 		newComment, err := commentUseCase.Create(c)
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
@@ -109,7 +111,7 @@ func TestCommentUseCase_Create(t *testing.T){
 	})
 
 	t.Run("Others anonymous comment", func(t *testing.T){
-		c := test.CommentsData[2] // 1번 인덱스는 기명 댓글
+		c := test.CommentsData["AnonymousSomebodyComment"] // 1번 인덱스는 기명 댓글
 		newComment, err := commentUseCase.Create(c)
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
@@ -144,4 +146,26 @@ func TestCommentUseCase_List(t *testing.T) {
 	})
 }
 
+func TestLikeCommentUseCase_Create(t *testing.T) {
+	t.Run("Somebody likes jinsu's comment", func(t *testing.T) {
+		newLike, err := likeCommentUseCase.Create(
+		&model.LikeComment{
+			CommentID: 1,
+			Username: test.UsersData["somebody"].Username,
+		})
+		assert.Nil(t, err)
+		assert.NotNil(t, newLike)
+	})
 
+	t.Run("jinsu likes jinsu's comment", func(t *testing.T){
+		newLike, err := likeCommentUseCase.Create(
+		&model.LikeComment{
+			CommentID: 1,
+			Username: test.UsersData["jinsu"].Username,
+		})
+		assert.NotNil(t, err)
+		assert.Nil(t, newLike)
+	})
+
+	t.Run("Bad request to create a like comment", func(t *testing.T){})
+}

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/khu-dev/khumu-comment/model"
+	"github.com/khu-dev/khumu-comment/test"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
@@ -40,18 +41,17 @@ func TestInit(t *testing.T) {
 		likeCommentRepository = lcr
 	})
 
-	t.Run("Create a user jinsu to preload in list comment", func(t *testing.T) {
-		user := &model.KhumuUserSimple{Username: "jinsu", Type: "active"}
-		err = cont.Invoke(func(db *gorm.DB){
-			dbErr := db.Create(&user).Error
-			assert.Nil(t, dbErr)
-			assert.Equal(t, "jinsu", user.Username)
-		})
-		assert.Nil(t, err)
-	})
-
-	t.Run("Create a user somebody who is not me to preload in list comment", func(t *testing.T) {
-
+	t.Run("Create sample users to preload in list comment", func(t *testing.T) {
+		for _, user := range test.UsersData{
+			username := user.Username
+			t.Log("Create a user named ", username)
+			err = cont.Invoke(func(db *gorm.DB){
+				dbErr := db.Create(&user).Error
+				assert.Nil(t, dbErr)
+				assert.Equal(t, username, user.Username)
+			})
+			assert.Nil(t, err)
+		}
 	})
 
 	assert.Nil(t, err)

@@ -12,9 +12,20 @@ type CommentUseCaseInterface interface {
 	Get(id int, opt *repository.CommentQueryOption) (*model.Comment, error)
 }
 
+type LikeCommentUseCaseInterface interface{
+	Create(like *model.LikeComment) (*model.LikeComment, error)
+}
+
 type CommentUseCase struct {
 	Repository repository.CommentRepositoryInterface
 }
+
+type LikeCommentUseCase struct{
+	Repository repository.LikeCommentRepositoryInterface
+	CommentRepository repository.CommentRepositoryInterface
+}
+
+type SomeoneLikesHisCommentError string
 
 func NewCommentUseCase(r repository.CommentRepositoryInterface) CommentUseCaseInterface {
 	return &CommentUseCase{Repository: r}
@@ -43,6 +54,12 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 	return parents, nil
 }
 
+func (uc *CommentUseCase) Get(id int, opt *repository.CommentQueryOption) (*model.Comment, error) {
+	log.Println("CommentUseCase_Get")
+	comment := uc.Repository.Get(id)
+	return comment, nil
+}
+
 func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) []*model.Comment {
 	var parents []*model.Comment
 
@@ -62,8 +79,24 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, requestUsername string) {
 	}
 }
 
-func (uc *CommentUseCase) Get(id int, opt *repository.CommentQueryOption) (*model.Comment, error) {
-	log.Println("CommentUseCase_Get")
-	comment := uc.Repository.Get(id)
-	return comment, nil
+
+
+func (uc *LikeCommentUseCase) Create(like *model.LikeComment) (*model.LikeComment, error){
+	comment := uc.CommentRepository.Get(like.CommentID)
+	if comment.AuthorUsername == like.Username{
+		return nil, SomeoneLikesHisCommentError(like.Username)
+	}
+	newLike, err := uc.Repository.Create(like)
+	if err != nil{return nil, err}
+	return newLike, err
+}
+
+func NewLikeCommentUseCase(
+	likeRepo repository.LikeCommentRepositoryInterface,
+	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface{
+	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
+}
+
+func (e SomeoneLikesHisCommentError) Error() string{
+	return "Error: " + string(e) + " requested to like his comment."
 }

@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	"github.com/khu-dev/khumu-comment/usecase"
@@ -20,8 +19,11 @@ import (
 
 var (
 	commentEcho              *echo.Echo
+	likeCommentEcho *echo.Echo
 	commentRouter  *CommentRouter
+	likeCommentRouter *LikeCommentRouter
 	commentUseCase usecase.CommentUseCaseInterface
+	likeCommentUseCase usecase.LikeCommentUseCaseInterface
 )
 
 // 후에 mocking을 사용하게 된다면 이 타입을 이용
@@ -42,31 +44,38 @@ func TestInit(t *testing.T) {
 	err = cont.Provide(repository.NewCommentRepositoryGorm)
 	assert.Nil(t, err)
 
+	err = cont.Provide(repository.NewLikeCommentRepositoryGorm)
+	assert.Nil(t, err)
+
 	err = cont.Provide(repository.NewUserRepositoryGorm)
 	assert.Nil(t, err)
 
 	err = cont.Provide(usecase.NewCommentUseCase)
 	assert.Nil(t, err)
 
-	err = cont.Invoke(func(uc usecase.CommentUseCaseInterface) {
+	err = cont.Provide(usecase.NewLikeCommentUseCase)
+	assert.Nil(t, err)
+
+	err = cont.Invoke(func(commentUC usecase.CommentUseCaseInterface, likeCommentUC usecase.LikeCommentUseCaseInterface) {
 		commentEcho = echo.New()
-		mockRoot := RootRouter{commentEcho.Group("/")}
-		commentRouter = NewCommentRouter(&mockRoot, uc)
-		commentUseCase = uc
+		mockRoot := RootRouter{commentEcho.Group("/comments")}
+		commentRouter = NewCommentRouter(&mockRoot, commentUC)
+		likeCommentRouter = NewLikeCommentRouter(&mockRoot, likeCommentUC)
+		commentUseCase = commentUC
+		likeCommentUseCase = likeCommentUC
 	})
 
-	t.Run("Create a user jinsu to preload in list comment", func(t *testing.T) {
-		user := &model.KhumuUserSimple{Username: "jinsu", Type: "active"}
-		err = cont.Invoke(func(db *gorm.DB){
-			dbErr := db.Create(&user).Error
-			assert.Nil(t, dbErr)
-			assert.Equal(t, "jinsu", user.Username)
-		})
-		assert.Nil(t, err)
-	})
-
-	t.Run("Create a user somebody who is not me to preload in list comment", func(t *testing.T) {
-
+	t.Run("Create sample users to preload in list comment", func(t *testing.T) {
+		for _, user := range test.UsersData{
+			username := user.Username
+			t.Log("Create a user named ", username)
+			err = cont.Invoke(func(db *gorm.DB){
+				dbErr := db.Create(&user).Error
+				assert.Nil(t, dbErr)
+				assert.Equal(t, username, user.Username)
+			})
+			assert.Nil(t, err)
+		}
 	})
 
 	assert.Nil(t, err)
@@ -88,11 +97,12 @@ func TestCommentRouter_Create(t *testing.T){
 		data, err := json.Marshal(defaultComment)
 		assert.Nil(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "/", bytes.NewReader(data))
+		req := httptest.NewRequest(http.MethodGet, "/comments", bytes.NewReader(data))
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		context := commentEcho.NewContext(req, rec)
 		context.Set("user_id", "jinsu")
+		assert.NotNil(t, commentRouter.UC)
 		err = commentRouter.Create(context)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -102,12 +112,40 @@ func TestCommentRouter_Create(t *testing.T){
 }
 
 func TestCommentRouter_List(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/comments", nil)
 	rec := httptest.NewRecorder()
 
 	context := commentEcho.NewContext(req, rec)
 	context.Set("user_id", "admin")
 	err := commentRouter.List(context)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	body, _ := ioutil.ReadAll(rec.Body)
+	log.Println("BODY", string(body))
+}
+
+//func TestLikeCommentRouter_Get(t *testing.T) {
+//	req := httptest.NewRequest(http.MethodGet, "/", nil)
+//	rec := httptest.NewRecorder()
+//
+//	context := commentEcho.NewContext(req, rec)
+//	context.Set("user_id", "admin")
+//	err := commentRouter.List(context)
+//	assert.Nil(t, err)
+//	assert.Equal(t, http.StatusOK, rec.Code)
+//	body, _ := ioutil.ReadAll(rec.Body)
+//	log.Println("BODY", string(body))
+//}
+
+func TestLikeCommentRouter_Create(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/like-comments", nil)
+	rec := httptest.NewRecorder()
+
+	context := commentEcho.NewContext(req, rec)
+	context.Set("user_id", "jinsu")
+	assert.NotNil(t, likeCommentRouter.UC)
+
+	err := likeCommentRouter.Create(context)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := ioutil.ReadAll(rec.Body)

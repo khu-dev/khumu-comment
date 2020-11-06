@@ -10,13 +10,16 @@ import (
 // 의존성 주입시에 root router를 판별하기 위해 임베딩
 type RootRouter struct{*echo.Group}
 
-func NewEcho(userRepository repository.UserRepositoryInterface, commentUC usecase.CommentUseCaseInterface) *echo.Echo {
+func NewEcho(userRepository repository.UserRepositoryInterface,
+	commentUC usecase.CommentUseCaseInterface,
+	likeUC usecase.LikeCommentUseCaseInterface) *echo.Echo {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
 	root := NewRootRouter(e, userRepository)
 	_ = NewCommentRouter(root, commentUC)
+	_ = NewLikeCommentRouter(root, likeUC)
 	return e
 }
 
