@@ -1,11 +1,11 @@
-name: Build
+name: Automated CI
 on:
   push:
     branches: ["*"]
   workflow_dispatch:
 
 jobs:
-  cicd:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: 🛎️ Checkout
@@ -13,17 +13,23 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: true
+
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.14' # The Go version to download (if necessary) and use.
+          go-version: '1.15.3' # The Go version to download (if necessary) and use.
 
-      - name: Unit test
-        run: KHUMU_HOME=$(pwd) go test ./... -v
+      - name: Cache Go dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: go-build-cache-${{ hashFiles('go.sum') }}
 
-      - name: Build Go
+      - name: Test and Build a binary
         run: |
-          go mod download
+          KHUMU_HOME=$(pwd) go test ./... -v
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o khumu-comment main.go
 
       - name: 🍦 Login to DockerHub

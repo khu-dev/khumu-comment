@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/container"
 	"github.com/labstack/echo/v4"
@@ -8,6 +9,10 @@ import (
 )
 
 func main() {
+	for i:=0; i<1000; i++{
+		fmt.Println("kkkk")
+	}
+
 	Run()
 }
 
