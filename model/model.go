@@ -27,7 +27,7 @@ type KhumuUser struct {
 	Username      string `gorm:"primaryKey"`
 	Email         string
 	IsActive      bool
-	Type          string
+	Kind          string
 	Nickanme      string
 	StudentNumber string
 	Memo          string
@@ -54,7 +54,7 @@ func (*KhumuUserAuth) TableName() string {
 
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
-	Type     string `gorm:"-" json:"type"`
+	Kind     string `gorm:"-" json:"type"`
 }
 
 func (*KhumuUserSimple) TableName() string {
@@ -62,8 +62,8 @@ func (*KhumuUserSimple) TableName() string {
 }
 
 type Article struct {
-	ArticleID      uint `gorm:"column:id"`
-	BoardID        uint
+	ArticleID      int `gorm:"column:id"`
+	BoardID        int
 	Board          Board `gorm:"foreignKey:BoardID"`
 	Title          string
 	AuthorUsername string    `gorm:"column:author_id"`
@@ -77,7 +77,7 @@ func (*Article) TableName() string {
 }
 
 type Board struct {
-	BoardID       uint `gorm:"column:id"`
+	BoardID       int `gorm:"column:id"`
 	ShortName     string
 	LongName      string
 	Name          string
@@ -91,15 +91,16 @@ func (*Board) TableName() string {
 }
 
 type Comment struct {
-	ID             uint             `gorm:"column:id" json:"id"`
+	ID             int             `gorm:"column:id" json:"id"`
 	Kind           string           `gorm:"column:kind" json:"kind"`
 	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
-	ArticleID      uint             `gorm:"column:article_id" json:"article"`
+	ArticleID      int             `gorm:"column:article_id" json:"article"`
 	//Article Article `gorm:"foreignKey:ArticleID"`
 	Content   string     `json:"content"`
-	ParentID  *uint      `gorm:"column:parent_id;default:null" json:"parent"`
+	ParentID  *int      `gorm:"column:parent_id;default:null" json:"parent"`
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
+	LikeCommentCount int `gorm:"-" json:"like_comment_count"`
 	CreatedAt time.Time  `json:"created_at"`
 }
 

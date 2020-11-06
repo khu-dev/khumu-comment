@@ -121,36 +121,17 @@ func TestCommentUseCase_Create(t *testing.T){
 	})
 }
 
-func TestCommentUseCase_List(t *testing.T) {
 
-	resultComments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{})
-	assert.Nil(t, err)
-
-	t.Run("My anonymous comment", func(t *testing.T) {
-		c := resultComments[0]
-		assert.Equal(t, c.Kind, "anonymous")
-		assert.Equal(t, "jinsu", c.AuthorUsername)
-		assert.Equal(t, "jinsu", c.Author.Username)
-	})
-	t.Run("My named comment", func(t *testing.T) {
-		c := resultComments[1]
-		assert.Equal(t, "named", c.Kind)
-		assert.Equal(t, "jinsu", c.AuthorUsername)
-		assert.Equal(t, "jinsu", c.Author.Username)
-	})
-	t.Run("Others anonymous comment", func(t *testing.T) {
-		c := resultComments[2]
-		assert.Equal(t, "anonymous", c.Kind)
-		assert.Equal(t, "익명", c.AuthorUsername)
-		assert.Equal(t, "익명", c.Author.Username)
-	})
+func TestLikeCommentUseCase_List(t *testing.T) {
+	// Nothing.
 }
 
 func TestLikeCommentUseCase_Create(t *testing.T) {
 	t.Run("Somebody likes jinsu's comment", func(t *testing.T) {
+		commentID := 1
 		newLike, err := likeCommentUseCase.Create(
 		&model.LikeComment{
-			CommentID: 1,
+			CommentID: commentID,
 			Username: test.UsersData["somebody"].Username,
 		})
 		assert.Nil(t, err)
@@ -168,4 +149,32 @@ func TestLikeCommentUseCase_Create(t *testing.T) {
 	})
 
 	t.Run("Bad request to create a like comment", func(t *testing.T){})
+}
+
+func TestCommentUseCase_List(t *testing.T) {
+
+	resultComments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{})
+	assert.Nil(t, err)
+
+	t.Run("Jinsu's anonymous comment", func(t *testing.T) {
+		c := resultComments[0]
+		assert.Equal(t, c.Kind, "anonymous")
+		assert.Equal(t, "jinsu", c.AuthorUsername)
+		assert.Equal(t, "jinsu", c.Author.Username)
+		assert.Equal(t, 1, c.LikeCommentCount)
+	})
+	t.Run("Jinsu's named comment", func(t *testing.T) {
+		c := resultComments[1]
+		assert.Equal(t, "named", c.Kind)
+		assert.Equal(t, "jinsu", c.AuthorUsername)
+		assert.Equal(t, "jinsu", c.Author.Username)
+		assert.Equal(t, 0, c.LikeCommentCount)
+	})
+	t.Run("Somebody's anonymous comment", func(t *testing.T) {
+		c := resultComments[2]
+		assert.Equal(t, "anonymous", c.Kind)
+		assert.Equal(t, "익명", c.AuthorUsername)
+		assert.Equal(t, "익명", c.Author.Username)
+		assert.Equal(t, 0, c.LikeCommentCount)
+	})
 }

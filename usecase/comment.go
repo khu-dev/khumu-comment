@@ -18,6 +18,7 @@ type LikeCommentUseCaseInterface interface{
 
 type CommentUseCase struct {
 	Repository repository.CommentRepositoryInterface
+	LikeCommentRepository repository.LikeCommentRepositoryInterface
 }
 
 type LikeCommentUseCase struct{
@@ -27,8 +28,8 @@ type LikeCommentUseCase struct{
 
 type SomeoneLikesHisCommentError string
 
-func NewCommentUseCase(r repository.CommentRepositoryInterface) CommentUseCaseInterface {
-	return &CommentUseCase{Repository: r}
+func NewCommentUseCase(repository repository.CommentRepositoryInterface, likeRepository repository.LikeCommentRepositoryInterface) CommentUseCaseInterface {
+	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository}
 }
 
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
@@ -47,8 +48,14 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 	for _, p := range parents {
 		for _, c := range p.Children {
 			uc.hideAuthor(c, username)
+			likeCount, err := uc.getLikeCommentCount(c.ID)
+			if err != nil{return nil, err}
+			c.LikeCommentCount = likeCount
 		}
 		uc.hideAuthor(p, username)
+		likeCount, err := uc.getLikeCommentCount(p.ID)
+		if err != nil{return nil, err}
+		p.LikeCommentCount = likeCount
 	}
 
 	return parents, nil
@@ -79,7 +86,17 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, requestUsername string) {
 	}
 }
 
+func (uc *CommentUseCase) getLikeCommentCount(commentID int) (int, error){
+	likes, err := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: commentID})
+	if err != nil{return 0, err}
+	return len(likes), nil
+}
 
+func NewLikeCommentUseCase(
+	likeRepo repository.LikeCommentRepositoryInterface,
+	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface{
+	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
+}
 
 func (uc *LikeCommentUseCase) Create(like *model.LikeComment) (*model.LikeComment, error){
 	comment := uc.CommentRepository.Get(like.CommentID)
@@ -89,12 +106,6 @@ func (uc *LikeCommentUseCase) Create(like *model.LikeComment) (*model.LikeCommen
 	newLike, err := uc.Repository.Create(like)
 	if err != nil{return nil, err}
 	return newLike, err
-}
-
-func NewLikeCommentUseCase(
-	likeRepo repository.LikeCommentRepositoryInterface,
-	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface{
-	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
 }
 
 func (e SomeoneLikesHisCommentError) Error() string{

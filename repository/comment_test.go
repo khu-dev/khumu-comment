@@ -59,7 +59,7 @@ func TestInit(t *testing.T) {
 
 func TestCommentRepositoryGorm_Create(t *testing.T) {
 	t.Run("Anonymous comment", func(t *testing.T){
-		parentID := uint(1)
+		parentID := int(1)
 		comment := &model.Comment{
 			Kind:           "anonymous",
 			Author: &model.KhumuUserSimple{Username: "jinsu"},
@@ -74,7 +74,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		assert.Equal(t, "테스트로 작성한 익명 코멘트입니다.", created.Content)
 	})
 	t.Run("Named comment", func(t *testing.T){
-		parentID := uint(1)
+		parentID := int(1)
 		comment := &model.Comment{
 			Kind:           "named",
 			Author: &model.KhumuUserSimple{Username: "jinsu"},
@@ -91,6 +91,22 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 	})
 }
 
+func TestLikeCommentRepositoryGorm_Create(t *testing.T) {
+	likeBefore := &model.LikeComment{CommentID: 1, Username: "jinsu"}
+	likeAfter, err := likeCommentRepository.Create(likeBefore)
+	assert.Nil(t, err)
+	assert.NotNil(t, likeAfter)
+	assert.Equal(t, likeBefore.CommentID, likeAfter.CommentID)
+	assert.Equal(t, likeBefore.Username, likeAfter.Username)
+}
+
+func TestLikeCommentRepositoryGorm_List(t *testing.T) {
+	// 위의 테스트에서 1번 코멘트에 대한 like comment를 생성했음.
+	likes, err := likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 1})
+	assert.Nil(t, err)
+	assert.GreaterOrEqual(t, len(likes), 1)
+}
+
 func TestCommentRepositoryGorm_Get(t *testing.T) {
 	comment := commentRepository.Get(commentID)
 	assert.NotNil(t, comment)
@@ -104,13 +120,4 @@ func TestCommentRepositoryGorm_List(t *testing.T) {
 	commentID = int(comments[0].ID)
 	comments = commentRepository.List(&CommentQueryOption{AuthorID: authorIDForList})
 	assert.Len(t, comments, 0)
-}
-
-func TestLikeCommentRepositoryGorm_Create(t *testing.T) {
-	likeBefore := &model.LikeComment{CommentID: 1, Username: "jinsu"}
-	likeAfter, err := likeCommentRepository.Create(likeBefore)
-	assert.Nil(t, err)
-	assert.NotNil(t, likeAfter)
-	assert.Equal(t, likeBefore.CommentID, likeAfter.CommentID)
-	assert.Equal(t, likeBefore.Username, likeAfter.Username)
 }

@@ -13,7 +13,7 @@ type CommentRepositoryInterface interface {
 
 type LikeCommentRepositoryInterface interface{
 	Create(like *model.LikeComment) (*model.LikeComment, error)
-	//List(opt *LikeCommentQueryOption) []*model.LikeComment
+	List(opt *LikeCommentQueryOption) ([]*model.LikeComment, error)
 }
 
 type CommentRepositoryGorm struct {
@@ -28,7 +28,7 @@ type CommentQueryOption struct {
 type LikeCommentRepositoryGorm struct{
 	DB *gorm.DB
 }
-type LikeCommentQueryOption struct{}
+type LikeCommentQueryOption struct{CommentID int}
 
 func NewCommentRepositoryGorm(db *gorm.DB) CommentRepositoryInterface{
 	return &CommentRepositoryGorm{DB: db}
@@ -85,4 +85,10 @@ func (r *CommentRepositoryGorm) Get(id int) *model.Comment {
 func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.LikeComment, error) {
 	err := r.DB.Save(like).Error
 	return like, err
+}
+
+func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) ([]*model.LikeComment, error) {
+	var likes []*model.LikeComment
+	err := r.DB.Find(&likes, "comment_id", opt.CommentID).Error
+	return likes, err
 }

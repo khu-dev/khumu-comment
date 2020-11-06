@@ -19,7 +19,7 @@ _author 쪽은 아직 미정_
       "kind": "anonymous",
       "author": {
          "username": "jinsu",
-         "type": ""
+         "kind": "active"
       },
       "article": 1,
       "content": "Lorem Ipsum passages, and ",
@@ -30,11 +30,11 @@ _author 쪽은 아직 미정_
           "kind": "named",
           "author": {
             "username": "jinsu",
-            "type": ""
+            "kind": "active"
           },
           "article": 1,
           "content": "more recently with desktop ",
-          "parent": null,
+          "parent": 1,
           "children": [],
           "created_at": "2020-11-01T14:10:40.016958Z"
         }
