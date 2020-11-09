@@ -36,7 +36,7 @@ type CommentUseCaseMock struct{}
 //	return commentsMock[0]
 //}
 
-func TestInit(t *testing.T) {
+func TestSetUp(t *testing.T) {
 	cont := dig.New()
 	err := cont.Provide(repository.NewTestGorm)
 	assert.Nil(t, err)
@@ -137,15 +137,15 @@ func TestCommentRouter_List(t *testing.T) {
 //	log.Println("BODY", string(body))
 //}
 
-func TestLikeCommentRouter_Create(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/like-comments", nil)
+func TestLikeCommentRouter_Toggle(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPut, "/like-comments", nil)
 	rec := httptest.NewRecorder()
 
 	context := commentEcho.NewContext(req, rec)
 	context.Set("user_id", "jinsu")
 	assert.NotNil(t, likeCommentRouter.UC)
 
-	err := likeCommentRouter.Create(context)
+	err := likeCommentRouter.Toggle(context)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := ioutil.ReadAll(rec.Body)

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/khu-dev/khumu-comment/model"
 	"gorm.io/gorm"
 )
@@ -14,6 +15,7 @@ type CommentRepositoryInterface interface {
 type LikeCommentRepositoryInterface interface{
 	Create(like *model.LikeComment) (*model.LikeComment, error)
 	List(opt *LikeCommentQueryOption) ([]*model.LikeComment, error)
+	Delete(id int) error
 }
 
 type CommentRepositoryGorm struct {
@@ -22,13 +24,16 @@ type CommentRepositoryGorm struct {
 
 type CommentQueryOption struct {
 	ArticleID uint
-	AuthorID  string
+	AuthorUsername  string
 }
 
 type LikeCommentRepositoryGorm struct{
 	DB *gorm.DB
 }
-type LikeCommentQueryOption struct{CommentID int}
+type LikeCommentQueryOption struct{
+	CommentID int
+	Username string
+}
 
 func NewCommentRepositoryGorm(db *gorm.DB) CommentRepositoryInterface{
 	return &CommentRepositoryGorm{DB: db}
@@ -61,8 +66,8 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 	if opt.ArticleID != 0 {
 		conditions["article_id"] = opt.ArticleID
 	}
-	if opt.AuthorID != "" {
-		conditions["author_id"] = opt.AuthorID
+	if opt.AuthorUsername != "" {
+		conditions["author_id"] = opt.AuthorUsername
 	}
 	var comments []*model.Comment
 	preloaded := r.DB.Preload("Author").
@@ -71,6 +76,7 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 	if len(conditions) == 0 {
 		preloaded.Find(&comments)
 	} else {
+		fmt.Println(conditions)
 		preloaded.Find(&comments, conditions)
 	}
 	return comments
@@ -88,7 +94,27 @@ func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.Like
 }
 
 func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) ([]*model.LikeComment, error) {
+	var conditions map[string]interface{} = map[string]interface{}{}
 	var likes []*model.LikeComment
-	err := r.DB.Find(&likes, "comment_id", opt.CommentID).Error
-	return likes, err
+	if opt.CommentID != 0{
+		conditions["comment_id"] = opt.CommentID
+	}
+	if opt.Username != ""{
+		conditions["user_id"] = opt.Username
+	}
+
+	var queryError error
+	if len(conditions) == 0{
+		queryError = r.DB.Find(&likes).Error
+	} else{
+		queryError = r.DB.Find(&likes, conditions).Error
+	}
+
+	return likes, queryError
+}
+
+
+func (r *LikeCommentRepositoryGorm) Delete(id int) error {
+	err := r.DB.Delete(&model.LikeComment{}, id).Error
+	return err
 }

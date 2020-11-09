@@ -90,8 +90,8 @@ $ go test ./... -v
 
 ```bash
 # 개발 중인 파일이 속한 패키지의 경로에 대해 실행하고자하는 함수명을 전달한다.
-# 이때 TestInit에서 Initialize 관련한 내용도 테스트하도록 설계했기때문에 TestInit도 같이 전달한다.
-$ go test ./repository/ -run TestInit TestLikeCommentRepositoryGorm_Create -v
+# 이때 TestSetUp에서 Initialize 관련한 내용도 테스트하도록 설계했기때문에 TestSetUp도 같이 전달한다.
+$ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 ```
 
 

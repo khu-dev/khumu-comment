@@ -32,7 +32,7 @@ func NewCommentRouter(root *RootRouter, uc usecase.CommentUseCaseInterface) *Com
 func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterface) *LikeCommentRouter {
 	group := root.Group.Group("/like-comments")
 	router := &LikeCommentRouter{group, uc}
-	group.POST("", router.Create)
+	group.PUT("", router.Toggle)
 	return router
 }
 
@@ -87,13 +87,14 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	return c.JSON(200, comment)
 }
 
-func (r *LikeCommentRouter) Create(c echo.Context) error {
-	log.Println("LikeCommentRouter_Create")
+
+func (r *LikeCommentRouter) Toggle(c echo.Context) error {
+	log.Println("LikeCommentRouter_Toggle")
 	var likeComment *model.LikeComment = &model.LikeComment{}
 	err := c.Bind(likeComment)
 	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
 
-	newLike, err := r.UC.Create(likeComment)
+	newLike, err := r.UC.Toggle(likeComment)
 	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
 
 	return c.JSON(200, newLike)

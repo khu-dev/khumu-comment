@@ -9,21 +9,19 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"strconv"
+	"time"
 )
 
 func NewGorm() *gorm.DB{
 	var db *gorm.DB
+	var connectionError error
 	if config.Config.DB.Kind == "sqlite3"{
 		log.Println("Connecting DB to " + config.Config.DB.SQLite3.FilePath)
-		conn, err := gorm.Open(sqlite.Open(config.Config.DB.SQLite3.FilePath), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		db = conn
+		db, connectionError = gorm.Open(sqlite.Open(config.Config.DB.SQLite3.FilePath), &gorm.Config{})
 	} else if config.Config.DB.Kind == "mysql"{
 		dest := config.Config.DB.MySQL.Host + strconv.Itoa(config.Config.DB.MySQL.Port)
 		log.Println("Connecting DB to " + dest)
-		conn, err := gorm.Open(mysql.Open(fmt.Sprintf(
+		db, connectionError = gorm.Open(mysql.Open(fmt.Sprintf(
 			"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true",
 			config.Config.DB.MySQL.User,
 			config.Config.DB.MySQL.Password,
@@ -31,12 +29,15 @@ func NewGorm() *gorm.DB{
 			config.Config.DB.MySQL.Port,
 			config.Config.DB.MySQL.DatabaseName,
 		)), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		db = conn
 	}
-	return db
+	if connectionError != nil {
+		log.Print("Failed to connect database. Retry after 3 seconds")
+		time.Sleep(time.Duration(3000) * time.Millisecond)
+		return NewGorm()
+	}else{
+		return db
+	}
+
 }
 
 func NewTestGorm() *gorm.DB{

@@ -13,7 +13,8 @@ type CommentUseCaseInterface interface {
 }
 
 type LikeCommentUseCaseInterface interface{
-	Create(like *model.LikeComment) (*model.LikeComment, error)
+	// return value 중 bool이 true면 생성, false면 삭제
+	Toggle(like *model.LikeComment) (bool, error)
 }
 
 type CommentUseCase struct {
@@ -98,14 +99,32 @@ func NewLikeCommentUseCase(
 	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
 }
 
-func (uc *LikeCommentUseCase) Create(like *model.LikeComment) (*model.LikeComment, error){
-	comment := uc.CommentRepository.Get(like.CommentID)
-	if comment.AuthorUsername == like.Username{
-		return nil, SomeoneLikesHisCommentError(like.Username)
+func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
+	likes, err := uc.Repository.List(&repository.LikeCommentQueryOption{CommentID: like.CommentID, Username: like.Username})
+	if err != nil{
+		log.Panic(false, err)
 	}
-	newLike, err := uc.Repository.Create(like)
-	if err != nil{return nil, err}
-	return newLike, err
+	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
+	// 1보다 큰 경우는 비정상적으로 여러개 존재할 때
+	if len(likes) >= 1 {
+		for _, like := range likes {
+			err = uc.Repository.Delete(like.ID)
+			if err != nil {
+				log.Panic(false, err)
+			}
+		}
+		return false, err
+	}else{
+		// 생성
+		comment := uc.CommentRepository.Get(like.CommentID)
+		if comment.AuthorUsername == like.Username{
+			return false, SomeoneLikesHisCommentError(like.Username)
+		}
+		_, err := uc.Repository.Create(like)
+		if err != nil{return false, err}
+
+		return true, err
+	}
 }
 
 func (e SomeoneLikesHisCommentError) Error() string{
