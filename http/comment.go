@@ -38,8 +38,7 @@ func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterfa
 
 type CommentResponse struct {
 	StatusCode int         `json:"statusCode"`
-	Comments   interface{} `json:"comments,omitempty"` //this contains any format of comments
-	Comment interface{} `json:"comment,omitempty"`
+	Data   interface{} `json:"data,omitempty"` //this contains any format of comments
 }
 
 func (r *CommentRouter) Create(c echo.Context) error {
@@ -63,7 +62,7 @@ func (r *CommentRouter) Create(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(200, CommentResponse{200, nil,comment})
+	return c.JSON(200, CommentResponse{200, comment})
 }
 
 func (r *CommentRouter) List(c echo.Context) error {
@@ -73,7 +72,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 	comments, err := r.UC.List(username, &repository.CommentQueryOption{})
 	if err != nil {return err}
 
-	return c.JSON(200, CommentResponse{200, comments, nil})
+	return c.JSON(200, CommentResponse{200, comments})
 }
 
 func (r *CommentRouter) Get(c echo.Context) error {
