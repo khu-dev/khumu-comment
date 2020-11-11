@@ -54,7 +54,7 @@ func (*KhumuUserAuth) TableName() string {
 
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
-	Kind     string `gorm:"-" json:"type"`
+	Kind     string `gorm:"column:kind" json:"kind"`
 }
 
 func (*KhumuUserSimple) TableName() string {

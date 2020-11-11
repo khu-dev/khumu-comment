@@ -65,6 +65,7 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 func (uc *CommentUseCase) Get(id int, opt *repository.CommentQueryOption) (*model.Comment, error) {
 	log.Println("CommentUseCase_Get")
 	comment := uc.Repository.Get(id)
+	uc.hideAuthor(comment, "") // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
 	return comment, nil
 }
 

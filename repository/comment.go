@@ -84,7 +84,7 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 
 func (r *CommentRepositoryGorm) Get(id int) *model.Comment {
 	var tmp *model.Comment = &model.Comment{}
-	r.DB.First(tmp)
+	r.DB.Preload("Author").First(tmp)
 	return tmp
 }
 
