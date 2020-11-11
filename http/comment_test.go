@@ -112,16 +112,42 @@ func TestCommentRouter_Create(t *testing.T){
 }
 
 func TestCommentRouter_List(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/comments", nil)
-	rec := httptest.NewRecorder()
+	t.Run("Admin user", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
+		rec := httptest.NewRecorder()
+		context := commentEcho.NewContext(req, rec)
+		context.Set("user_id", "admin")
+		err := commentRouter.List(context)
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		body, _ := ioutil.ReadAll(rec.Body)
+		log.Println("BODY", string(body))
+	})
 
-	context := commentEcho.NewContext(req, rec)
-	context.Set("user_id", "admin")
-	err := commentRouter.List(context)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-	body, _ := ioutil.ReadAll(rec.Body)
-	log.Println("BODY", string(body))
+	t.Run("Jinsu user with required arguments", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/comments?article=1", nil)
+		rec := httptest.NewRecorder()
+		context := commentEcho.NewContext(req, rec)
+		context.Set("user_id", "jinsu")
+		err := commentRouter.List(context)
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		body, _ := ioutil.ReadAll(rec.Body)
+		log.Println("BODY", string(body))
+	})
+
+	t.Run("Jinsu user without required arguments", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
+		rec := httptest.NewRecorder()
+		context := commentEcho.NewContext(req, rec)
+		context.Set("user_id", "jinsu")
+		err := commentRouter.List(context)
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		body, _ := ioutil.ReadAll(rec.Body)
+		log.Println("BODY", string(body))
+	})
+
 }
 
 //func TestLikeCommentRouter_Get(t *testing.T) {

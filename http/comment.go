@@ -39,6 +39,7 @@ func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterfa
 type CommentResponse struct {
 	StatusCode int         `json:"statusCode"`
 	Data   interface{} `json:"data,omitempty"` //this contains any format of comments
+	Message string `json:"message"`
 }
 
 func (r *CommentRouter) Create(c echo.Context) error {
@@ -62,17 +63,31 @@ func (r *CommentRouter) Create(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(200, CommentResponse{200, comment})
+	return c.JSON(200, CommentResponse{StatusCode: 200, Data: comment})
 }
 
 func (r *CommentRouter) List(c echo.Context) error {
 	log.Println("CommentRouter_List")
 	username := c.Get("user_id").(string)
-	if username == "" {log.Println("No user_id in context")}
-	comments, err := r.UC.List(username, &repository.CommentQueryOption{})
+	if username == "" {
+		return c.JSON(403, CommentResponse{StatusCode: 403, Message: "No user_id in context"})
+	}
+	if !isAdmin(username){
+		if c.QueryParam("article") == ""{
+			//return c.JSON(400, CommentResponse{StatusCode: 401, Message: ""})
+			return c.JSON(commentRequiredQueryParamErrorJSON("article"))
+		}
+	}
+	articleIDString := c.QueryParam("article")
+	if articleIDString == ""{articleIDString="0"}
+	articleID, err := strconv.Atoi(articleIDString)
+	//if articleID == {articleID=0}
+	if err!=nil{return c.JSON(400, CommentResponse{StatusCode: 400, Message: "article should be int"})}
+
+	comments, err := r.UC.List(username, &repository.CommentQueryOption{ArticleID: articleID})
 	if err != nil {return err}
 
-	return c.JSON(200, CommentResponse{200, comments})
+	return c.JSON(200, CommentResponse{StatusCode: 200, Data: comments})
 }
 
 func (r *CommentRouter) Get(c echo.Context) error {
@@ -97,4 +112,18 @@ func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
 
 	return c.JSON(200, newLike)
+}
+
+func commentRequiredQueryParamErrorJSON(key string) (int, *CommentResponse){
+	return 400, &CommentResponse{
+		StatusCode: 400,
+		Message: key + " should be defined in query strings if you are not in admin groups",
+	}
+}
+
+func commentRequiredParamErrorJSON(key string) (int, *CommentResponse){
+	return 400, &CommentResponse{
+		StatusCode: 400,
+		Message: key + " should be defined in url parameters if you are not in admin groups",
+	}
 }

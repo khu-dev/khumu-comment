@@ -84,11 +84,6 @@ func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context
 	}
 }
 
-func mockCheckUserExists(username string) bool {
-	if username == "jinsu" {
-		return true
-	} else {
-		return false
-	}
-
+func isAdmin(username string) bool{
+	return username == "admin"
 }

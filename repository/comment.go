@@ -23,7 +23,7 @@ type CommentRepositoryGorm struct {
 }
 
 type CommentQueryOption struct {
-	ArticleID uint
+	ArticleID int
 	AuthorUsername  string
 }
 
