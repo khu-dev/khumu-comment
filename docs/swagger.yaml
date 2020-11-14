@@ -1,0 +1,139 @@
+definitions:
+  http.CommentResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.Comment'
+        description: this contains any format of comments
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
+  http.CommentsResponse:
+    properties:
+      data:
+        description: this contains any format of comments
+        items:
+          $ref: '#/definitions/model.Comment'
+        type: array
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
+  model.Comment:
+    properties:
+      article:
+        type: integer
+      author:
+        $ref: '#/definitions/model.KhumuUserSimple'
+      children:
+        description: Has-Many relationship => Preload 필요
+        items:
+          $ref: '#/definitions/model.Comment'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      kind:
+        description: 'Kind: (anonymous, named)'
+        type: string
+      like_comment_count:
+        type: integer
+      parent:
+        $ref: '#/definitions/model.Comment'
+      state:
+        description: 'State: (exists, deleted)'
+        type: string
+    type: object
+  model.KhumuUserSimple:
+    properties:
+      state:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://github.com/khu-dev
+  description: KHUMU의 Comment와 Comment-Like에 대한 RESTful API server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Docs::KHUMU Comment
+  version: "1.0"
+paths:
+  /api/comments/:
+    get:
+      parameters:
+      - description: admin이 아닌 이상은 게시물 id를 꼭 정의해야합니다.
+        in: query
+        name: article
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.CommentsResponse'
+      summary: Comment List를 조회합니다.
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 어떤 게시물의 댓글인지
+        in: body
+        name: article_id
+        required: true
+        schema:
+          type: integer
+      - description: 댓글의 작성자
+        in: body
+        name: author
+        required: true
+        schema:
+          $ref: '#/definitions/model.KhumuUserSimple'
+      - description: 익명인지, 기명인지
+        in: body
+        name: kind
+        schema:
+          type: string
+      - description: 댓글 내용
+        in: body
+        name: content
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.CommentResponse'
+      summary: Comment를 생성합니다.
+  /api/comments/{id}:
+    get:
+      parameters:
+      - description: Commet ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.CommentsResponse'
+      summary: Comment 조회합니다.
+swagger: "2.0"

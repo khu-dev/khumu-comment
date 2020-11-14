@@ -1,0 +1,211 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "KHUMU의 Comment와 Comment-Like에 대한 RESTful API server",
+        "title": "Docs::KHUMU Comment",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://github.com/khu-dev",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/comments/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Comment List를 조회합니다.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "admin이 아닌 이상은 게시물 id를 꼭 정의해야합니다.",
+                        "name": "article",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.CommentsResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Comment를 생성합니다.",
+                "parameters": [
+                    {
+                        "description": "어떤 게시물의 댓글인지",
+                        "name": "article_id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "댓글의 작성자",
+                        "name": "author",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.KhumuUserSimple"
+                        }
+                    },
+                    {
+                        "description": "익명인지, 기명인지",
+                        "name": "kind",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "댓글 내용",
+                        "name": "content",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.CommentResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/comments/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Comment 조회합니다.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Commet ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.CommentsResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "http.CommentResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "this contains any format of comments",
+                    "$ref": "#/definitions/model.Comment"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "integer"
+                }
+            }
+        },
+        "http.CommentsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "this contains any format of comments",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Comment"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Comment": {
+            "type": "object",
+            "properties": {
+                "article": {
+                    "type": "integer"
+                },
+                "author": {
+                    "$ref": "#/definitions/model.KhumuUserSimple"
+                },
+                "children": {
+                    "description": "Has-Many relationship =\u003e Preload 필요",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Comment"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "Kind: (anonymous, named)",
+                    "type": "string"
+                },
+                "like_comment_count": {
+                    "type": "integer"
+                },
+                "parent": {
+                    "$ref": "#/definitions/model.Comment"
+                },
+                "state": {
+                    "description": "State: (exists, deleted)",
+                    "type": "string"
+                }
+            }
+        },
+        "model.KhumuUserSimple": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

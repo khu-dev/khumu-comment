@@ -38,10 +38,28 @@ func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterfa
 
 type CommentResponse struct {
 	StatusCode int         `json:"statusCode"`
-	Data   interface{} `json:"data,omitempty"` //this contains any format of comments
+	Data   *model.Comment `json:"data,omitempty"` //this contains any format of comments
 	Message string `json:"message"`
 }
 
+type CommentsResponse struct {
+	StatusCode int         `json:"statusCode"`
+	Data   []*model.Comment `json:"data,omitempty"` //this contains any format of comments
+	Message string `json:"message"`
+}
+
+
+// @Summary Comment를 생성합니다.
+// @Description
+// @name create-comment
+// @Accept  application/json
+// @Produce  application/json
+// @Param article_id body int true "어떤 게시물의 댓글인지"
+// @Param author body model.KhumuUserSimple true "댓글의 작성자"
+// @Param kind body string false "익명인지, 기명인지"
+// @Param content body string true "댓글 내용"
+// @Router /api/comments/ [post]
+// @Success 200 {object} CommentResponse
 func (r *CommentRouter) Create(c echo.Context) error {
 	log.Println("CommentRouter_Create")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다.러 그렇지 않으면 nil 참조 에
@@ -66,6 +84,13 @@ func (r *CommentRouter) Create(c echo.Context) error {
 	return c.JSON(200, CommentResponse{StatusCode: 200, Data: comment})
 }
 
+// @Summary Comment List를 조회합니다.
+// @Description
+// @name list-comment
+// @Produce  application/json
+// @Param article query int true "admin이 아닌 이상은 게시물 id를 꼭 정의해야합니다."
+// @Router /api/comments/ [get]
+// @Success 200 {object} CommentsResponse
 func (r *CommentRouter) List(c echo.Context) error {
 	log.Println("CommentRouter_List")
 	username := c.Get("user_id").(string)
@@ -87,9 +112,16 @@ func (r *CommentRouter) List(c echo.Context) error {
 	comments, err := r.UC.List(username, &repository.CommentQueryOption{ArticleID: articleID})
 	if err != nil {return err}
 
-	return c.JSON(200, CommentResponse{StatusCode: 200, Data: comments})
+	return c.JSON(200, CommentsResponse{StatusCode: 200, Data: comments})
 }
 
+// @Summary Comment 조회합니다.
+// @Description
+// @name get-comment
+// @Produce  application/json
+// @Param id path int true "Commet ID"
+// @Router /api/comments/{id} [get]
+// @Success 200 {object} CommentsResponse
 func (r *CommentRouter) Get(c echo.Context) error {
 	log.Println("CommentRouter Get")
 	id, err := strconv.Atoi(c.Param("id"))
@@ -117,13 +149,13 @@ func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 func commentRequiredQueryParamErrorJSON(key string) (int, *CommentResponse){
 	return 400, &CommentResponse{
 		StatusCode: 400,
-		Message: key + " should be defined in query strings if you are not in admin groups",
+		Message: key + " seems to be required in query strings",
 	}
 }
 
 func commentRequiredParamErrorJSON(key string) (int, *CommentResponse){
 	return 400, &CommentResponse{
 		StatusCode: 400,
-		Message: key + " should be defined in url parameters if you are not in admin groups",
+		Message: key + " seems to be required in url parameters",
 	}
 }

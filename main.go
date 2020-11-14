@@ -1,5 +1,16 @@
-package main
+// @title Docs::KHUMU Comment
+// @version 1.0
+// @description KHUMU의 Comment와 Comment-Like에 대한 RESTful API server
+// @termsOfService http://swagger.io/terms/
 
+// @contact.name API Support
+// @contact.url http://github.com/khu-dev
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+package main
 import (
 	"fmt"
 	"github.com/khu-dev/khumu-comment/config"

@@ -1,10 +1,12 @@
 package http
 
 import (
+	_ "github.com/khu-dev/khumu-comment/docs"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 // 의존성 주입시에 root router를 판별하기 위해 임베딩
@@ -17,6 +19,7 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
+	e.GET("/api/comments/swagger/*", echoSwagger.WrapHandler)
 	root := NewRootRouter(e, userRepository)
 	_ = NewCommentRouter(root, commentUC)
 	_ = NewLikeCommentRouter(root, likeUC)
