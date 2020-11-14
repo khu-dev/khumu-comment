@@ -4,6 +4,7 @@
 package usecase
 
 import (
+	"fmt"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
@@ -85,10 +86,6 @@ func TestSetUp(t *testing.T) {
 	assert.GreaterOrEqual(t, len(test.CommentsData), 3) // e1 >= 3
 }
 
-func createCommentData(t *testing.T){
-	assert.Len(t, test.CommentsData, 3)
-}
-
 func TestCommentUseCase_Create(t *testing.T){
 	t.Run("My anonymous comment", func(t *testing.T){
 		c := test.CommentsData["JinsuAnonymousComment"] // 0 번 인덱스는 익명 댓글
@@ -121,6 +118,69 @@ func TestCommentUseCase_Create(t *testing.T){
 	})
 }
 
+func TestCommentUseCase_Get(t *testing.T) {
+
+}
+
+func TestCommentUseCase_Update(t *testing.T) {
+	toUpdate, _ := commentUseCase.Get(1)
+	updated, err := commentUseCase.Update(toUpdate.ID, map[string]interface{}{
+		"content": "수정된 1번 코멘트입니다.",
+	})
+	assert.NoError(t, err)
+	assert.NotEqual(t, toUpdate, updated)
+	assert.Equal(t, "수정된 1번 코멘트입니다.", updated.Content)
+}
+
+// setup에서 parent comment 1개, 그 comment를 참조하는 child comment 2개 생성
+// 이후 child comment 삭제 => 실제로 DB에서 삭제
+// parent comment 삭제 시 parent comment의 state는 deleted
+// 남아있던 child comment는 여전히 parent를 참조.
+func TestCommentUseCase_Delete(t *testing.T) {
+	var err error
+	var parent, child1, child2 *model.Comment
+	t.Run("Setup", func(t *testing.T) {
+		parent, err = commentUseCase.Create(&model.Comment{
+			Author: &model.KhumuUserSimple{Username: "jinsu"},
+			Content: "A parent comment to setup CommentRepositoryGorm_Delete.",
+		})
+		assert.Nil(t, err)
+
+		child1, err = commentUseCase.Create(&model.Comment{
+			Author: &model.KhumuUserSimple{Username: "somebody"},
+			Content: "The first child comment to setup CommentRepositoryGorm_Delete.",
+		})
+		assert.Nil(t, err)
+
+		child2, err = commentUseCase.Create(&model.Comment{
+			Author: &model.KhumuUserSimple{Username: "somebody"},
+			Content: "The second child comment to setup CommentRepositoryGorm_Delete.",
+		})
+		assert.Nil(t, err)
+	})
+	fmt.Println(parent,child1,child2)
+
+	t.Run("The second child comment", func(t *testing.T) {
+		deleted, err := commentUseCase.Delete(child2.ID)
+		assert.Nil(t, err)
+		assert.NotNil(t, deleted)
+
+		_, err = commentUseCase.Get(deleted.ID)
+		assert.NoError(t, err)
+	})
+
+	// parent comment는 실제로 삭제되는 것이 아니라, kind가 deleted 로 변경될 뿐.
+	t.Run("The parent comment", func(t *testing.T) {
+		assert.Equal(t, "exists", parent.State)
+		updatedParent, err := commentUseCase.Update(parent.ID, map[string]interface{}{
+			"state": "deleted",
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, "deleted", updatedParent.State)
+		// 삭제된 댓글의 작성자는 무언가를 통해 익명처리가 되어야함.
+		assert.NotEqual(t, parent.AuthorUsername, updatedParent.AuthorUsername)
+	})
+}
 
 func TestLikeCommentUseCase_List(t *testing.T) {
 	// Nothing.
@@ -179,6 +239,9 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
+	for _, c := range resultComments{
+		fmt.Println(c.ID, c.Author.Username)
+	}
 
 	t.Run("Jinsu's anonymous comment", func(t *testing.T) {
 		c := resultComments[0]

@@ -164,16 +164,23 @@ func TestCommentRouter_List(t *testing.T) {
 //}
 
 func TestLikeCommentRouter_Toggle(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPut, "/like-comments", nil)
+	data, err := json.Marshal(
+		map[string]interface{}{
+			"comment": 1,
+		},
+	)
+	req := httptest.NewRequest(http.MethodPut, "/like-comments", bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
 	context := commentEcho.NewContext(req, rec)
 	context.Set("user_id", "jinsu")
-	assert.NotNil(t, likeCommentRouter.UC)
 
-	err := likeCommentRouter.Toggle(context)
+	assert.NotNil(t, likeCommentRouter.UC)
+	err = likeCommentRouter.Toggle(context)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
+
 	body, _ := ioutil.ReadAll(rec.Body)
 	log.Println("BODY", string(body))
 }

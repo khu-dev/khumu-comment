@@ -42,11 +42,12 @@ func NewGorm() *gorm.DB{
 
 func NewTestGorm() *gorm.DB{
 	var db *gorm.DB
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
 	if err != nil{log.Panic(err)}
 
 	err = db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
 	if err != nil{log.Panic(err)}
-
+	// this allows foreign key contraints
+	db.Exec("PRAGMA foreign_keys=ON")
 	return db
 }

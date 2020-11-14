@@ -1,25 +1,11 @@
 package model
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 )
 
 type ModelPrettyPrinter interface {
 	prettyPrint()
-}
-
-func PrintModel(p ModelPrettyPrinter) {
-	p.prettyPrint()
-}
-
-type ModelStringer interface {
-	toString() string
-}
-
-func String(s ModelStringer) string {
-	return s.toString()
 }
 
 type KhumuUser struct {
@@ -38,11 +24,6 @@ func (*KhumuUser) TableName() string {
 	return "user_khumuuser"
 }
 
-func (m *KhumuUser) prettyPrint() {
-	s, _ := json.MarshalIndent(m, "", "    ")
-	fmt.Print(string(s))
-}
-
 type KhumuUserAuth struct {
 	Username string `gorm:"primaryKey"`
 	Password string `gorm:"password"`
@@ -54,7 +35,7 @@ func (*KhumuUserAuth) TableName() string {
 
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
-	Kind     string `gorm:"column:kind" json:"kind"`
+	State     string `gorm:"column:kind" json:"state"`
 }
 
 func (*KhumuUserSimple) TableName() string {
@@ -92,13 +73,16 @@ func (*Board) TableName() string {
 
 type Comment struct {
 	ID             int             `gorm:"column:id" json:"id"`
-	Kind           string           `gorm:"column:kind" json:"kind"`
-	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
+	// Kind: (anonymous, named)
+	Kind           string           `gorm:"column:kind; default:anonymous" json:"kind"`
+	// State: (exists, deleted)
+	State           string           `gorm:"column:state; default:exists" json:"state"`
+	Author         KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
 	ArticleID      int             `gorm:"column:article_id" json:"article"`
-	//Article Article `gorm:"foreignKey:ArticleID"`
 	Content   string     `json:"content"`
-	ParentID  *int      `gorm:"column:parent_id;default:null" json:"parent"`
+	ParentID  int      `gorm:"column:parent_id;default:null" json:"parent"`
+	Parent *Comment `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	LikeCommentCount int `gorm:"-" json:"like_comment_count"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -108,19 +92,10 @@ func (*Comment) TableName() string {
 	return "comment_comment"
 }
 
-func (m *Comment) prettyPrint() {
-	s, _ := json.MarshalIndent(m, "", "    ")
-	fmt.Print(string(s))
-}
-
-func (m *Comment) toString() string {
-	s, _ := json.MarshalIndent(m, "", "    ")
-	return string(s)
-}
-
 type LikeComment struct{
 	ID int `gorm:"primaryKey"`
 	CommentID int `gorm:"column:comment_id" json:"comment"`
+	Comment *Comment `gorm:"foreignKey: CommentID; references: ID; constraint:OnDelete:CASCADE;" json:",omitempty"`
 	Username string `gorm:"column:user_id" json:"username"`
 }
 

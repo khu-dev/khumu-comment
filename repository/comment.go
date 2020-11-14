@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"github.com/khu-dev/khumu-comment/model"
 	"gorm.io/gorm"
 )
@@ -9,12 +8,14 @@ import (
 type CommentRepositoryInterface interface {
 	Create(comment *model.Comment) (*model.Comment, error)
 	List(opt *CommentQueryOption) []*model.Comment
-	Get(id int) *model.Comment
+	Get(id int) (*model.Comment, error)
+	Update(id int, opt map[string]interface{}) (*model.Comment, error)
+	Delete(id int) (*model.Comment, error)
 }
 
 type LikeCommentRepositoryInterface interface{
 	Create(like *model.LikeComment) (*model.LikeComment, error)
-	List(opt *LikeCommentQueryOption) ([]*model.LikeComment, error)
+	List(opt *LikeCommentQueryOption) ([]*model.LikeComment)
 	Delete(id int) error
 }
 
@@ -50,11 +51,11 @@ func NewLikeCommentRepositoryGorm(db *gorm.DB) LikeCommentRepositoryInterface{
 func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, error) {
 	// Author field가 남아있으면 그걸 기준으로 Author 필드의 데이터도 업데이트시키려고하기때문에
 	// 단순히 foreignKey field만 남긴다.
-	// 리턴할 땐 다시 그 정보 복
+	// 리턴할 땐 다시 그 정보 복사
 	comment.AuthorUsername = comment.Author.Username
 	tmpStoreUser := comment.Author
 	comment.Author = nil
-	err := r.DB.Save(comment).Error
+	err := r.DB.Create(comment).Error
 	if err != nil{return nil, err}
 
 	comment.Author = tmpStoreUser
@@ -76,16 +77,50 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 	if len(conditions) == 0 {
 		preloaded.Find(&comments)
 	} else {
-		fmt.Println(conditions)
 		preloaded.Find(&comments, conditions)
 	}
 	return comments
 }
 
-func (r *CommentRepositoryGorm) Get(id int) *model.Comment {
+func (r *CommentRepositoryGorm) Get(id int) (*model.Comment, error) {
 	var tmp *model.Comment = &model.Comment{}
-	r.DB.Preload("Author").First(tmp)
-	return tmp
+	err := r.DB.Preload("Author").First(tmp, id).Error
+	if err != nil{
+		return nil, err
+	}
+	return tmp, nil
+}
+
+func (r *CommentRepositoryGorm) Update(id int, opt map[string]interface{}) (*model.Comment, error) {
+	var tmp *model.Comment = &model.Comment{}
+	err := r.DB.Preload("Author").First(tmp, id).Error
+	if err != nil{
+		return nil, err
+	}
+
+	// update 된 내용은 tmp에 저장됨.
+	err = r.DB.Model(tmp).Updates(opt).Error
+	if err != nil{
+		return nil, err
+	}
+
+	return tmp, nil
+}
+
+func (r *CommentRepositoryGorm) Delete(id int) (*model.Comment, error) {
+	var tmp *model.Comment = &model.Comment{}
+	err := r.DB.First(tmp, id).Error
+	if err != nil{
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	err = r.DB.Delete(tmp, id).Error
+
+	if tmp.ID == 0{
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return tmp, nil
 }
 
 func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.LikeComment, error) {
@@ -93,7 +128,7 @@ func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.Like
 	return like, err
 }
 
-func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) ([]*model.LikeComment, error) {
+func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) []*model.LikeComment {
 	var conditions map[string]interface{} = map[string]interface{}{}
 	var likes []*model.LikeComment
 	if opt.CommentID != 0{
@@ -103,14 +138,13 @@ func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) ([]*model.
 		conditions["user_id"] = opt.Username
 	}
 
-	var queryError error
 	if len(conditions) == 0{
-		queryError = r.DB.Find(&likes).Error
+		r.DB.Find(&likes)
 	} else{
-		queryError = r.DB.Find(&likes, conditions).Error
+		r.DB.Find(&likes, conditions)
 	}
 
-	return likes, queryError
+	return likes
 }
 
 
