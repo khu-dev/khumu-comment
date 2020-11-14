@@ -95,7 +95,7 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {return err}
 
-	comment, err := r.UC.Get(id, &repository.CommentQueryOption{})
+	comment, err := r.UC.Get(id)
 	if err != nil {return err}
 
 	return c.JSON(200, comment)

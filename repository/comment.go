@@ -79,6 +79,12 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 	} else {
 		preloaded.Find(&comments, conditions)
 	}
+
+	// copy 작업을 해주지 않으면 같은 author는 같은 주소값을 참조하게됨.
+	for _, c := range comments{
+		tmpAuthor := *(c.Author)
+		c.Author = &tmpAuthor
+	}
 	return comments
 }
 

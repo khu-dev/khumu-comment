@@ -45,9 +45,19 @@ func NewTestGorm() *gorm.DB{
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
 	if err != nil{log.Panic(err)}
 
-	err = db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
+	err = MigrateAll(db)
 	if err != nil{log.Panic(err)}
 	// this allows foreign key contraints
 	db.Exec("PRAGMA foreign_keys=ON")
 	return db
+}
+
+func MigrateAll(db *gorm.DB) error{
+	err := db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
+	return err
+}
+
+func MigrateMinimum(db *gorm.DB) error{
+	err := db.AutoMigrate(&model.Comment{}, &model.LikeComment{})
+	return err
 }

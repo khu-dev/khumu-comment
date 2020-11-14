@@ -1,14 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/container"
+	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/labstack/echo/v4"
 	"log"
+	"os"
 )
 
 func main() {
-	Run()
+	fmt.Println("Args: ", len(os.Args), os.Args)
+	if len(os.Args) == 1{
+		Run()
+	} else{
+		if os.Args[1] == "run"{
+			Run()
+		} else if os.Args[1] == "migrate"{
+			//config.Load()
+			db := repository.NewGorm()
+			err := repository.MigrateMinimum(db)
+			if err != nil{
+				fmt.Println(err)
+			}
+		}
+	}
 }
 
 func Run() {

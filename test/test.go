@@ -21,7 +21,7 @@ func init(){
 	CommentsData["JinsuAnonymousComment"] = &model.Comment{
 		Kind:           "anonymous",
 		//AuthorUsername: "jinsu",
-		Author: model.KhumuUserSimple{Username: "jinsu"},
+		Author: &model.KhumuUserSimple{Username: "jinsu"},
 		ArticleID:      1,
 		Content:        "테스트로 작성한 jinsu의 익명 코멘트",
 		ParentID:       0,
@@ -29,7 +29,7 @@ func init(){
 	id++
 	CommentsData["JinsuNamedComment"] = &model.Comment{
 		Kind:           "named",
-		Author: model.KhumuUserSimple{Username: "jinsu"},
+		Author: &model.KhumuUserSimple{Username: "jinsu"},
 		ArticleID:      1,
 		Content:        "테스트로 작성한 jinsu의 기명 코멘트",
 		ParentID:       0,
@@ -37,7 +37,7 @@ func init(){
 	id++
 	CommentsData["SomebodyAnonymousComment"] = &model.Comment{
 		Kind:           "anonymous",
-		Author: model.KhumuUserSimple{Username: "somebody"},
+		Author: &model.KhumuUserSimple{Username: "somebody"},
 		ArticleID:      1,
 		Content:        "테스트로 작성한 somebody의 익명 코멘트",
 		ParentID:       0,

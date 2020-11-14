@@ -75,6 +75,7 @@ func (uc *CommentUseCase) Get(id int) (*model.Comment, error) {
 
 func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Comment, error) {
 	updated, err := uc.Repository.Update(id, opt)
+	uc.hideAuthor(updated, "")
 	return updated, err
 }
 
@@ -104,6 +105,8 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 	return parents
 }
 
+// username이 author의 username과 일치하면 hide
+// 그냥 무조건 hide 하고싶다면 username을 ""으로 전달
 func (uc *CommentUseCase) hideAuthor(c *model.Comment, requestUsername string) {
 	if c.State == "deleted" {
 		c.AuthorUsername = "삭제된 댓글의 작성자"

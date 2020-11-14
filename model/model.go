@@ -58,10 +58,9 @@ func (*Article) TableName() string {
 }
 
 type Board struct {
-	BoardID       int `gorm:"column:id"`
 	ShortName     string
 	LongName      string
-	Name          string
+	Name          string `gorm:"primaryKey"`
 	Description   string
 	AdminUsername string
 	Admin         KhumuUser `gorm:"foreignKey:AdminUsername"`
@@ -77,7 +76,7 @@ type Comment struct {
 	Kind           string           `gorm:"column:kind; default:anonymous" json:"kind"`
 	// State: (exists, deleted)
 	State           string           `gorm:"column:state; default:exists" json:"state"`
-	Author         KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
+	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
 	ArticleID      int             `gorm:"column:article_id" json:"article"`
 	Content   string     `json:"content"`
