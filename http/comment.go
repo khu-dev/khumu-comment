@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
@@ -37,23 +38,28 @@ func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterfa
 }
 
 type CommentResponse struct {
-	Data   *model.Comment `json:"data,omitempty"` //this contains any format of comments
+	Data   *model.Comment `json:"data"` //this contains any format of comments
 	Message string `json:"message"`
 }
 
 type CommentsResponse struct {
-	Data   []*model.Comment `json:"data,omitempty"` //this contains any format of comments
+	Data   []*model.Comment `json:"data"` //this contains any format of comments
 	Message string `json:"message"`
 }
 
+type LikeCommentResponse struct {
+	Data   bool `json:"data"` //this contains any format of comments
+	Message string `json:"message"`
+}
 
+// @Tags Comment
 // @Summary Comment를 생성합니다.
-// @Description
+// @Description 사용 가능한 필드는 주로 Get API의 응답에 있는 필드와 유사합니다.
+// @Description author field는 요청자의 Authorization header의 값을 이용합니다.
 // @name create-comment
 // @Accept  application/json
 // @Produce  application/json
-// @Param article_id body int true "어떤 게시물의 댓글인지"
-// @Param author body model.KhumuUserSimple true "댓글의 작성자"
+// @Param article body int true "어떤 게시물의 댓글인지"
 // @Param kind body string false "익명인지, 기명인지"
 // @Param content body string true "댓글 내용"
 // @Router /api/comments/ [post]
@@ -61,18 +67,15 @@ type CommentsResponse struct {
 func (r *CommentRouter) Create(c echo.Context) error {
 	log.Println("CommentRouter_Create")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다.러 그렇지 않으면 nil 참조 에
-	var comment *model.Comment = &model.Comment{}
+	var comment *model.Comment = &model.Comment{Author: &model.KhumuUserSimple{}}
 	err := c.Bind(comment)
+
 	if err != nil{
 		log.Print(err)
 		return err
 	}
-	authorUsername := comment.Author.Username
 
-	if c.Get("user_id").(string) != authorUsername{
-		return c.JSON(401, "Unauthorized error. The author has not been set as you.")
-	}
-
+	comment.AuthorUsername = c.Get("user_id").(string)
 	comment, err = r.UC.Create(comment)
 	if err != nil{
 		log.Print(err)
@@ -82,6 +85,7 @@ func (r *CommentRouter) Create(c echo.Context) error {
 	return c.JSON(200, CommentResponse{Data: comment})
 }
 
+// @Tags comment
 // @Summary Comment List를 조회합니다.
 // @Description
 // @name list-comment
@@ -98,7 +102,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 	if !isAdmin(username){
 		if c.QueryParam("article") == ""{
 			//return c.JSON(400, CommentResponse{StatusCode: 401, Message: ""})
-			return c.JSON(commentRequiredQueryParamErrorJSON("article"))
+			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "article in query string is required"})
 		}
 	}
 	articleIDString := c.QueryParam("article")
@@ -113,11 +117,12 @@ func (r *CommentRouter) List(c echo.Context) error {
 	return c.JSON(200, CommentsResponse{Data: comments})
 }
 
+// @Tags Comment
 // @Summary Comment 조회합니다.
 // @Description
 // @name get-comment
 // @Produce  application/json
-// @Param id path int true "Commet ID"
+// @Param id path int true "Comment ID"
 // @Router /api/comments/{id} [get]
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) Get(c echo.Context) error {
@@ -131,27 +136,30 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	return c.JSON(200, comment)
 }
 
-
+// @Tags Like Comment
+// @Summary Comment에 대한 "좋아요"를 생성하거나 삭제합니다.
+// @Description 현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.
+// @name create-like-comment
+// @Produce  application/json
+// @Param comment body int true "좋아요할 comment의 ID"
+// @Router /api/like-comments/ [put]
+// @Success 200 {object} CommentResponse
 func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 	log.Println("LikeCommentRouter_Toggle")
 	var likeComment *model.LikeComment = &model.LikeComment{}
-	err := c.Bind(likeComment)
-	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
-
-	newLike, err := r.UC.Toggle(likeComment)
-	if err != nil {return c.JSON(http.StatusBadRequest, err.Error())}
-
-	return c.JSON(200, newLike)
-}
-
-func commentRequiredQueryParamErrorJSON(key string) (int, *CommentResponse){
-	return 400, &CommentResponse{
-		Message: key + " seems to be required in query strings",
+	form, err := c.FormParams()
+	if err != nil{
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
 	}
-}
+	username := c.Get("user_id").(string)
+	fmt.Println(username)
+	form.Set("username", username)
 
-func commentRequiredParamErrorJSON(key string) (int, *CommentResponse){
-	return 400, &CommentResponse{
-		Message: key + " seems to be required in url parameters",
-	}
+	err = c.Bind(likeComment)
+	if err != nil {return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})}
+
+	ok, err := r.UC.Toggle(likeComment)
+	if err != nil {return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})}
+
+	return c.JSON(200, LikeCommentResponse{Data: ok})
 }

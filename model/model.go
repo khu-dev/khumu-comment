@@ -95,7 +95,7 @@ type LikeComment struct{
 	ID int `gorm:"primaryKey"`
 	CommentID int `gorm:"column:comment_id" json:"comment"`
 	Comment *Comment `gorm:"foreignKey: CommentID; references: ID; constraint:OnDelete:CASCADE;" json:",omitempty"`
-	Username string `gorm:"column:user_id" json:"username"`
+	Username string `gorm:"column:username" json:"username"`
 }
 
 func (*LikeComment) TableName() string {

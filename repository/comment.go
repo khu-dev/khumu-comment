@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"github.com/khu-dev/khumu-comment/model"
 	"gorm.io/gorm"
 )
@@ -52,7 +53,16 @@ func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, 
 	// Author field가 남아있으면 그걸 기준으로 Author 필드의 데이터도 업데이트시키려고하기때문에
 	// 단순히 foreignKey field만 남긴다.
 	// 리턴할 땐 다시 그 정보 복사
-	comment.AuthorUsername = comment.Author.Username
+	if comment.Author.Username == "" && comment.AuthorUsername != ""{
+		comment.Author.Username = comment.AuthorUsername
+	} else if comment.Author.Username != "" && comment.AuthorUsername == ""{
+		comment.AuthorUsername = comment.Author.Username
+	} else if comment.Author.Username == "" && comment.AuthorUsername == ""{
+		return nil, errors.New("Please input author username")
+	}
+	// 기본 값
+	comment.Author.State = "active"
+
 	tmpStoreUser := comment.Author
 	comment.Author = nil
 	err := r.DB.Create(comment).Error
@@ -141,7 +151,7 @@ func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) []*model.L
 		conditions["comment_id"] = opt.CommentID
 	}
 	if opt.Username != ""{
-		conditions["user_id"] = opt.Username
+		conditions["username"] = opt.Username
 	}
 
 	if len(conditions) == 0{
@@ -152,7 +162,6 @@ func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) []*model.L
 
 	return likes
 }
-
 
 func (r *LikeCommentRepositoryGorm) Delete(id int) error {
 	err := r.DB.Delete(&model.LikeComment{}, id).Error

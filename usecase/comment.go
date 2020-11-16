@@ -46,7 +46,7 @@ func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error)
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
 
 	log.Println("CommentUseCase List")
-	comments := uc.Repository.List(&repository.CommentQueryOption{})
+	comments := uc.Repository.List(opt)
 	parents := uc.listParentWithChildren(comments)
 
 	for _, p := range parents {

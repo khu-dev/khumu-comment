@@ -6,8 +6,6 @@ definitions:
         description: this contains any format of comments
       message:
         type: string
-      statusCode:
-        type: integer
     type: object
   http.CommentsResponse:
     properties:
@@ -18,8 +16,6 @@ definitions:
         type: array
       message:
         type: string
-      statusCode:
-        type: integer
     type: object
   model.Comment:
     properties:
@@ -72,7 +68,7 @@ paths:
   /api/comments/:
     get:
       parameters:
-      - description: admin이 아닌 이상은 게시물 id를 꼭 정의해야합니다.
+      - description: admin group이 아닌 이상은 게시물 id를 꼭 정의해야합니다.
         in: query
         name: article
         required: true
@@ -85,22 +81,21 @@ paths:
           schema:
             $ref: '#/definitions/http.CommentsResponse'
       summary: Comment List를 조회합니다.
+      tags:
+      - comment
     post:
       consumes:
       - application/json
+      description: |-
+        사용 가능한 필드는 주로 Get API의 응답에 있는 필드와 유사합니다.
+        author field는 요청자의 Authorization header의 값을 이용합니다.
       parameters:
       - description: 어떤 게시물의 댓글인지
         in: body
-        name: article_id
+        name: article
         required: true
         schema:
           type: integer
-      - description: 댓글의 작성자
-        in: body
-        name: author
-        required: true
-        schema:
-          $ref: '#/definitions/model.KhumuUserSimple'
       - description: 익명인지, 기명인지
         in: body
         name: kind
@@ -120,10 +115,12 @@ paths:
           schema:
             $ref: '#/definitions/http.CommentResponse'
       summary: Comment를 생성합니다.
+      tags:
+      - Comment
   /api/comments/{id}:
     get:
       parameters:
-      - description: Commet ID
+      - description: Comment ID
         in: path
         name: id
         required: true
@@ -134,6 +131,28 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/http.CommentsResponse'
+            $ref: '#/definitions/http.CommentResponse'
       summary: Comment 조회합니다.
+      tags:
+      - Comment
+  /api/like-comments/:
+    put:
+      description: 현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.
+      parameters:
+      - description: 좋아요할 comment의 ID
+        in: body
+        name: comment
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.CommentResponse'
+      summary: Comment에 대한 "좋아요"를 생성하거나 삭제합니다.
+      tags:
+      - Like Comment
 swagger: "2.0"

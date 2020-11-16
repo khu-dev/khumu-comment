@@ -38,11 +38,14 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "comment"
+                ],
                 "summary": "Comment List를 조회합니다.",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "admin이 아닌 이상은 게시물 id를 꼭 정의해야합니다.",
+                        "description": "admin group이 아닌 이상은 게시물 id를 꼭 정의해야합니다.",
                         "name": "article",
                         "in": "query",
                         "required": true
@@ -58,30 +61,25 @@ var doc = `{
                 }
             },
             "post": {
+                "description": "사용 가능한 필드는 주로 Get API의 응답에 있는 필드와 유사합니다.\nauthor field는 요청자의 Authorization header의 값을 이용합니다.",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Comment"
+                ],
                 "summary": "Comment를 생성합니다.",
                 "parameters": [
                     {
                         "description": "어떤 게시물의 댓글인지",
-                        "name": "article_id",
+                        "name": "article",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "댓글의 작성자",
-                        "name": "author",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.KhumuUserSimple"
                         }
                     },
                     {
@@ -117,11 +115,14 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Comment"
+                ],
                 "summary": "Comment 조회합니다.",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Commet ID",
+                        "description": "Comment ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -131,7 +132,38 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/http.CommentsResponse"
+                            "$ref": "#/definitions/http.CommentResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/like-comments/": {
+            "put": {
+                "description": "현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like Comment"
+                ],
+                "summary": "Comment에 대한 \"좋아요\"를 생성하거나 삭제합니다.",
+                "parameters": [
+                    {
+                        "description": "좋아요할 comment의 ID",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.CommentResponse"
                         }
                     }
                 }
@@ -148,9 +180,6 @@ var doc = `{
                 },
                 "message": {
                     "type": "string"
-                },
-                "statusCode": {
-                    "type": "integer"
                 }
             }
         },
@@ -166,9 +195,6 @@ var doc = `{
                 },
                 "message": {
                     "type": "string"
-                },
-                "statusCode": {
-                    "type": "integer"
                 }
             }
         },

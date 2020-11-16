@@ -4,46 +4,8 @@
 khumu API 서버 중 khumu-command-center 가 article을 비롯한 대부분의 API를 제공하고있으며, article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 형태로 개발하고자 
 khumu-comment 서버를 이렇게 따로 개발하고 있습니다.
 
-
-## 📑 API Examples
-
-### List comments
-
-_author 쪽은 아직 미정_
-```json
-{
-  "statusCode": 200,
-  "data": [
-    {
-      "id": 1,
-      "kind": "anonymous",
-      "author": {
-         "username": "jinsu",
-         "kind": "active"
-      },
-      "article": 1,
-      "content": "Lorem Ipsum passages, and ",
-      "parent": null,
-      "children": [
-        {
-          "id": 2,
-          "kind": "named",
-          "author": {
-            "username": "jinsu",
-            "kind": "active"
-          },
-          "article": 1,
-          "content": "more recently with desktop ",
-          "parent": 1,
-          "children": [],
-          "created_at": "2020-11-01T14:10:40.016958Z"
-        }
-      ]
-    }
-  ]
-}
-```
-
+**API Documentation**: https://api.khumu.jinsu.me/api/comments/swagger.html
+**API Demo**: https://api.khumu.jinsu.me/api/comments
 
 ## ⚙️설정
 
