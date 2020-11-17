@@ -62,7 +62,7 @@ type LikeCommentResponse struct {
 // @Param article body int true "어떤 게시물의 댓글인지"
 // @Param kind body string false "익명인지, 기명인지"
 // @Param content body string true "댓글 내용"
-// @Router /api/comments/ [post]
+// @Router /api/comments [post]
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) Create(c echo.Context) error {
 	log.Println("CommentRouter_Create")
@@ -91,7 +91,7 @@ func (r *CommentRouter) Create(c echo.Context) error {
 // @name list-comment
 // @Produce  application/json
 // @Param article query int true "admin group이 아닌 이상은 게시물 id를 꼭 정의해야합니다."
-// @Router /api/comments/ [get]
+// @Router /api/comments [get]
 // @Success 200 {object} CommentsResponse
 func (r *CommentRouter) List(c echo.Context) error {
 	log.Println("CommentRouter_List")
@@ -142,21 +142,28 @@ func (r *CommentRouter) Get(c echo.Context) error {
 // @name create-like-comment
 // @Produce  application/json
 // @Param comment body int true "좋아요할 comment의 ID"
-// @Router /api/like-comments/ [put]
+// @Router /api/like-comments [put]
 // @Success 200 {object} CommentResponse
 func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 	log.Println("LikeCommentRouter_Toggle")
-	var likeComment *model.LikeComment = &model.LikeComment{}
+	var likeComment *model.LikeComment = &model.LikeComment{Comment:&model.Comment{}, User:&model.KhumuUserSimple{}}
 	form, err := c.FormParams()
 	if err != nil{
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
 	}
 	username := c.Get("user_id").(string)
-	fmt.Println(username)
-	form.Set("username", username)
+	form.Set("comment", "1")
 
 	err = c.Bind(likeComment)
-	if err != nil {return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})}
+	likeComment.Username = username
+
+	commentID, err := strconv.Atoi(form.Get("comment"))
+	if err != nil{
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
+	}
+	likeComment.CommentID =  commentID
+	fmt.Println(*likeComment)
+
 
 	ok, err := r.UC.Toggle(likeComment)
 	if err != nil {return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})}

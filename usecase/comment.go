@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"fmt"
+	"errors"
 	"github.com/khu-dev/khumu-comment/repository"
 	"log"
 )
@@ -51,14 +51,9 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 
 	for _, p := range parents {
 		for _, c := range p.Children {
-			uc.hideAuthor(c, username)
-			likeCount := uc.getLikeCommentCount(c.ID)
-			c.LikeCommentCount = likeCount
+			uc.handleComment(c, username)
 		}
-		uc.hideAuthor(p, username)
-		likeCount := uc.getLikeCommentCount(p.ID)
-		p.LikeCommentCount = likeCount
-		fmt.Println(username, *p)
+		uc.handleComment(p, username)
 	}
 
 	return parents, nil
@@ -105,13 +100,26 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 	return parents
 }
 
+// 대부분의 comment usecase에서 사용되는 로직을 담당한다.
+func (uc *CommentUseCase) handleComment(c *model.Comment, username string){
+	uc.hideAuthor(c, username)
+	likeCount := uc.getLikeCommentCount(c.ID)
+	c.LikeCommentCount = likeCount
+	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
+	if len(likes) == 1{
+		c.Liked = true
+	} else if len(likes) > 1{
+		log.Print("[ERROR] ", c, "에 대한", username, "의 like가 1개 이상")
+	}
+}
+
 // username이 author의 username과 일치하면 hide
 // 그냥 무조건 hide 하고싶다면 username을 ""으로 전달
-func (uc *CommentUseCase) hideAuthor(c *model.Comment, requestUsername string) {
+func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 	if c.State == "deleted" {
 		c.AuthorUsername = "삭제된 댓글의 작성자"
 		c.Author.Username = "삭제된 댓글의 작성자"
-	} else if c.Kind == "anonymous" && c.AuthorUsername != requestUsername {
+	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
 		c.AuthorUsername = "익명"
 		c.Author.Username = "익명"
 	}
@@ -146,15 +154,11 @@ func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
 		comment, err := uc.CommentRepository.Get(like.CommentID)
 		if err != nil { return false, err}
 		if comment.AuthorUsername == like.Username{
-			return false, SomeoneLikesHisCommentError(like.Username)
+			return false, errors.New("Error: " + like.Username + " requested to like his comment.")
 		}
 		_, err = uc.Repository.Create(like)
 		if err != nil{return false, err}
 
 		return true, err
 	}
-}
-
-func (e SomeoneLikesHisCommentError) Error() string{
-	return "Error: " + string(e) + " requested to like his comment."
 }

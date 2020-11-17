@@ -148,6 +148,7 @@ func TestCommentRepositoryGorm_Delete(t *testing.T) {
 	})
 }
 
+// somebody가 1번 코멘트를 좋아도록합니다.
 func TestLikeCommentRepositoryGorm_Create(t *testing.T) {
 	likeBefore := &model.LikeComment{CommentID: 1, Username: "somebody"}
 	likeAfter, err := likeCommentRepository.Create(likeBefore)
@@ -168,13 +169,25 @@ func TestLikeCommentRepositoryGorm_Delete(t *testing.T) {
 
 func TestLikeCommentRepositoryGorm_List(t *testing.T) {
 	// 위의 테스트에서 1번 코멘트에 대한 like comment를 생성했음.
-	likes := likeCommentRepository.List(&LikeCommentQueryOption{})
+	t.Run("Somebody likes comment 1.", func(t *testing.T) {
+		likes := likeCommentRepository.List(&LikeCommentQueryOption{})
+		assert.GreaterOrEqual(t, 1, len(likes))
 
-	likes = likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 1})
-	assert.Equal(t,1, len(likes))
+		likes = likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 1})
+		assert.Equal(t,1, len(likes))
 
-	likes = likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 3})
-	assert.Equal(t, 0, len(likes))
+		likes = likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 1, Username: "somebody"})
+		assert.Equal(t,1, len(likes))
+
+		// 존재하지 않는 유저
+		likes = likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 1, Username: "wizardofoz"})
+		assert.Equal(t,0, len(likes))
+	})
+
+	t.Run("Somebody doesn't like comment 3.", func(t *testing.T) {
+		likes := likeCommentRepository.List(&LikeCommentQueryOption{CommentID: 3})
+		assert.Equal(t, 0, len(likes))
+	})
 }
 
 func TestCommentRepositoryGorm_Get(t *testing.T) {

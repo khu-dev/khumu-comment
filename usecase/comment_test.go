@@ -186,6 +186,9 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 	// Nothing.
 }
 
+
+// 시나리오
+// somebody가 jinsu의 댓글인 1번 댓글을 좋아요.
 func TestLikeCommentUseCase_Toggle(t *testing.T) {
 	t.Run("Somebody likes jinsu's comment", func(t *testing.T) {
 		commentID := 1
@@ -209,6 +212,17 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 		assert.False(t, created)
 	})
 
+	t.Run("Somebody likes jinsu's comment three time so create again", func(t *testing.T) {
+		commentID := 1
+		created, err := likeCommentUseCase.Toggle(
+		&model.LikeComment{
+			CommentID: commentID,
+			Username: test.UsersData["Somebody"].Username,
+		})
+		assert.Nil(t, err)
+		assert.True(t, created)
+	})
+
 	t.Run("jinsu likes jinsu's comment", func(t *testing.T){
 		created, err := likeCommentUseCase.Toggle(
 		&model.LikeComment{
@@ -224,16 +238,13 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 
 }
 
+// 시나리오
+// 기존에 somebody가 진수의 1번 댓글을 좋아요.
+// => 좋아요 1개
 func TestCommentUseCase_List(t *testing.T) {
 	var resultComments []*model.Comment
+	var err error
 	t.Run("Set up", func(t *testing.T) {
-		created, err := likeCommentUseCase.Toggle(
-		&model.LikeComment{
-			CommentID: 1,
-			Username: test.UsersData["Puppy"].Username,
-		})
-		assert.Nil(t, err)
-		assert.True(t, created)
 
 		resultComments, err = commentUseCase.List("jinsu", &repository.CommentQueryOption{})
 		assert.Nil(t, err)
@@ -249,6 +260,7 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Equal(t, "jinsu", c.AuthorUsername)
 		assert.Equal(t, "jinsu", c.Author.Username)
 		assert.Equal(t, 1, c.LikeCommentCount)
+		assert.False(t, c.Liked) // 자신의 코멘트에 대한 liked
 	})
 	t.Run("Jinsu's named comment", func(t *testing.T) {
 		c := resultComments[1]
@@ -256,6 +268,7 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Equal(t, "jinsu", c.AuthorUsername)
 		assert.Equal(t, "jinsu", c.Author.Username)
 		assert.Equal(t, 0, c.LikeCommentCount)
+		assert.False(t, c.Liked) // 자신의 코멘트에 대한 liked
 	})
 	t.Run("Somebody's anonymous comment", func(t *testing.T) {
 		c := resultComments[2]
@@ -263,5 +276,14 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Equal(t, "익명", c.AuthorUsername)
 		assert.Equal(t, "익명", c.Author.Username)
 		assert.Equal(t, 0, c.LikeCommentCount)
+	})
+
+	t.Run("Somebody likes Comment 1 (jinsu's anonymous comment)", func(t *testing.T) {
+		comments, err := commentUseCase.List("somebody", &repository.CommentQueryOption{ArticleID: 1})
+		assert.NoError(t, err)
+		jinsuComment := comments[0]
+		somebodyComment := comments[2]
+		assert.True(t, jinsuComment.Liked)
+		assert.False(t, somebodyComment.Liked)
 	})
 }

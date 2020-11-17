@@ -72,16 +72,20 @@ func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, 
 	return comment, err
 }
 
+
+// List 할 때에는 Author{}가 아닌 AuthorUsername을 이용해 List 한다.
 func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 	conditions := make(map[string]interface{})
+	// option 인자 정리
 	if opt.ArticleID != 0 {
 		conditions["article_id"] = opt.ArticleID
 	}
 	if opt.AuthorUsername != "" {
 		conditions["author_id"] = opt.AuthorUsername
 	}
+
 	var comments []*model.Comment
-	preloaded := r.DB.Preload("Author").
+	preloaded := r.DB.Preload("Author"). // Author가 사용하는 foreignKey를 이용해 Preload
 		Preload("Children.Author"). // nested preload
 		Preload("Children.Children")
 	if len(conditions) == 0 {
@@ -90,8 +94,8 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 		preloaded.Find(&comments, conditions)
 	}
 
-	// copy 작업을 해주지 않으면 같은 author는 같은 주소값을 참조하게됨.
 	for _, c := range comments{
+		// copy 작업을 해주지 않으면 같은 author는 같은 주소값을 참조하게됨.
 		tmpAuthor := *(c.Author)
 		c.Author = &tmpAuthor
 	}
@@ -140,6 +144,8 @@ func (r *CommentRepositoryGorm) Delete(id int) (*model.Comment, error) {
 }
 
 func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.LikeComment, error) {
+	like.Comment = nil
+	like.User = nil
 	err := r.DB.Save(like).Error
 	return like, err
 }
