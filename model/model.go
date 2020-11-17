@@ -84,6 +84,7 @@ type Comment struct {
 	Parent *Comment `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	LikeCommentCount int `gorm:"-" json:"like_comment_count"`
+	Liked bool `gorm:"-" json:"liked"`
 	CreatedAt time.Time  `json:"created_at"`
 }
 
@@ -94,8 +95,9 @@ func (*Comment) TableName() string {
 type LikeComment struct{
 	ID int `gorm:"primaryKey"`
 	CommentID int `gorm:"column:comment_id" json:"comment"`
-	Comment *Comment `gorm:"foreignKey: CommentID; references: ID; constraint:OnDelete:CASCADE;" json:",omitempty"`
+	Comment *Comment `gorm:"foreignKey: CommentID; references:ID; constraint:OnDelete:CASCADE;" json:"-"`
 	Username string `gorm:"column:username" json:"username"`
+	User *KhumuUserSimple `gorm:"foreignKey: Username; references:Username; constraint:OnDelete:CASCADE" json:"-"`
 }
 
 func (*LikeComment) TableName() string {
