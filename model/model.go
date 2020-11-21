@@ -35,6 +35,7 @@ func (*KhumuUserAuth) TableName() string {
 
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
+	NickName string `gorm:"unique json:"nickname`
 	State     string `gorm:"column:kind" json:"state"`
 }
 
@@ -76,7 +77,7 @@ type Comment struct {
 	Kind           string           `gorm:"column:kind; default:anonymous" json:"kind"`
 	// State: (exists, deleted)
 	State           string           `gorm:"column:state; default:exists" json:"state"`
-	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername;references:Username" json:"author"`
+	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername; references:Username; constraint:OnDELETE:CASCADE" json:"author"`
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
 	ArticleID      int             `gorm:"column:article_id" json:"article"`
 	Content   string     `json:"content"`
@@ -85,7 +86,7 @@ type Comment struct {
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	LikeCommentCount int `gorm:"-" json:"like_comment_count"`
 	Liked bool `gorm:"-" json:"liked"`
-	CreatedAt time.Time  `json:"created_at"`
+	CreatedAt time.Time  `gorm:"autoCreateTime" json:"created_at"`
 }
 
 func (*Comment) TableName() string {

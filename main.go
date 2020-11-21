@@ -34,6 +34,7 @@ func main() {
 			err := repository.MigrateMinimum(db)
 			if err != nil{
 				fmt.Println(err)
+				os.Exit(1)
 			}
 			fmt.Println("Successfully migrated db.")
 		}
