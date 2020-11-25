@@ -42,7 +42,7 @@ func init(){
 		Content:        "테스트로 작성한 somebody의 익명 코멘트",
 		ParentID:       0,
 	}
-	UsersData["Jinsu"] = &model.KhumuUserSimple{Username: "jinsu"}
-	UsersData["Somebody"] = &model.KhumuUserSimple{Username: "somebody"}
-	UsersData["Puppy"] = &model.KhumuUserSimple{Username: "puppy"}
+	UsersData["Jinsu"] = &model.KhumuUserSimple{Username: "jinsu", Nickname: "진수짱짱맨"}
+	UsersData["Somebody"] = &model.KhumuUserSimple{Username: "somebody", Nickname: "썸바디"}
+	UsersData["Puppy"] = &model.KhumuUserSimple{Username: "puppy", Nickname: "댕댕이"}
 }

@@ -14,7 +14,7 @@ type KhumuUser struct {
 	Email         string
 	IsActive      bool
 	Kind          string
-	Nickanme      string
+	Nickname      string `gorm:"unique"`
 	StudentNumber string
 	Memo          string
 	CreatedAt     time.Time
@@ -35,7 +35,7 @@ func (*KhumuUserAuth) TableName() string {
 
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
-	NickName string `gorm:"unique json:"nickname`
+	Nickname string `gorm:"unique json:"nickname`
 	State     string `gorm:"column:kind" json:"state"`
 }
 
