@@ -164,21 +164,24 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		deleted, err := commentUseCase.Delete(child2.ID)
 		assert.Nil(t, err)
 		assert.NotNil(t, deleted)
+		assert.Equal(t, child2.ID, deleted.ID)
 
-		_, err = commentUseCase.Get(deleted.ID)
+		afterDeleted, err := commentUseCase.Get(child2.ID)
+		assert.NotNil(t, afterDeleted)
 		assert.NoError(t, err)
+		assert.Equal(t, "deleted", afterDeleted.State)
 	})
 
 	// parent comment는 실제로 삭제되는 것이 아니라, kind가 deleted 로 변경될 뿐.
 	t.Run("The parent comment", func(t *testing.T) {
 		assert.Equal(t, "exists", parent.State)
-		updatedParent, err := commentUseCase.Update(parent.ID, map[string]interface{}{
-			"state": "deleted",
-		})
+		deletedParent, err := commentUseCase.Delete(parent.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, "deleted", updatedParent.State)
+		assert.Equal(t, "deleted", deletedParent.State)
+		assert.Equal(t, parent.ID, deletedParent.ID)
+
 		// 삭제된 댓글의 작성자는 무언가를 통해 익명처리가 되어야함.
-		assert.NotEqual(t, parent.AuthorUsername, updatedParent.AuthorUsername)
+		assert.NotEqual(t, parent.AuthorUsername, deletedParent.AuthorUsername)
 	})
 }
 

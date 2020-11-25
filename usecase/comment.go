@@ -74,14 +74,13 @@ func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Com
 	return updated, err
 }
 
+// 실제로 Delete 하지는 않고 State를 "deleted"로 변경
 func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
 	log.Println("CommentUseCase_Delete")
-	comment, err := uc.Repository.Get(id)
+	comment, err := uc.Repository.Update(id, map[string]interface{}{
+		"state": "deleted",
+	})
 	if err != nil { return nil, err}
-
-	if comment.ParentID == 0{
-
-	}
 
 	uc.hideAuthor(comment, "") // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
 	return comment, nil
