@@ -121,6 +121,7 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
 		c.AuthorUsername = "익명"
 		c.Author.Username = "익명"
+		c.Author.Nickname = "익명"
 	}
 }
 
