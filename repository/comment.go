@@ -157,7 +157,7 @@ func (r *LikeCommentRepositoryGorm) List(opt *LikeCommentQueryOption) []*model.L
 		conditions["comment_id"] = opt.CommentID
 	}
 	if opt.Username != ""{
-		conditions["username"] = opt.Username
+		conditions["user_id"] = opt.Username
 	}
 
 	if len(conditions) == 0{

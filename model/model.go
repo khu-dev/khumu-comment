@@ -4,10 +4,6 @@ import (
 	"time"
 )
 
-type ModelPrettyPrinter interface {
-	prettyPrint()
-}
-
 type KhumuUser struct {
 	//gorm.Model
 	Username      string `gorm:"primaryKey"`
@@ -35,7 +31,7 @@ func (*KhumuUserAuth) TableName() string {
 
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
-	Nickname string `gorm:"unique json:"nickname`
+	Nickname string `gorm:"unique" json:"nickname"`
 	State     string `gorm:"column:kind" json:"state"`
 }
 
@@ -97,7 +93,7 @@ type LikeComment struct{
 	ID int `gorm:"primaryKey"`
 	CommentID int `gorm:"column:comment_id" json:"comment"`
 	Comment *Comment `gorm:"foreignKey: CommentID; references:ID; constraint:OnDelete:CASCADE;" json:"-"`
-	Username string `gorm:"column:username" json:"username"`
+	Username string `gorm:"column:user_id" json:"username"`
 	User *KhumuUserSimple `gorm:"foreignKey: Username; references:Username; constraint:OnDelete:CASCADE" json:"-"`
 }
 
