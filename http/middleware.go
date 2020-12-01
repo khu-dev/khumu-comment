@@ -1,12 +1,15 @@
 package http
 
 import (
+	"bytes"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/meehow/go-django-hashers"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -81,6 +84,38 @@ func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context
 		found, err := hashers.CheckPassword(password, user.Password)
 		c.Set("user_id", username)
 		return found, err
+	}
+}
+
+func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
+	return func(context echo.Context) error {
+		req := context.Request()
+		if req.Header.Get("Content-Type") != ""{
+			log.Println("Content-Type:", req.Header.Get("Content-Type"))
+		}
+
+		if (req.Method == http.MethodPost || req.Method == http.MethodPut || req.Method == http.MethodPatch) &&
+			strings.HasPrefix(req.Header.Get("Content-Type"), "application/json"){
+			rawBody, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				log.Println(err)
+			}
+			// body는 stream 형태이므로 한 번 읽으면 다시 원상복구 시켜줘야함.
+			// Restore the io.ReadCloser to it's original state
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
+			body := &echo.Map{}
+			err = context.Bind(body)
+			// Restore the io.ReadCloser to it's original state
+			// Bind에서 한 번 또 읽었으니 원상복구
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
+			if err != nil{
+				log.Println("Body bind error:", err)
+				return err
+			}
+
+			log.Println("Body:", body)
+		}
+		return handlerFunc(context)
 	}
 }
 

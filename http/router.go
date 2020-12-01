@@ -17,6 +17,7 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	likeUC usecase.LikeCommentUseCaseInterface) *echo.Echo {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.Use(KhumuRequestLog)
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
 	e.GET("/api/comments/swagger/*", echoSwagger.WrapHandler)
