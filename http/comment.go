@@ -165,8 +165,13 @@ func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 	fmt.Println(*likeComment)
 
 
-	ok, err := r.UC.Toggle(likeComment)
+	isCreated, err := r.UC.Toggle(likeComment)
 	if err != nil {return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})}
 
-	return c.JSON(200, LikeCommentResponse{Data: ok})
+	if isCreated{
+		return c.JSON(201, LikeCommentResponse{Data: isCreated})
+	} else{
+		return c.NoContent(204)
+	}
+
 }

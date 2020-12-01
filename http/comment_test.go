@@ -180,7 +180,29 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 	assert.NotNil(t, likeCommentRouter.UC)
 	err = likeCommentRouter.Toggle(context)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	body, _ := ioutil.ReadAll(rec.Body)
+	log.Println("BODY", string(body))
+	})
+
+	t.Run("Somebody doesn't like jinsu's comment 1.", func(t *testing.T) {
+		data, err := json.Marshal(
+		map[string]interface{}{
+			"comment": 1,
+		},
+	)
+	req := httptest.NewRequest(http.MethodPut, "/like-comments", bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	context := commentEcho.NewContext(req, rec)
+	context.Set("user_id", "somebody")
+
+	assert.NotNil(t, likeCommentRouter.UC)
+	err = likeCommentRouter.Toggle(context)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 
 	body, _ := ioutil.ReadAll(rec.Body)
 	log.Println("BODY", string(body))
