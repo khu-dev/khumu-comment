@@ -147,19 +147,19 @@ func (r *CommentRouter) Get(c echo.Context) error {
 func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 	log.Println("LikeCommentRouter_Toggle")
 	var likeComment *model.LikeComment = &model.LikeComment{Comment:&model.Comment{}, User:&model.KhumuUserSimple{}}
-	form, err := c.FormParams()
+	username := c.Get("user_id").(string)
+	body := &echo.Map{}
+	err := c.Bind(body)
+
+	likeComment.Username = username
 	if err != nil{
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
 	}
-	username := c.Get("user_id").(string)
-	form.Set("comment", "1")
 
-	err = c.Bind(likeComment)
-	likeComment.Username = username
-
-	commentID, err := strconv.Atoi(form.Get("comment"))
-	if err != nil{
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
+	commentIDFloat64, ok := (*body)["comment"].(float64)
+	commentID := int(commentIDFloat64)
+	if !ok{
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "comment 필드가 올바른 int 값이 아닙니다."})
 	}
 	likeComment.CommentID =  commentID
 	fmt.Println(*likeComment)
