@@ -125,18 +125,20 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 
 // Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.
 func (uc *CommentUseCase) setCreatedAtExpression(c *model.Comment){
-	now := time.Now()
-	nowYear, _, nowDate := now.Date()
-
-	commentYear, _, commentDate := c.CreatedAt.Date()
+	// UTC 시간을 단순 한국시간으로 변경
+	now := time.Now().In(repository.Location) // now는 근데 기본적으로 UTC긴한듯.
+	nowYear, nowMonth, nowDate := now.Date()
+	log.Println(c.CreatedAt.In(repository.Location).Format("15:04"))
+	//log.Println(c.CreatedAt.In(repository.Location).Format("2006/01/02 15:04")) // => 한국시간대로 잘 나옴.
+	createdYear, createdMonth, createdDate := c.CreatedAt.In(repository.Location).Date()
 	if now.Sub(c.CreatedAt).Minutes() < 5{
 		c.CreatedAtExpression = "지금"
-	} else if nowDate == commentDate{
-		c.CreatedAtExpression = c.CreatedAt.Format("15:04")
-	} else if nowYear == commentYear{
-		c.CreatedAtExpression = c.CreatedAt.Format("01/02 15:04")
+	} else if nowYear == createdYear && nowMonth == createdMonth && nowDate == createdDate{
+		c.CreatedAtExpression = c.CreatedAt.In(repository.Location).Format("15:04")
+	} else if nowYear == createdYear{
+		c.CreatedAtExpression = c.CreatedAt.In(repository.Location).Format("01/02 15:04")
 	} else{
-		c.CreatedAtExpression = c.CreatedAt.Format("2006/01/02 15:04")
+		c.CreatedAtExpression = c.CreatedAt.In(repository.Location).Format("2006/01/02 15:04")
 	}
 }
 

@@ -12,6 +12,20 @@ import (
 	"time"
 )
 
+var (
+	Location *time.Location
+)
+
+func init(){
+	l, err := time.LoadLocation("Asia/Seoul")
+	if err != nil{
+		log.Fatal(err)
+	} else{
+		Location = l
+	}
+
+}
+
 func NewGorm() *gorm.DB{
 	var db *gorm.DB
 	var connectionError error
@@ -21,6 +35,7 @@ func NewGorm() *gorm.DB{
 	} else if config.Config.DB.Kind == "mysql"{
 		dest := config.Config.DB.MySQL.Host + strconv.Itoa(config.Config.DB.MySQL.Port)
 		log.Println("Connecting DB to " + dest)
+		// loc을 통해 timezone을 설정해줘야만함.
 		db, connectionError = gorm.Open(mysql.Open(fmt.Sprintf(
 			"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true",
 			config.Config.DB.MySQL.User,

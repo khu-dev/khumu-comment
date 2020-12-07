@@ -11,6 +11,7 @@
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 package main
+
 import (
 	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
@@ -21,7 +22,7 @@ import (
 	"os"
 )
 
-func main() {
+func main(){
 	fmt.Println("Args: ", len(os.Args), os.Args)
 	if len(os.Args) == 1{
 		Run()
