@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -43,6 +44,7 @@ func readConfigFileFromKhumuHome(relPath string) *[]byte {
 	return &yamlFileData
 }
 func Load() {
+	log.Println(time.LoadLocation("Asia/Seoul"))
 	var configRelPath string = "config/local.yaml" // 기본은 local.yaml
 	if os.Getenv("KHUMU_ENVIRONMENT") == "DEV"{
 		// KHUMU_HOME을 기준으로한 대한 상대 경로
