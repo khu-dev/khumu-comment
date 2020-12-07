@@ -105,13 +105,21 @@ func (r *CommentRouter) List(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "article in query string is required"})
 		}
 	}
+
+	opt := &repository.CommentQueryOption{}
 	articleIDString := c.QueryParam("article")
 	if articleIDString == ""{articleIDString="0"}
 	articleID, err := strconv.Atoi(articleIDString)
 	//if articleID == {articleID=0}
 	if err!=nil{return c.JSON(400, CommentResponse{Message: "article should be int"})}
+	opt.ArticleID = articleID
 
-	comments, err := r.UC.List(username, &repository.CommentQueryOption{ArticleID: articleID})
+	commentIDString := c.QueryParam("comment")
+	if commentIDString == ""{articleIDString="0"}
+	commentID, err := strconv.Atoi(commentIDString)
+	opt.CommentID = commentID
+
+	comments, err := r.UC.List(username, opt)
 	if err != nil {return err}
 
 	return c.JSON(200, CommentsResponse{Data: comments})
