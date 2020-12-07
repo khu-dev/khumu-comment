@@ -38,30 +38,23 @@ func NewCommentUseCase(repository repository.CommentRepositoryInterface, likeRep
 }
 
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
-	log.Println("CommentUseCase_Create")
 	newComment, err := uc.Repository.Create(comment)
 	if err!=nil{return newComment, err}
 	return newComment, nil
 }
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
-
-	log.Println("CommentUseCase List")
 	comments := uc.Repository.List(opt)
 	parents := uc.listParentWithChildren(comments)
 
 	for _, p := range parents {
-		for _, c := range p.Children {
-			uc.handleComment(c, username)
-		}
-		uc.handleComment(p, username)
+		uc.handleComment(p, username, 0)
 	}
 
 	return parents, nil
 }
 
 func (uc *CommentUseCase) Get(id int) (*model.Comment, error) {
-	log.Println("CommentUseCase_Get")
 	comment, err := uc.Repository.Get(id)
 	if err != nil { return nil, err}
 
@@ -77,7 +70,6 @@ func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Com
 
 // 실제로 Delete 하지는 않고 State를 "deleted"로 변경
 func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
-	log.Println("CommentUseCase_Delete")
 	comment, err := uc.Repository.Update(id, map[string]interface{}{
 		"state": "deleted",
 	})
@@ -100,8 +92,9 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 	return parents
 }
 
-// 대부분의 comment usecase에서 사용되는 로직을 담당한다.
-func (uc *CommentUseCase) handleComment(c *model.Comment, username string){
+// 대부분의 comment usecase에서 사용되는 로직을 담당한다. 재귀적으로 자식 코멘트들에게도 적용된다.
+func (uc *CommentUseCase) handleComment(c *model.Comment, username string, currentDepth int){
+	const maxDepth = 1
 	uc.hideAuthor(c, username)
 	likeCount := uc.getLikeCommentCount(c.ID)
 	c.LikeCommentCount = likeCount
@@ -110,6 +103,11 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string){
 		c.Liked = true
 	}
 	uc.setCreatedAtExpression(c)
+	if currentDepth < maxDepth{
+		for _, child := range c.Children{
+			uc.handleComment(child, username, currentDepth + 1)
+		}
+	}
 }
 
 // username이 author의 username과 일치하면 hide
