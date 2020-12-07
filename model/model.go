@@ -82,7 +82,8 @@ type Comment struct {
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	LikeCommentCount int `gorm:"-" json:"like_comment_count"`
 	Liked bool `gorm:"-" json:"liked"`
-	CreatedAt time.Time  `gorm:"autoCreateTime" json:"created_at"`
+	CreatedAt time.Time  `gorm:"autoCreateTime" json:"-"`
+	CreatedAtExpression string `gorm:"-" json:"created_at"`
 }
 
 func (*Comment) TableName() string {

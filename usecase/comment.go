@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/khu-dev/khumu-comment/repository"
 	"log"
+	"time"
 )
 import "github.com/khu-dev/khumu-comment/model"
 
@@ -107,9 +108,8 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string){
 	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
 	if len(likes) >= 1{
 		c.Liked = true
-	} else if len(likes) > 1{
-		log.Print("[ERROR] ", c, "에 대한", username, "의 like가 1개 이상")
 	}
+	uc.setCreatedAtExpression(c)
 }
 
 // username이 author의 username과 일치하면 hide
@@ -122,6 +122,23 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 		c.AuthorUsername = "익명"
 		c.Author.Username = "익명"
 		c.Author.Nickname = "익명"
+	}
+}
+
+// Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.
+func (uc *CommentUseCase) setCreatedAtExpression(c *model.Comment){
+	now := time.Now()
+	nowYear, _, nowDate := now.Date()
+
+	commentYear, _, commentDate := c.CreatedAt.Date()
+	if now.Sub(c.CreatedAt).Minutes() < 5{
+		c.CreatedAtExpression = "지금"
+	} else if nowDate == commentDate{
+		c.CreatedAtExpression = c.CreatedAt.Format("15:04")
+	} else if nowYear == commentYear{
+		c.CreatedAtExpression = c.CreatedAt.Format("01/02 15:04")
+	} else{
+		c.CreatedAtExpression = c.CreatedAt.Format("2006/01/02 15:04")
 	}
 }
 

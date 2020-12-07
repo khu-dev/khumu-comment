@@ -15,24 +15,21 @@ import (
 )
 
 // 언젠가 모킹을 사용할 것이라면 이 타입을 구현. 메소드는 현재 사용하지 않으므로 주석처리했다.
-type CommentRepositoryMock struct{}
-//func (r *CommentRepositoryMock) Create(comment *model.Comment) error {
-//	commentsData = append(commentsData, comment)
+//type CommentRepositoryMock struct{}
+//func (r *CommentRepositoryMock) Create(comment *model.Comment) (*model.Comment, error){
+//	return nil, nil
+//}
+//func (r *CommentRepositoryMock) List(opt *repository.CommentQueryOption) []*model.Comment{
 //	return nil
 //}
-//
-//// QyeryOption기능은 제외하고 mock
-//func (r *CommentRepositoryMock) List(opt *repository.CommentQueryOption) []*model.Comment {
-//	return commentsData
+//func (r *CommentRepositoryMock) Get(id int) (*model.Comment, error){
+//	return nil, nil
 //}
-//
-//func (r *CommentRepositoryMock) Get(id int) *model.Comment {
-//	for _, comment := range commentsData {
-//		if int(comment.ArticleID) == id {
-//			return comment
-//		}
-//	}
-//	return nil
+//func (r *CommentRepositoryMock) Update(id int, opt map[string]interface{}) (*model.Comment, error){
+//	return nil, nil
+//}
+//func (r *CommentRepositoryMock) Delete(id int) (*model.Comment, error){
+//	return nil, nil
 //}
 
 var (
@@ -238,7 +235,6 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 
 	t.Run("Bad request to create a like comment", func(t *testing.T){
 	})
-
 }
 
 // 시나리오

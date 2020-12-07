@@ -27,6 +27,7 @@ type CommentRepositoryGorm struct {
 type CommentQueryOption struct {
 	ArticleID int
 	AuthorUsername  string
+	CommentID int
 }
 
 type LikeCommentRepositoryGorm struct{
