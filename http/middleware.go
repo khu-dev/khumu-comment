@@ -87,6 +87,7 @@ func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context
 	}
 }
 
+// application/json 요청인 경우 바디를 출력.
 func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	return func(context echo.Context) error {
 		req := context.Request()

@@ -17,6 +17,9 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	likeUC usecase.LikeCommentUseCaseInterface) *echo.Echo {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	  Format: "${time_rfc3339} ${method} ${status} uri=${uri} latency=${latency}\n",
+	}))
 	e.Use(KhumuRequestLog)
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
