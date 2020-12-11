@@ -18,7 +18,14 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-	  Format: "${time_rfc3339} ${method} ${status} uri=${uri} latency=${latency}\n",
+		Format: "${time_rfc3339} ${method} ${status} uri=${uri} latency=${latency}\n",
+		Skipper: func(context echo.Context) bool {
+	  		// health check log는 너무 verbose함.
+			if context.Request().URL.RequestURI() == "/healthz"{
+				return true
+			}
+			return false
+	  },
 	}))
 	e.Use(KhumuRequestLog)
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })

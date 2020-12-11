@@ -157,7 +157,7 @@ func NewLikeCommentUseCase(
 func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
 	var err error
 	logger := logrus.WithField("CommentID", like.CommentID)
-	logger.Println("Toggle LikeComment")
+	logger.Debug("Toggle LikeComment")
 	likes := uc.Repository.List(&repository.LikeCommentQueryOption{CommentID: like.CommentID, Username: like.Username})
 	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
 	// 1보다 큰 경우는 비정상적으로 여러개 존재할 때

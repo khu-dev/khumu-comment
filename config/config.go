@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -10,12 +11,13 @@ import (
 	"time"
 )
 
-const DefaultKhumuHome string = "/home/jinsu/git/khumu/khumu-comment"
+const (
+	DefaultKhumuHome string = "/home/jinsu/git/khumu/khumu-comment"
+)
 
 var (
 	Config *KhumuConfig
 	Location *time.Location
-
 )
 
 func init() {
@@ -25,7 +27,6 @@ func init() {
 		log.Fatal(err)
 	}
 	Location = l
-	log.Println("timezone: ", Location)
 }
 
 // env.KHUMU_HOME의 경로로부터 config/local.yaml or config/dev.yaml을 읽어옵니다.
@@ -38,17 +39,17 @@ func readConfigFileFromKhumuHome(relPath string) *[]byte {
 	if khumuHome == "" {
 		khumuHome = DefaultKhumuHome
 	}
-	log.Print("KHUMU_HOME is ", khumuHome)
+	logrus.Print("KHUMU_HOME is ", khumuHome)
 
 	filename, err := filepath.Abs(path.Join(khumuHome, relPath))
-	log.Println("Open config file ", filename)
+	logrus.Println("Open config file ", filename)
 	if err != nil {
-		log.Panic(err)
+		logrus.Panic(err)
 	}
 
 	yamlFileData, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Panic(err)
+		logrus.Panic(err)
 	}
 
 	return &yamlFileData
@@ -63,7 +64,7 @@ func Load() {
 	Config = &KhumuConfig{}
 	err := yaml.Unmarshal(*yamlDataPtr, Config)
 	if err != nil {
-		log.Panic(err)
+		logrus.Panic(err)
 	}
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/meehow/go-django-hashers"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -28,8 +27,9 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 	// 괜찮으면 받았던 handlerFunc를 수행
 	// 안괜찮으면 error로 응답하는 handlerFunc를 수행하는 방식
 	return func(context echo.Context) error {
+		logger := logrus.WithField("middleware", "Authenticator.Authenticate")
 		if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Bearer") {
-			logrus.Debug("Try JWT Authentication")
+			logger.Debug("Try JWT Authentication")
 			return middleware.JWTWithConfig(KhumuJWTConfig)(
 				// 토큰 속의 유저가 존재하는 유저인지 확인해서 분기하는 http Handler 끼워넣기
 				func(context echo.Context) error {
@@ -40,12 +40,12 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 							if user != nil {
 								context.Set("user_id", username)
 								//여기까지 왔으면 존재하는 유저의 토큰
-								logrus.WithField("user_id", mapClaim["user_id"]).Println("Pass JWT Authentication.")
+								logger.WithField("user_id", mapClaim["user_id"]).Println("Pass JWT Authentication.")
 								return handlerFunc(context)
 							}
 						}
 					}
-					logrus.Error("JWT Authentication failed")
+					logger.Error("JWT Authentication failed")
 					return context.JSON(401, map[string]interface{}{
 						"statusCode": 401,
 						"body":       "Request with a non-existing user.",
@@ -53,7 +53,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 
 				})(context)
 		} else if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Basic") {
-			logrus.Debug("Try Basic Authentication")
+			logger.Debug("Try Basic Authentication")
 			return middleware.BasicAuth(a.KhumuBasicAuth)(handlerFunc)(context)
 		} else {
 			return context.JSON(401, map[string]interface{}{
@@ -91,16 +91,17 @@ func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context
 // application/json 요청인 경우 바디를 출력.
 func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	return func(context echo.Context) error {
+		logger := logrus.WithField("middleware", "KhumuRequestLog")
 		req := context.Request()
 		if req.Header.Get("Content-Type") != ""{
-			log.Println("Content-Type:", req.Header.Get("Content-Type"))
+			logger.Println("Content-Type:", req.Header.Get("Content-Type"))
 		}
 
 		if (req.Method == http.MethodPost || req.Method == http.MethodPut || req.Method == http.MethodPatch) &&
 			strings.HasPrefix(req.Header.Get("Content-Type"), "application/json"){
 			rawBody, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				logrus.Error(err)
+				logger.Error(err)
 			}
 			// body는 stream 형태이므로 한 번 읽으면 다시 원상복구 시켜줘야함.
 			// Restore the io.ReadCloser to it's original state
@@ -111,11 +112,11 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 			// Bind에서 한 번 또 읽었으니 원상복구
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
 			if err != nil{
-				logrus.Error("Body bind error:", err)
+				logger.Error("Body bind error:", err)
 				return err
 			}
 
-			logrus.Println("Body:", body)
+			logger.Println("body: ", body)
 		}
 		return handlerFunc(context)
 	}
