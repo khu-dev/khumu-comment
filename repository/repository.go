@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/model"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -12,25 +13,11 @@ import (
 	"time"
 )
 
-var (
-	Location *time.Location
-)
-
-func init(){
-	l, err := time.LoadLocation("Asia/Seoul")
-	if err != nil{
-		log.Fatal(err)
-	} else{
-		Location = l
-	}
-
-}
-
 func NewGorm() *gorm.DB{
 	var db *gorm.DB
 	var connectionError error
 	if config.Config.DB.Kind == "sqlite3"{
-		log.Println("Connecting DB to " + config.Config.DB.SQLite3.FilePath)
+		logrus.Println("Connecting DB to " + config.Config.DB.SQLite3.FilePath)
 		db, connectionError = gorm.Open(sqlite.Open(config.Config.DB.SQLite3.FilePath), &gorm.Config{})
 	} else if config.Config.DB.Kind == "mysql"{
 		dest := config.Config.DB.MySQL.Host + strconv.Itoa(config.Config.DB.MySQL.Port)

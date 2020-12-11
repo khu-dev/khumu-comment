@@ -2,8 +2,9 @@ package usecase
 
 import (
 	"errors"
+	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/repository"
-	"log"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 import "github.com/khu-dev/khumu-comment/model"
@@ -126,19 +127,19 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 // Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.
 func (uc *CommentUseCase) setCreatedAtExpression(c *model.Comment){
 	// UTC 시간을 단순 한국시간으로 변경
-	now := time.Now().In(repository.Location) // now는 근데 기본적으로 UTC긴한듯.
+	now := time.Now().In(config.Location) // now는 근데 기본적으로 UTC긴한듯.
 	nowYear, nowMonth, nowDate := now.Date()
-	log.Println(c.CreatedAt.In(repository.Location).Format("15:04"))
 	//log.Println(c.CreatedAt.In(repository.Location).Format("2006/01/02 15:04")) // => 한국시간대로 잘 나옴.
-	createdYear, createdMonth, createdDate := c.CreatedAt.In(repository.Location).Date()
+	createdAt := c.CreatedAt.In(config.Location)
+	createdYear, createdMonth, createdDate := createdAt.Date()
 	if now.Sub(c.CreatedAt).Minutes() < 5{
 		c.CreatedAtExpression = "지금"
 	} else if nowYear == createdYear && nowMonth == createdMonth && nowDate == createdDate{
-		c.CreatedAtExpression = c.CreatedAt.In(repository.Location).Format("15:04")
+		c.CreatedAtExpression = createdAt.Format("15:04")
 	} else if nowYear == createdYear{
-		c.CreatedAtExpression = c.CreatedAt.In(repository.Location).Format("01/02 15:04")
+		c.CreatedAtExpression = createdAt.Format("01/02 15:04")
 	} else{
-		c.CreatedAtExpression = c.CreatedAt.In(repository.Location).Format("2006/01/02 15:04")
+		c.CreatedAtExpression = createdAt.Format("2006/01/02 15:04")
 	}
 }
 
@@ -155,7 +156,8 @@ func NewLikeCommentUseCase(
 
 func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
 	var err error
-	log.Println(like.CommentID)
+	logger := logrus.WithField("CommentID", like.CommentID)
+	logger.Println("Toggle LikeComment")
 	likes := uc.Repository.List(&repository.LikeCommentQueryOption{CommentID: like.CommentID, Username: like.Username})
 	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
 	// 1보다 큰 경우는 비정상적으로 여러개 존재할 때
@@ -163,7 +165,7 @@ func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
 		for _, like := range likes {
 			err = uc.Repository.Delete(like.ID)
 			if err != nil {
-				log.Panic(false, err)
+				logger.Panic(false, err)
 			}
 		}
 		return false, err

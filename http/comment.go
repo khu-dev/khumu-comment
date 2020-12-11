@@ -1,11 +1,11 @@
 package http
 
 import (
-	"fmt"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 	"strconv"
@@ -65,7 +65,7 @@ type LikeCommentResponse struct {
 // @Router /api/comments [post]
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) Create(c echo.Context) error {
-	log.Println("CommentRouter_Create")
+	logrus.Debug("CommentRouter_Create")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다.러 그렇지 않으면 nil 참조 에
 	var comment *model.Comment = &model.Comment{Author: &model.KhumuUserSimple{}}
 	err := c.Bind(comment)
@@ -94,12 +94,13 @@ func (r *CommentRouter) Create(c echo.Context) error {
 // @Router /api/comments [get]
 // @Success 200 {object} CommentsResponse
 func (r *CommentRouter) List(c echo.Context) error {
-	log.Println("CommentRouter_List")
+	logrus.Debug("CommentRouter_List")
 	username := c.Get("user_id").(string)
 	if username == "" {
 		return c.JSON(403, CommentResponse{Message: "No user_id in context"})
 	}
 	if !isAdmin(username){
+		log.Println(c.QueryParams())
 		if c.QueryParam("article") == ""{
 			//return c.JSON(400, CommentResponse{StatusCode: 401, Message: ""})
 			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "article in query string is required"})
@@ -111,16 +112,28 @@ func (r *CommentRouter) List(c echo.Context) error {
 	if articleIDString == ""{articleIDString="0"}
 	articleID, err := strconv.Atoi(articleIDString)
 	//if articleID == {articleID=0}
-	if err!=nil{return c.JSON(400, CommentResponse{Message: "article should be int"})}
+	if err!=nil{
+		logrus.WithField("article", articleIDString).Error(err)
+		return c.JSON(400, CommentResponse{Message: "article should be int"})
+	}
 	opt.ArticleID = articleID
 
 	commentIDString := c.QueryParam("comment")
-	if commentIDString == ""{articleIDString="0"}
+
+	if commentIDString == ""{commentIDString="0"}
 	commentID, err := strconv.Atoi(commentIDString)
+
+	if err != nil {
+		logrus.Println(err, commentIDString, commentID)
+		return err
+	}
 	opt.CommentID = commentID
 
 	comments, err := r.UC.List(username, opt)
-	if err != nil {return err}
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
 
 	return c.JSON(200, CommentsResponse{Data: comments})
 }
@@ -134,12 +147,18 @@ func (r *CommentRouter) List(c echo.Context) error {
 // @Router /api/comments/{id} [get]
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) Get(c echo.Context) error {
-	log.Println("CommentRouter Get")
+	logrus.Debug("CommentRouter Get")
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {return err}
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
 
 	comment, err := r.UC.Get(id)
-	if err != nil {return err}
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
 
 	return c.JSON(200, comment)
 }
@@ -153,7 +172,7 @@ func (r *CommentRouter) Get(c echo.Context) error {
 // @Router /api/like-comments [put]
 // @Success 200 {object} CommentResponse
 func (r *LikeCommentRouter) Toggle(c echo.Context) error {
-	log.Println("LikeCommentRouter_Toggle")
+	logrus.Debug("LikeCommentRouter_Toggle")
 	var likeComment *model.LikeComment = &model.LikeComment{Comment:&model.Comment{}, User:&model.KhumuUserSimple{}}
 	username := c.Get("user_id").(string)
 	body := &echo.Map{}
@@ -161,20 +180,23 @@ func (r *LikeCommentRouter) Toggle(c echo.Context) error {
 
 	likeComment.Username = username
 	if err != nil{
+		logrus.Error(err)
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
 	}
 
 	commentIDFloat64, ok := (*body)["comment"].(float64)
 	commentID := int(commentIDFloat64)
 	if !ok{
+		logrus.Error("Wrong comment ID format")
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "comment 필드가 올바른 int 값이 아닙니다."})
 	}
 	likeComment.CommentID =  commentID
-	fmt.Println(*likeComment)
-
 
 	isCreated, err := r.UC.Toggle(likeComment)
-	if err != nil {return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})}
+	if err != nil {
+		logrus.Error(err)
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
+	}
 
 	if isCreated{
 		return c.JSON(201, LikeCommentResponse{Data: isCreated})

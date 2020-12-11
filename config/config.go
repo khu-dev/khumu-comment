@@ -1,24 +1,34 @@
 package config
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
-
-	"gopkg.in/yaml.v2"
 )
 
 const DefaultKhumuHome string = "/home/jinsu/git/khumu/khumu-comment"
 
-var Config *KhumuConfig
+var (
+	Config *KhumuConfig
+	Location *time.Location
+
+)
 
 func init() {
 	Load()
+	l, err := time.LoadLocation("Asia/Seoul")
+	if err != nil{
+		log.Fatal(err)
+	}
+	Location = l
+	log.Println("timezone: ", Location)
 }
 
+// env.KHUMU_HOME의 경로로부터 config/local.yaml or config/dev.yaml을 읽어옵니다.
 func readConfigFileFromKhumuHome(relPath string) *[]byte {
 	if Config == nil {
 		Config = &KhumuConfig{}
@@ -44,7 +54,6 @@ func readConfigFileFromKhumuHome(relPath string) *[]byte {
 	return &yamlFileData
 }
 func Load() {
-	log.Println(time.LoadLocation("Asia/Seoul"))
 	var configRelPath string = "config/local.yaml" // 기본은 local.yaml
 	if os.Getenv("KHUMU_ENVIRONMENT") == "DEV"{
 		// KHUMU_HOME을 기준으로한 대한 상대 경로

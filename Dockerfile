@@ -1,4 +1,5 @@
 FROM alpine
+RUN apk add tzdata
 WORKDIR /khumu
 COPY khumu-comment /khumu/khumu-comment
 ENV KHUMU_HOME /khumu

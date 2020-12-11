@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/meehow/go-django-hashers"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,7 +29,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 	// 안괜찮으면 error로 응답하는 handlerFunc를 수행하는 방식
 	return func(context echo.Context) error {
 		if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Bearer") {
-			log.Println("Try JWT Authentication")
+			logrus.Debug("Try JWT Authentication")
 			return middleware.JWTWithConfig(KhumuJWTConfig)(
 				// 토큰 속의 유저가 존재하는 유저인지 확인해서 분기하는 http Handler 끼워넣기
 				func(context echo.Context) error {
@@ -39,12 +40,12 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 							if user != nil {
 								context.Set("user_id", username)
 								//여기까지 왔으면 존재하는 유저의 토큰
-								log.Println("Pass JWT Authentication. user_id: ", mapClaim["user_id"])
+								logrus.WithField("user_id", mapClaim["user_id"]).Println("Pass JWT Authentication.")
 								return handlerFunc(context)
 							}
 						}
 					}
-					log.Println("JWT Authentication failed")
+					logrus.Error("JWT Authentication failed")
 					return context.JSON(401, map[string]interface{}{
 						"statusCode": 401,
 						"body":       "Request with a non-existing user.",
@@ -52,7 +53,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 
 				})(context)
 		} else if strings.HasPrefix(context.Request().Header.Get("Authorization"), "Basic") {
-			log.Println("Try Basic Authentication")
+			logrus.Debug("Try Basic Authentication")
 			return middleware.BasicAuth(a.KhumuBasicAuth)(handlerFunc)(context)
 		} else {
 			return context.JSON(401, map[string]interface{}{
@@ -99,7 +100,7 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 			strings.HasPrefix(req.Header.Get("Content-Type"), "application/json"){
 			rawBody, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				log.Println(err)
+				logrus.Error(err)
 			}
 			// body는 stream 형태이므로 한 번 읽으면 다시 원상복구 시켜줘야함.
 			// Restore the io.ReadCloser to it's original state
@@ -110,11 +111,11 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 			// Bind에서 한 번 또 읽었으니 원상복구
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
 			if err != nil{
-				log.Println("Body bind error:", err)
+				logrus.Error("Body bind error:", err)
 				return err
 			}
 
-			log.Println("Body:", body)
+			logrus.Println("Body:", body)
 		}
 		return handlerFunc(context)
 	}
