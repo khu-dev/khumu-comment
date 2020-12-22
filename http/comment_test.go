@@ -170,7 +170,7 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 			"comment": 1,
 		},
 	)
-	req := httptest.NewRequest(http.MethodPut, "/like-comments", bytes.NewReader(data))
+	req := httptest.NewRequest(http.MethodPatch, "/like-comments", bytes.NewReader(data))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 

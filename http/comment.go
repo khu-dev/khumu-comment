@@ -33,7 +33,7 @@ func NewCommentRouter(root *RootRouter, uc usecase.CommentUseCaseInterface) *Com
 func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterface) *LikeCommentRouter {
 	group := root.Group.Group("/like-comments")
 	router := &LikeCommentRouter{group, uc}
-	group.PUT("", router.Toggle)
+	group.PATCH("", router.Toggle)
 	return router
 }
 
