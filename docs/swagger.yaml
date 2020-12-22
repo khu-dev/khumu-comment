@@ -39,6 +39,8 @@ definitions:
         type: string
       like_comment_count:
         type: integer
+      liked:
+        type: boolean
       parent:
         $ref: '#/definitions/model.Comment'
       state:
@@ -47,6 +49,8 @@ definitions:
     type: object
   model.KhumuUserSimple:
     properties:
+      nickname:
+        type: string
       state:
         type: string
       username:
@@ -57,7 +61,13 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://github.com/khu-dev
-  description: KHUMU의 Comment와 Comment-Like에 대한 RESTful API server
+  description: |-
+    KHUMU의 Comment와 Comment-Like에 대한 RESTful API server
+    <h3>KHUMU API Documentations</h3>
+    <ul>
+    <li><a href='https://api.khumu.jinsu.me/docs/command-center'>command-center</a>: 인증, 유저, 게시판, 게시물, 게시물 좋아요, 게시물 북마크 등 전반적인 쿠뮤의 API</li>
+    <li><a href='https://api.khumu.jinsu.me/docs/comment/index.html'>comment</a>: 댓글, 댓글 좋아요와 관련된 API</li>
+    </ul>
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -65,7 +75,7 @@ info:
   title: Docs::KHUMU Comment
   version: "1.0"
 paths:
-  /api/comments/:
+  /api/comments:
     get:
       parameters:
       - description: admin group이 아닌 이상은 게시물 id를 꼭 정의해야합니다.
@@ -135,7 +145,7 @@ paths:
       summary: Comment 조회합니다.
       tags:
       - Comment
-  /api/like-comments/:
+  /api/like-comments:
     put:
       description: 현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.
       parameters:

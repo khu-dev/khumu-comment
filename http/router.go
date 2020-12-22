@@ -30,7 +30,7 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	e.Use(KhumuRequestLog)
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
-	e.GET("/api/comments/swagger/*", echoSwagger.WrapHandler)
+	e.GET("/docs/comment/*", echoSwagger.WrapHandler)
 	root := NewRootRouter(e, userRepository)
 	_ = NewCommentRouter(root, commentUC)
 	_ = NewLikeCommentRouter(root, likeUC)

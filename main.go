@@ -1,6 +1,12 @@
 // @title Docs::KHUMU Comment
 // @version 1.0
 // @description KHUMU의 Comment와 Comment-Like에 대한 RESTful API server
+// @description <h3>KHUMU API Documentations</h3>
+// @description <ul>
+// @description <li><a href='https://api.khumu.jinsu.me/docs/command-center'>command-center</a>: 인증, 유저, 게시판, 게시물, 게시물 좋아요, 게시물 북마크 등 전반적인 쿠뮤의 API</li>
+// @description <li><a href='https://api.khumu.jinsu.me/docs/comment/index.html'>comment</a>: 댓글, 댓글 좋아요와 관련된 API</li>
+// @description </ul>
+
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support

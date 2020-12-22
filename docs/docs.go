@@ -33,7 +33,7 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/comments/": {
+        "/api/comments": {
             "get": {
                 "produces": [
                     "application/json"
@@ -138,7 +138,7 @@ var doc = `{
                 }
             }
         },
-        "/api/like-comments/": {
+        "/api/like-comments": {
             "put": {
                 "description": "현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.",
                 "produces": [
@@ -230,6 +230,9 @@ var doc = `{
                 "like_comment_count": {
                     "type": "integer"
                 },
+                "liked": {
+                    "type": "boolean"
+                },
                 "parent": {
                     "$ref": "#/definitions/model.Comment"
                 },
@@ -242,6 +245,9 @@ var doc = `{
         "model.KhumuUserSimple": {
             "type": "object",
             "properties": {
+                "nickname": {
+                    "type": "string"
+                },
                 "state": {
                     "type": "string"
                 },
@@ -269,7 +275,7 @@ var SwaggerInfo = swaggerInfo{
 	BasePath:    "",
 	Schemes:     []string{},
 	Title:       "Docs::KHUMU Comment",
-	Description: "KHUMU의 Comment와 Comment-Like에 대한 RESTful API server",
+	Description: "KHUMU의 Comment와 Comment-Like에 대한 RESTful API server\n<h3>KHUMU API Documentations</h3>\n<ul>\n<li><a href='https://api.khumu.jinsu.me/docs/command-center'>command-center</a>: 인증, 유저, 게시판, 게시물, 게시물 좋아요, 게시물 북마크 등 전반적인 쿠뮤의 API</li>\n<li><a href='https://api.khumu.jinsu.me/docs/comment/index.html'>comment</a>: 댓글, 댓글 좋아요와 관련된 API</li>\n</ul>",
 }
 
 type s struct{}
