@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-openapi/spec v0.19.12 // indirect
 	github.com/labstack/echo/v4 v4.1.17
+	github.com/labstack/gommon v0.3.0
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/meehow/go-django-hashers v0.0.0-20171231135116-5e5d6afe52db
 	github.com/sirupsen/logrus v1.7.0

@@ -57,13 +57,15 @@ func TestSetUp(t *testing.T) {
 }
 
 func TestCommentRepositoryGorm_Create(t *testing.T) {
+	//parentID0 := 0
+	parentID1 := 1
 	t.Run("jinsu's anonymous comment", func(t *testing.T){
 		comment := &model.Comment{
 			Kind:           "anonymous",
 			Author: &model.KhumuUserSimple{Username: "jinsu"},
 			ArticleID:      1,
 			Content:        "테스트로 작성한 익명 코멘트입니다.",
-			ParentID:       1,
+			ParentID:       &parentID1,
 		}
 		created, err := commentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -77,7 +79,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 			Author: &model.KhumuUserSimple{Username: "jinsu"},
 			ArticleID:      1,
 			Content:        "테스트로 작성한 기명 코멘트입니다.",
-			ParentID:       1,
+			ParentID:       &parentID1,
 		}
 		created, err := commentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -91,7 +93,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 			Author: &model.KhumuUserSimple{Username: "somebody"},
 			ArticleID:      1,
 			Content:        "테스트로 작성한 somebody의 기명 코멘트입니다.",
-			ParentID:       0,
+			ParentID:       &parentID1,
 		}
 		created, err := commentRepository.Create(comment)
 		assert.Nil(t, err)

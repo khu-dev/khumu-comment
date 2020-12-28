@@ -99,17 +99,35 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 		// copy 작업을 해주지 않으면 같은 author는 같은 주소값을 참조하게됨.
 		tmpAuthor := *(c.Author)
 		c.Author = &tmpAuthor
+		if len(c.Children) == 0{
+			c.Children = make([]*model.Comment, 0)
+		} // slice를 초기화해주지 않으면 empty의 경우 null이 되어버림.
+		for _, child := range c.Children{
+			// 현재 비즈니스 로직상에선 max depth가 1이므로 child의 Children은 존재하지 않는다.
+			child.Children = make([]*model.Comment, 0)
+		}
 	}
 	return comments
 }
 
 func (r *CommentRepositoryGorm) Get(id int) (*model.Comment, error) {
-	var tmp *model.Comment = &model.Comment{}
-	err := r.DB.Preload("Author").First(tmp, id).Error
+	var c *model.Comment = &model.Comment{}
+	err := r.DB.Preload("Author").
+		Preload("Children").
+		Preload("Children.Author").
+		First(c, id).Error
+
 	if err != nil{
 		return nil, err
 	}
-	return tmp, nil
+	for _, child := range c.Children{
+		// 현재 비즈니스 로직상에선 max depth가 1이므로 child의 Children은 존재하지 않는다.
+		child.Children = make([]*model.Comment, 0)
+	}
+	// List의 경우 Children이 empty의 경우 empty slice로 할당해줘야 null이 아닌 []가 되는데
+	// Get은 왜 안 해줘도 []이 되는지는 모르겠음.
+	// c.Children = make([]*model.Comment, 0)
+	return c, nil
 }
 
 func (r *CommentRepositoryGorm) Update(id int, opt map[string]interface{}) (*model.Comment, error) {

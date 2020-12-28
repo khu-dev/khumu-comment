@@ -1,11 +1,13 @@
 package http
 
 import (
+	"errors"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
@@ -135,6 +137,11 @@ func (r *CommentRouter) List(c echo.Context) error {
 		return err
 	}
 
+	// 개수가 0인 경우 그냥 리턴하면 data: null이 되어버림.
+	// 따라서 empty slice를 새로 만들어준다.
+	if len(comments) == 0{
+		comments = make([]*model.Comment, 0)
+	}
 	return c.JSON(200, CommentsResponse{Data: comments})
 }
 
@@ -154,8 +161,13 @@ func (r *CommentRouter) Get(c echo.Context) error {
 		return err
 	}
 
+
 	comment, err := r.UC.Get(id)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
+		}
+
 		logrus.Error(err)
 		return err
 	}

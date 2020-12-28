@@ -77,7 +77,7 @@ type Comment struct {
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
 	ArticleID      int             `gorm:"column:article_id" json:"article"`
 	Content   string     `json:"content"`
-	ParentID  int      `gorm:"column:parent_id;default:null" json:"parent"`
+	ParentID  *int      `gorm:"column:parent_id;default:null" json:"parent"`
 	Parent *Comment `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
 	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
 	LikeCommentCount int `gorm:"-" json:"like_comment_count"`

@@ -19,17 +19,19 @@
 package main
 
 import (
-	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/container"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 )
-
+func init(){
+	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: false, DisableQuote: true, ForceColors: true})
+}
 func main(){
-	fmt.Println("Args: ", len(os.Args), os.Args)
+	logrus.Println("Args: ", len(os.Args), os.Args)
 	if len(os.Args) == 1{
 		Run()
 	} else{
@@ -40,16 +42,15 @@ func main(){
 			db := repository.NewGorm()
 			err := repository.MigrateMinimum(db)
 			if err != nil{
-				fmt.Println(err)
-				os.Exit(1)
+				logrus.Fatal(err)
 			}
-			fmt.Println("Successfully migrated db.")
+			logrus.Println("Successfully migrated db.")
 		}
 	}
 }
 
 func Run() {
-	log.Printf("Default config. %#v\n", config.Config)
+	logrus.Printf("Default config. %#v\n", config.Config)
 	cont := container.Build()
 	err := cont.Invoke(func(e *echo.Echo){
 		e.Logger.Print("Started Server")

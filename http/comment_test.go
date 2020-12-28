@@ -150,6 +150,21 @@ func TestCommentRouter_List(t *testing.T) {
 
 }
 
+func TestCommentRouter_Get(t *testing.T) {
+	t.Run("Get a non-existing comment", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
+		rec := httptest.NewRecorder()
+		context := commentEcho.NewContext(req, rec)
+		context.Set("user_id", "jinsu")
+		context.SetParamNames("id")
+		context.SetParamValues("99999")
+		//con
+		err := commentRouter.Get(context)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+}
 //func TestLikeCommentRouter_Get(t *testing.T) {
 //	req := httptest.NewRequest(http.MethodGet, "/", nil)
 //	rec := httptest.NewRecorder()
