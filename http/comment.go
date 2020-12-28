@@ -15,28 +15,20 @@ import (
 
 type CommentRouter struct {
 	*echo.Group
-	UC usecase.CommentUseCaseInterface
+	commentUC usecase.CommentUseCaseInterface
+	likeUC usecase.LikeCommentUseCaseInterface
 }
 
-type LikeCommentRouter struct{
-	*echo.Group
-	UC usecase.LikeCommentUseCaseInterface
-}
-
-func NewCommentRouter(root *RootRouter, uc usecase.CommentUseCaseInterface) *CommentRouter {
+func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterface, likeUC usecase.LikeCommentUseCaseInterface) *CommentRouter {
 	group := root.Group.Group("/comments")
-	router := &CommentRouter{group, uc}
-	group.POST("", router.Create)
-	group.GET("", router.List)
-	group.GET("/:id", router.Get)
-	return router
-}
+	commentRouter := &CommentRouter{group, commentUC, likeUC}
 
-func NewLikeCommentRouter(root *RootRouter, uc usecase.LikeCommentUseCaseInterface) *LikeCommentRouter {
-	group := root.Group.Group("/like-comments")
-	router := &LikeCommentRouter{group, uc}
-	group.PATCH("", router.Toggle)
-	return router
+	group.POST("", commentRouter.Create)
+	group.GET("", commentRouter.List)
+	group.GET("/:id", commentRouter.Get)
+	group.PATCH("/:id/likes", commentRouter.Toggle)
+
+	return commentRouter
 }
 
 type CommentResponse struct {
@@ -78,7 +70,7 @@ func (r *CommentRouter) Create(c echo.Context) error {
 	}
 
 	comment.AuthorUsername = c.Get("user_id").(string)
-	comment, err = r.UC.Create(comment)
+	comment, err = r.commentUC.Create(comment)
 	if err != nil{
 		log.Print(err)
 		return err
@@ -131,7 +123,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 	}
 	opt.CommentID = commentID
 
-	comments, err := r.UC.List(username, opt)
+	comments, err := r.commentUC.List(username, opt)
 	if err != nil {
 		logrus.Error(err)
 		return err
@@ -162,7 +154,7 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	}
 
 
-	comment, err := r.UC.Get(id)
+	comment, err := r.commentUC.Get(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound){
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
@@ -183,28 +175,21 @@ func (r *CommentRouter) Get(c echo.Context) error {
 // @Param comment body int true "좋아요할 comment의 ID"
 // @Router /api/like-comments [put]
 // @Success 200 {object} CommentResponse
-func (r *LikeCommentRouter) Toggle(c echo.Context) error {
+func (r *CommentRouter) Toggle(c echo.Context) error {
 	logrus.Debug("LikeCommentRouter_Toggle")
 	var likeComment *model.LikeComment = &model.LikeComment{Comment:&model.Comment{}, User:&model.KhumuUserSimple{}}
 	username := c.Get("user_id").(string)
-	body := &echo.Map{}
-	err := c.Bind(body)
-
 	likeComment.Username = username
-	if err != nil{
-		logrus.Error(err)
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
-	}
 
-	commentIDFloat64, ok := (*body)["comment"].(float64)
-	commentID := int(commentIDFloat64)
-	if !ok{
+	commentID, err := strconv.Atoi(c.Param("id"))
+	logrus.Warn(commentID)
+	if err != nil{
 		logrus.Error("Wrong comment ID format")
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "comment 필드가 올바른 int 값이 아닙니다."})
 	}
 	likeComment.CommentID =  commentID
 
-	isCreated, err := r.UC.Toggle(likeComment)
+	isCreated, err := r.likeUC.Toggle(likeComment)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})

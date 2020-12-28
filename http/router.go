@@ -32,8 +32,7 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
 	e.GET("/docs/comment/*", echoSwagger.WrapHandler)
 	root := NewRootRouter(e, userRepository)
-	_ = NewCommentRouter(root, commentUC)
-	_ = NewLikeCommentRouter(root, likeUC)
+	_ = NewCommentRouter(root, commentUC, likeUC)
 	return e
 }
 

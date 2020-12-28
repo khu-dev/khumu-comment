@@ -21,7 +21,6 @@ var (
 	commentEcho              *echo.Echo
 	likeCommentEcho *echo.Echo
 	commentRouter  *CommentRouter
-	likeCommentRouter *LikeCommentRouter
 	commentUseCase usecase.CommentUseCaseInterface
 	likeCommentUseCase usecase.LikeCommentUseCaseInterface
 )
@@ -59,8 +58,7 @@ func TestSetUp(t *testing.T) {
 	err = cont.Invoke(func(commentUC usecase.CommentUseCaseInterface, likeCommentUC usecase.LikeCommentUseCaseInterface) {
 		commentEcho = echo.New()
 		mockRoot := RootRouter{commentEcho.Group("/comments")}
-		commentRouter = NewCommentRouter(&mockRoot, commentUC)
-		likeCommentRouter = NewLikeCommentRouter(&mockRoot, likeCommentUC)
+		commentRouter = NewCommentRouter(&mockRoot, commentUC, likeCommentUC)
 		commentUseCase = commentUC
 		likeCommentUseCase = likeCommentUC
 	})
@@ -102,7 +100,7 @@ func TestCommentRouter_Create(t *testing.T){
 		rec := httptest.NewRecorder()
 		context := commentEcho.NewContext(req, rec)
 		context.Set("user_id", "jinsu")
-		assert.NotNil(t, commentRouter.UC)
+		assert.NotNil(t, commentRouter.commentUC)
 		err = commentRouter.Create(context)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -180,25 +178,18 @@ func TestCommentRouter_Get(t *testing.T) {
 
 func TestLikeCommentRouter_Toggle(t *testing.T) {
 	t.Run("Somebody likes jinsu's comment 1.", func(t *testing.T) {
-		data, err := json.Marshal(
-		map[string]interface{}{
-			"comment": 1,
-		},
-	)
-	req := httptest.NewRequest(http.MethodPatch, "/like-comments", bytes.NewReader(data))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPatch, "/comments/1/likes", nil)
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
 
-	context := commentEcho.NewContext(req, rec)
-	context.Set("user_id", "somebody")
-
-	assert.NotNil(t, likeCommentRouter.UC)
-	err = likeCommentRouter.Toggle(context)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusCreated, rec.Code)
-
-	body, _ := ioutil.ReadAll(rec.Body)
-	log.Println("BODY", string(body))
+		context := commentEcho.NewContext(req, rec)
+		context.Set("user_id", "somebody")
+		context.SetParamNames("id")
+		context.SetParamValues("1")
+		assert.NotNil(t, commentRouter.likeUC)
+		err := commentRouter.Toggle(context)
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusCreated, rec.Code)
 	})
 
 	t.Run("Somebody doesn't like jinsu's comment 1.", func(t *testing.T) {
@@ -207,15 +198,18 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 			"comment": 1,
 		},
 	)
-	req := httptest.NewRequest(http.MethodPut, "/like-comments", bytes.NewReader(data))
+
+	req := httptest.NewRequest(http.MethodPut, "/comments/1/likes", bytes.NewReader(data))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
 	context := commentEcho.NewContext(req, rec)
 	context.Set("user_id", "somebody")
+	context.SetParamNames("id")
+	context.SetParamValues("1")
 
-	assert.NotNil(t, likeCommentRouter.UC)
-	err = likeCommentRouter.Toggle(context)
+	assert.NotNil(t, commentRouter.likeUC)
+	err = commentRouter.Toggle(context)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 
