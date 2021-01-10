@@ -101,3 +101,10 @@ type LikeComment struct{
 func (*LikeComment) TableName() string {
 	return "comment_likecomment"
 }
+
+
+var (
+	DeletedCommentContent string = "삭제된 댓글입니다."
+	DeletedCommentUsername string = "삭제된 댓글의 작성자"
+	DeletedCommentNickname string = "삭제된 댓글의 작성자"
+)

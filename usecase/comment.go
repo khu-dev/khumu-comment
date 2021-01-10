@@ -73,7 +73,7 @@ func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Com
 func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
 	comment, err := uc.Repository.Update(id, map[string]interface{}{
 		"state": "deleted",
-		"content": "삭제된 댓글입니다.",
+		"content": model.DeletedCommentContent,
 	})
 	if err != nil { return nil, err}
 
@@ -116,9 +116,9 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string, curre
 // 그냥 무조건 hide 하고싶다면 username을 ""으로 전달
 func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 	if c.State == "deleted" {
-		c.AuthorUsername = "삭제된 댓글의 작성자"
-		c.Author.Username = "삭제된 댓글의 작성자"
-		c.Author.Nickname = "삭제된 댓글의 작성자"
+		c.AuthorUsername = model.DeletedCommentUsername
+		c.Author.Username = model.DeletedCommentUsername
+		c.Author.Nickname = model.DeletedCommentNickname
 	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
 		c.AuthorUsername = "익명"
 		c.Author.Username = "익명"
