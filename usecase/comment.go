@@ -118,6 +118,7 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 	if c.State == "deleted" {
 		c.AuthorUsername = "삭제된 댓글의 작성자"
 		c.Author.Username = "삭제된 댓글의 작성자"
+		c.Author.Nickname = "삭제된 댓글의 작성자"
 	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
 		c.AuthorUsername = "익명"
 		c.Author.Username = "익명"
