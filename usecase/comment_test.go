@@ -167,6 +167,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.NotNil(t, afterDeleted)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", afterDeleted.State)
+		assert.Equal(t, "", afterDeleted.Content)
 	})
 
 	// parent comment는 실제로 삭제되는 것이 아니라, kind가 deleted 로 변경될 뿐.

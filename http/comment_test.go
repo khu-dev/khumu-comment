@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	"github.com/khu-dev/khumu-comment/usecase"
@@ -14,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 )
 
@@ -163,6 +165,53 @@ func TestCommentRouter_Get(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
 }
+
+func TestCommentRouter_Delete(t *testing.T) {
+	var (
+		tmpParentComment, tmpChildComment *model.Comment
+		err error
+	)
+	t.Run("[Setup] 임시 코멘트 생성", func(t *testing.T) {
+		tmpParentComment, err = commentUseCase.Create(&model.Comment{ArticleID: 1, AuthorUsername: "jinsu", Author: &model.KhumuUserSimple{Username: "jinsu"}, ParentID: nil, Content: "삭제될 임시 Parent Comment"})
+		assert.NoError(t, err)
+		assert.NotNil(t, tmpParentComment)
+		tmpChildComment, err = commentUseCase.Create(&model.Comment{ArticleID: 1, AuthorUsername: "somebody", Author: &model.KhumuUserSimple{Username: "somebody"}, ParentID: &tmpParentComment.ID, Content: "삭제될 임시 Child Comment"})
+		assert.NoError(t, err)
+		assert.NotNil(t, tmpChildComment)
+	})
+
+	t.Run("부모 댓글 삭제", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/comments/" + strconv.Itoa(tmpParentComment.ID), nil)
+		rec := httptest.NewRecorder()
+		context := commentEcho.NewContext(req, rec)
+		context.SetParamNames("id")
+		context.SetParamValues(strconv.Itoa(tmpParentComment.ID))
+		//con
+		err := commentRouter.Delete(context)
+		assert.Nil(t, err)
+
+		deletedStateParentComment, err := commentUseCase.Get(tmpParentComment.ID)
+		assert.Equal(t, "deleted", deletedStateParentComment.State)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+	})
+
+	t.Run("자식 댓글 삭제", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/comments/" + strconv.Itoa(tmpChildComment.ID), nil)
+		rec := httptest.NewRecorder()
+		context := commentEcho.NewContext(req, rec)
+		context.SetParamNames("id")
+		context.SetParamValues(strconv.Itoa(tmpChildComment.ID))
+		//con
+		err := commentRouter.Delete(context)
+		assert.Nil(t, err)
+
+		deletedStateChildComment, err := commentUseCase.Get(tmpChildComment.ID)
+		assert.Equal(t, "deleted", deletedStateChildComment.State)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+	})
+}
 //func TestLikeCommentRouter_Get(t *testing.T) {
 //	req := httptest.NewRequest(http.MethodGet, "/", nil)
 //	rec := httptest.NewRecorder()
@@ -187,7 +236,7 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 		assert.NotNil(t, commentRouter.likeUC)
-		err := commentRouter.Toggle(context)
+		err := commentRouter.LikeToggle(context)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 	})
@@ -209,7 +258,7 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 	context.SetParamValues("1")
 
 	assert.NotNil(t, commentRouter.likeUC)
-	err = commentRouter.Toggle(context)
+	err = commentRouter.LikeToggle(context)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 

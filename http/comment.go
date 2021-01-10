@@ -23,10 +23,12 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	group := root.Group.Group("/comments")
 	commentRouter := &CommentRouter{group, commentUC, likeUC}
 
+	// comment는 Update API를 제공하지 않는다.
 	group.POST("", commentRouter.Create)
 	group.GET("", commentRouter.List)
 	group.GET("/:id", commentRouter.Get)
-	group.PATCH("/:id/likes", commentRouter.Toggle)
+	group.DELETE("/:id", commentRouter.Delete)
+	group.PATCH("/:id/likes", commentRouter.LikeToggle)
 
 	return commentRouter
 }
@@ -145,6 +147,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 // @Param id path int true "Comment ID"
 // @Router /api/comments/{id} [get]
 // @Success 200 {object} CommentResponse
+
 func (r *CommentRouter) Get(c echo.Context) error {
 	logrus.Debug("CommentRouter Get")
 	id, err := strconv.Atoi(c.Param("id"))
@@ -167,6 +170,27 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	return c.JSON(200, comment)
 }
 
+func (r *CommentRouter) Delete(c echo.Context) error {
+	logrus.Debug("CommentRouter Delete")
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+
+	_, err = r.commentUC.Delete(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
+		}
+
+		logrus.Error(err)
+		return err
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // @Tags Like Comment
 // @Summary Comment에 대한 "좋아요"를 생성하거나 삭제합니다.
 // @Description 현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.
@@ -175,7 +199,7 @@ func (r *CommentRouter) Get(c echo.Context) error {
 // @Param comment body int true "좋아요할 comment의 ID"
 // @Router /api/like-comments [put]
 // @Success 200 {object} CommentResponse
-func (r *CommentRouter) Toggle(c echo.Context) error {
+func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	logrus.Debug("LikeCommentRouter_Toggle")
 	var likeComment *model.LikeComment = &model.LikeComment{Comment:&model.Comment{}, User:&model.KhumuUserSimple{}}
 	username := c.Get("user_id").(string)

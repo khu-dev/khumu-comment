@@ -138,7 +138,7 @@ func (r *CommentRepositoryGorm) Update(id int, opt map[string]interface{}) (*mod
 	}
 
 	// update 된 내용은 tmp에 저장됨.
-	err = r.DB.Model(tmp).Updates(opt).Error
+	err = r.DB.Model(tmp).Omit("Author").Updates(opt).Error
 	if err != nil{
 		return nil, err
 	}
@@ -146,6 +146,7 @@ func (r *CommentRepositoryGorm) Update(id int, opt map[string]interface{}) (*mod
 	return tmp, nil
 }
 
+// repository 레벨에서 까지 실제로 Delete 할 일은 아직 없다.
 func (r *CommentRepositoryGorm) Delete(id int) (*model.Comment, error) {
 	var tmp *model.Comment = &model.Comment{}
 	err := r.DB.First(tmp, id).Error

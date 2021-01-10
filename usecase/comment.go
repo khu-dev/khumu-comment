@@ -73,6 +73,7 @@ func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Com
 func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
 	comment, err := uc.Repository.Update(id, map[string]interface{}{
 		"state": "deleted",
+		"content": "삭제된 댓글입니다.",
 	})
 	if err != nil { return nil, err}
 
