@@ -4,13 +4,9 @@
 khumu API 서버 중 khumu-command-center 가 article을 비롯한 대부분의 API를 제공하고있으며, article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 형태로 개발하고자 
 khumu-comment 서버를 이렇게 따로 개발하고 있습니다.
 
-## API Documentation**: 
+## API Documentation: 
 
-> 참고: https://github.com/swaggo/echo-swagger
-
-https://api.khumu.jinsu.me/docs/comment/index.html
-
-`$ swag init` 으로 swagger file 생성
+https://documenter.getpostman.com/view/13384984/TVsvfkxs
 
 ## ⚙️설정
 
