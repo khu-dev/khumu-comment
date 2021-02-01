@@ -16,7 +16,7 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	commentUC usecase.CommentUseCaseInterface,
 	likeUC usecase.LikeCommentUseCaseInterface) *echo.Echo {
 	e := echo.New()
-	e.Pre(middleware.RemoveTrailingSlash())
+	e.Pre(middleware.RemoveTrailingSlash()) // 이거 안하면 꼭 끝에 /를 붙여야할 수도 있음.
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339} ${method} ${status} uri=${uri} latency=${latency}\n",
 		Skipper: func(context echo.Context) bool {

@@ -39,10 +39,15 @@ func (*KhumuUserSimple) TableName() string {
 	return "user_khumuuser"
 }
 
+type Board struct {
+	Name string `gorm:"primaryKey"`
+	DisplayName string `gorm:"column:display_name"`
+}
+
 type Article struct {
 	ArticleID      int `gorm:"column:id"`
-	BoardID        int
-	Board          Board `gorm:"foreignKey:BoardID"`
+	BoardName        string
+	Board          Board `gorm:"foreignKey:BoardName"`
 	Title          string
 	AuthorUsername string    `gorm:"column:author_id"`
 	Author         KhumuUser `gorm:"foreignKey:AuthorUsername"`
@@ -52,15 +57,6 @@ type Article struct {
 
 func (*Article) TableName() string {
 	return "article_article"
-}
-
-type Board struct {
-	ShortName     string
-	LongName      string
-	Name          string `gorm:"primaryKey"`
-	Description   string
-	AdminUsername string
-	Admin         KhumuUser `gorm:"foreignKey:AdminUsername"`
 }
 
 func (*Board) TableName() string {

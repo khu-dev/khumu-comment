@@ -62,8 +62,8 @@ type LikeCommentResponse struct {
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) Create(c echo.Context) error {
 	logrus.Debug("CommentRouter_Create")
-	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다.러 그렇지 않으면 nil 참조 에
-	var comment *model.Comment = &model.Comment{Author: &model.KhumuUserSimple{}}
+	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
+	var comment *model.Comment = &model.Comment{}
 	err := c.Bind(comment)
 
 	if err != nil{
@@ -96,7 +96,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 		return c.JSON(403, CommentResponse{Message: "No user_id in context"})
 	}
 	if !isAdmin(username){
-		log.Println(c.QueryParams())
+		logrus.Println(c.QueryParams())
 		if c.QueryParam("article") == ""{
 			//return c.JSON(400, CommentResponse{StatusCode: 401, Message: ""})
 			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "article in query string is required"})

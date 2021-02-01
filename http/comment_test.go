@@ -3,16 +3,14 @@ package http
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -20,66 +18,52 @@ import (
 )
 
 var (
+	db *gorm.DB
+	commentUseCase usecase.CommentUseCaseInterface
+	likeCommentUseCase usecase.LikeCommentUseCaseInterface
+
 	commentEcho              *echo.Echo
 	likeCommentEcho *echo.Echo
 	commentRouter  *CommentRouter
-	commentUseCase usecase.CommentUseCaseInterface
-	likeCommentUseCase usecase.LikeCommentUseCaseInterface
 )
 
-// 후에 mocking을 사용하게 된다면 이 타입을 이용
-type CommentUseCaseMock struct{}
-//func (uc *CommentUseCaseMock) List(c echo.Context) []*model.Comment {
-//	return commentsMock
-//}
-//
-//func (uc *CommentUseCaseMock) Get(c echo.Context) *model.Comment {
-//	return commentsMock[0]
-//}
+func TestMain(m *testing.M){
+	cont := BuildContainer()
 
-func TestSetUp(t *testing.T) {
-	cont := dig.New()
-	err := cont.Provide(repository.NewTestGorm)
-	assert.Nil(t, err)
+	err := cont.Invoke(func(conn *gorm.DB, cuc usecase.CommentUseCaseInterface, lcu usecase.LikeCommentUseCaseInterface) {
+		db = conn
+		commentUseCase = cuc
+		likeCommentUseCase = lcu
 
-	err = cont.Provide(repository.NewCommentRepositoryGorm)
-	assert.Nil(t, err)
-
-	err = cont.Provide(repository.NewLikeCommentRepositoryGorm)
-	assert.Nil(t, err)
-
-	err = cont.Provide(repository.NewUserRepositoryGorm)
-	assert.Nil(t, err)
-
-	err = cont.Provide(usecase.NewCommentUseCase)
-	assert.Nil(t, err)
-
-	err = cont.Provide(usecase.NewLikeCommentUseCase)
-	assert.Nil(t, err)
-
-	err = cont.Invoke(func(commentUC usecase.CommentUseCaseInterface, likeCommentUC usecase.LikeCommentUseCaseInterface) {
 		commentEcho = echo.New()
 		mockRoot := RootRouter{commentEcho.Group("/comments")}
-		commentRouter = NewCommentRouter(&mockRoot, commentUC, likeCommentUC)
-		commentUseCase = commentUC
-		likeCommentUseCase = likeCommentUC
+		commentRouter = NewCommentRouter(&mockRoot, commentUseCase, likeCommentUseCase)
 	})
+	if err != nil{
+		logrus.Fatal(err)
+	}
+	m.Run()
+}
 
-	t.Run("Create sample users to preload in list comment", func(t *testing.T) {
-		for _, user := range test.UsersData{
-			username := user.Username
-			t.Log("Create a user named ", username)
-			err = cont.Invoke(func(db *gorm.DB){
-				dbErr := db.Create(&user).Error
-				assert.Nil(t, dbErr)
-				assert.Equal(t, username, user.Username)
-			})
-			assert.Nil(t, err)
-		}
-	})
+// B는 Before each의 acronym
+func B(tb testing.TB){
+	test.SetUp(db)
+}
 
-	assert.Nil(t, err)
-	assert.GreaterOrEqual(t, len(test.CommentsData), 3)
+// A는 After each의 acronym
+func A(tb testing.TB){
+	test.CleanUp(db)
+}
+
+func BuildContainer() (*dig.Container) {
+	cont := dig.New()
+	cont.Provide(repository.NewTestGorm)
+	cont.Provide(repository.NewCommentRepositoryGorm)
+	cont.Provide(repository.NewLikeCommentRepositoryGorm)
+	cont.Provide(usecase.NewCommentUseCase)
+	cont.Provide(usecase.NewLikeCommentUseCase)
+
+	return cont
 }
 
 func TestCommentRouter_Create(t *testing.T){
@@ -94,6 +78,8 @@ func TestCommentRouter_Create(t *testing.T){
 	}
 
 	t.Run("Authenticated user", func(t *testing.T) {
+		B(t)
+		defer A(t)
 		data, err := json.Marshal(defaultComment)
 		assert.Nil(t, err)
 
@@ -112,6 +98,8 @@ func TestCommentRouter_Create(t *testing.T){
 }
 
 func TestCommentRouter_List(t *testing.T) {
+	B(t)
+	defer A(t)
 	t.Run("Admin user", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
 		rec := httptest.NewRecorder()
@@ -120,8 +108,6 @@ func TestCommentRouter_List(t *testing.T) {
 		err := commentRouter.List(context)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		body, _ := ioutil.ReadAll(rec.Body)
-		log.Println("BODY", string(body))
 	})
 
 	t.Run("Jinsu user with required arguments", func(t *testing.T) {
@@ -132,8 +118,6 @@ func TestCommentRouter_List(t *testing.T) {
 		err := commentRouter.List(context)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		body, _ := ioutil.ReadAll(rec.Body)
-		log.Println("BODY", string(body))
 	})
 
 	t.Run("Jinsu user without required arguments", func(t *testing.T) {
@@ -144,13 +128,13 @@ func TestCommentRouter_List(t *testing.T) {
 		err := commentRouter.List(context)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, _ := ioutil.ReadAll(rec.Body)
-		log.Println("BODY", string(body))
 	})
 
 }
 
 func TestCommentRouter_Get(t *testing.T) {
+	B(t)
+	defer A(t)
 	t.Run("Get a non-existing comment", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
 		rec := httptest.NewRecorder()
@@ -167,102 +151,86 @@ func TestCommentRouter_Get(t *testing.T) {
 }
 
 func TestCommentRouter_Delete(t *testing.T) {
-	var (
-		tmpParentComment, tmpChildComment *model.Comment
-		err error
-	)
-	t.Run("[Setup] 임시 코멘트 생성", func(t *testing.T) {
-		tmpParentComment, err = commentUseCase.Create(&model.Comment{ArticleID: 1, AuthorUsername: "jinsu", Author: &model.KhumuUserSimple{Username: "jinsu"}, ParentID: nil, Content: "삭제될 임시 Parent Comment"})
-		assert.NoError(t, err)
-		assert.NotNil(t, tmpParentComment)
-		tmpChildComment, err = commentUseCase.Create(&model.Comment{ArticleID: 1, AuthorUsername: "somebody", Author: &model.KhumuUserSimple{Username: "somebody"}, ParentID: &tmpParentComment.ID, Content: "삭제될 임시 Child Comment"})
-		assert.NoError(t, err)
-		assert.NotNil(t, tmpChildComment)
-	})
-
 	t.Run("부모 댓글 삭제", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/comments/" + strconv.Itoa(tmpParentComment.ID), nil)
+		B(t)
+		defer A(t)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		context := commentEcho.NewContext(req, rec)
 		context.SetParamNames("id")
-		context.SetParamValues(strconv.Itoa(tmpParentComment.ID))
-		//con
+		context.SetParamValues(strconv.Itoa(1))
+
 		err := commentRouter.Delete(context)
 		assert.Nil(t, err)
-
-		deletedStateParentComment, err := commentUseCase.Get(tmpParentComment.ID)
-		assert.Equal(t, "deleted", deletedStateParentComment.State)
-
 		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		// 테스트 시나리오 상 ID:1 댓글은 부모 댓글이다.
+		deletedStateParentComment, err := commentUseCase.Get(1)
+		assert.NoError(t, err)
+		assert.Equal(t, "deleted", deletedStateParentComment.State)
+		assert.Equal(t, usecase.DeletedCommentContent, deletedStateParentComment.Content)
 	})
 
 	t.Run("자식 댓글 삭제", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/comments/" + strconv.Itoa(tmpChildComment.ID), nil)
+		B(t)
+		defer A(t)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		context := commentEcho.NewContext(req, rec)
 		context.SetParamNames("id")
-		context.SetParamValues(strconv.Itoa(tmpChildComment.ID))
+		context.SetParamValues(strconv.Itoa(test.ReplyCommentsData["JinsuNamedReplyComment"].ID))
 		//con
 		err := commentRouter.Delete(context)
 		assert.Nil(t, err)
-
-		deletedStateChildComment, err := commentUseCase.Get(tmpChildComment.ID)
-		assert.Equal(t, "deleted", deletedStateChildComment.State)
-
 		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		deletedStateChildComment, err := commentUseCase.Get(test.ReplyCommentsData["JinsuNamedReplyComment"].ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "deleted", deletedStateChildComment.State)
 	})
 }
-//func TestLikeCommentRouter_Get(t *testing.T) {
-//	req := httptest.NewRequest(http.MethodGet, "/", nil)
-//	rec := httptest.NewRecorder()
-//
-//	context := commentEcho.NewContext(req, rec)
-//	context.Set("user_id", "admin")
-//	err := commentRouter.List(context)
-//	assert.Nil(t, err)
-//	assert.Equal(t, http.StatusOK, rec.Code)
-//	body, _ := ioutil.ReadAll(rec.Body)
-//	log.Println("BODY", string(body))
-//}
 
 func TestLikeCommentRouter_Toggle(t *testing.T) {
-	t.Run("Somebody likes jinsu's comment 1.", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPatch, "/comments/1/likes", nil)
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
+	t.Run("Somebody likes and dislikes jinsu's comment 1.", func(t *testing.T) {
+		B(t)
+		defer A(t)
 
-		context := commentEcho.NewContext(req, rec)
-		context.Set("user_id", "somebody")
-		context.SetParamNames("id")
-		context.SetParamValues("1")
-		assert.NotNil(t, commentRouter.likeUC)
-		err := commentRouter.LikeToggle(context)
-		assert.Nil(t, err)
-		assert.Equal(t, http.StatusCreated, rec.Code)
-	})
+		// like
+		func(){
+			req := httptest.NewRequest(http.MethodPatch, "/", nil)
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
 
-	t.Run("Somebody doesn't like jinsu's comment 1.", func(t *testing.T) {
-		data, err := json.Marshal(
-		map[string]interface{}{
-			"comment": 1,
-		},
-	)
+			context := commentEcho.NewContext(req, rec)
+			context.Set("user_id", "somebody")
+			context.SetParamNames("id")
+			context.SetParamValues("1")
+			assert.NotNil(t, commentRouter.likeUC)
+			err := commentRouter.LikeToggle(context)
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusCreated, rec.Code)
+		}()
 
-	req := httptest.NewRequest(http.MethodPut, "/comments/1/likes", bytes.NewReader(data))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
+		requestBody, err := json.Marshal(
+			map[string]interface{}{
+				"comment": 1,
+		})
 
-	context := commentEcho.NewContext(req, rec)
-	context.Set("user_id", "somebody")
-	context.SetParamNames("id")
-	context.SetParamValues("1")
+		// dislike by liking again
+		func(){
+			req := httptest.NewRequest(http.MethodPut, "/comments/1/likes", bytes.NewReader(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
 
-	assert.NotNil(t, commentRouter.likeUC)
-	err = commentRouter.LikeToggle(context)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusNoContent, rec.Code)
+			context := commentEcho.NewContext(req, rec)
+			context.Set("user_id", "somebody")
+			context.SetParamNames("id")
+			context.SetParamValues("1")
 
-	body, _ := ioutil.ReadAll(rec.Body)
-	log.Println("BODY", string(body))
+			assert.NotNil(t, commentRouter.likeUC)
+			err = commentRouter.LikeToggle(context)
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusNoContent, rec.Code)
+		}()
 	})
 }

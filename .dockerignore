@@ -1,3 +1,6 @@
+/* .gitignore 와 동일해야함 */
+
+
 .DS_Store
 *.[56789ao]
 *.a[56789o]
@@ -22,7 +25,11 @@ _testmain.go
 
 *.db
 *.sqlite3
-# This file includes artifacts of Go build that should not be checked in.
-# For files created by specific development environment (e.g. editor),
-# use alternative ways to exclude files from git.
-# For example, set up .git/info/exclude or use a global .gitignore.
+config/*
+!config/local.yaml
+
+
+/* .gitignore과 다름 */
+
+
+!khumu-comment

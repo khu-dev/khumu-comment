@@ -9,6 +9,10 @@ import (
 )
 import "github.com/khu-dev/khumu-comment/model"
 
+var (
+	DeletedCommentContent = "삭제된 댓글입니다."
+	AnonymousUsername = "익명"
+)
 type CommentUseCaseInterface interface {
 	Create(comment *model.Comment) (*model.Comment, error)
 	List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error)
@@ -120,9 +124,9 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 		c.Author.Username = model.DeletedCommentUsername
 		c.Author.Nickname = model.DeletedCommentNickname
 	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
-		c.AuthorUsername = "익명"
-		c.Author.Username = "익명"
-		c.Author.Nickname = "익명"
+		c.AuthorUsername = AnonymousUsername
+		c.Author.Username = AnonymousUsername
+		c.Author.Nickname = AnonymousUsername
 	}
 }
 

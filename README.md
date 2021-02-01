@@ -111,7 +111,7 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 * 큰 장점들
   * 지속적인 개발에 대한 신뢰와 안정성이 상승하고, 이는 생산성으로도 연결된다.
   * 또한 당장의 개발에서도 unit test를 통해 계층을 나누어 개발하기 편리하게 때문에 생산성이 증가된다.
- 
+
 * 원래는 의존성 주입 패키지를 사용하지 않았는데, test code를 짜게 되면서 수동으로 의존성을 넣는 것이 번거롭기도 하고 가독성도 안 좋은 것 같아
   의존성 주입 패키지를 사용하기 시작했다.
   
@@ -123,6 +123,22 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
   * 다만 하위 계층을 흉내냈다는 점에서 실제 하위 계층의 동작과 다르게 동작할 수 있다는 면이 해당 계층의 테스트의 정확성을
     낮출 수 있다.
   * 의존성을 주입하는 것이 오히려 mock methods를 정의하는 것보다 편리한 경우도 많다.  
+  
+* 각 Test 별 독립성이 테스트가 가능하도록 하자.
+
+  * Java Spring의 BeforeEach와 AfterEach에서 아이디어를 얻어 `B`와 `A`라는 함수를 정의하기로 했다. 기본적으로 초기 데이터가 필요한 테스트들은 모두 아래와 같이 B와 A를 이용해 Set up과 clean up을 진행한다.
+
+    ```go
+    func TestFoo(t *testing.T) {
+        B()
+        defer A()
+        // some test scenarios.
+    }
+    ```
+
+  * `github.com/khu-dev/khumu-comment/test`  패키지에 초기 데이터 형식과 필요한 몇 가지 함수를 정의해놓았다.
+
+  * 독립적인 유닛 테스트가 가능해져 GoLand에서 지원하는 test를 바로 실행시켜주는 기능도 편리하게 이용 가능해졌다.
 
 
 ## 📚 Golang 개발 이야기

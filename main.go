@@ -21,7 +21,6 @@ package main
 import (
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/container"
-	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -32,21 +31,7 @@ func init(){
 }
 func main(){
 	logrus.Println("Args: ", len(os.Args), os.Args)
-	if len(os.Args) == 1{
-		Run()
-	} else{
-		if os.Args[1] == "run"{
-			Run()
-		} else if os.Args[1] == "migrate"{
-			//config.Load()
-			db := repository.NewGorm()
-			err := repository.MigrateMinimum(db)
-			if err != nil{
-				logrus.Fatal(err)
-			}
-			logrus.Println("Successfully migrated db.")
-		}
-	}
+	Run()
 }
 
 func Run() {
