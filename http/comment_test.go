@@ -18,16 +18,16 @@ import (
 )
 
 var (
-	db *gorm.DB
-	commentUseCase usecase.CommentUseCaseInterface
+	db                 *gorm.DB
+	commentUseCase     usecase.CommentUseCaseInterface
 	likeCommentUseCase usecase.LikeCommentUseCaseInterface
 
-	commentEcho              *echo.Echo
+	commentEcho     *echo.Echo
 	likeCommentEcho *echo.Echo
-	commentRouter  *CommentRouter
+	commentRouter   *CommentRouter
 )
 
-func TestMain(m *testing.M){
+func TestMain(m *testing.M) {
 	cont := BuildContainer()
 
 	err := cont.Invoke(func(conn *gorm.DB, cuc usecase.CommentUseCaseInterface, lcu usecase.LikeCommentUseCaseInterface) {
@@ -39,23 +39,23 @@ func TestMain(m *testing.M){
 		mockRoot := RootRouter{commentEcho.Group("/comments")}
 		commentRouter = NewCommentRouter(&mockRoot, commentUseCase, likeCommentUseCase)
 	})
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	m.Run()
 }
 
 // B는 Before each의 acronym
-func B(tb testing.TB){
+func B(tb testing.TB) {
 	test.SetUp(db)
 }
 
 // A는 After each의 acronym
-func A(tb testing.TB){
+func A(tb testing.TB) {
 	test.CleanUp(db)
 }
 
-func BuildContainer() (*dig.Container) {
+func BuildContainer() *dig.Container {
 	cont := dig.New()
 	cont.Provide(repository.NewTestGorm)
 	cont.Provide(repository.NewCommentRepositoryGorm)
@@ -66,15 +66,15 @@ func BuildContainer() (*dig.Container) {
 	return cont
 }
 
-func TestCommentRouter_Create(t *testing.T){
+func TestCommentRouter_Create(t *testing.T) {
 	defaultComment := map[string]interface{}{
-		"kind":"anonymous",
-		"author":map[string]interface{}{
+		"kind": "anonymous",
+		"author": map[string]interface{}{
 			"username": "jinsu",
 		},
 		"article": 1,
 		"content": "jinsu의 익명 댓글을 테스트하고 있습니다.\nhello, world",
-		"parent": nil,
+		"parent":  nil,
 	}
 
 	t.Run("Authenticated user", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestCommentRouter_List(t *testing.T) {
 	B(t)
 	defer A(t)
 	t.Run("Admin user", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		context := commentEcho.NewContext(req, rec)
 		context.Set("user_id", "admin")
@@ -136,7 +136,7 @@ func TestCommentRouter_Get(t *testing.T) {
 	B(t)
 	defer A(t)
 	t.Run("Get a non-existing comment", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/comments", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		context := commentEcho.NewContext(req, rec)
 		context.Set("user_id", "jinsu")
@@ -196,7 +196,7 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 		defer A(t)
 
 		// like
-		func(){
+		func() {
 			req := httptest.NewRequest(http.MethodPatch, "/", nil)
 			req.Header.Set("Content-Type", "application/json")
 			rec := httptest.NewRecorder()
@@ -214,10 +214,10 @@ func TestLikeCommentRouter_Toggle(t *testing.T) {
 		requestBody, err := json.Marshal(
 			map[string]interface{}{
 				"comment": 1,
-		})
+			})
 
 		// dislike by liking again
-		func(){
+		func() {
 			req := httptest.NewRequest(http.MethodPut, "/comments/1/likes", bytes.NewReader(requestBody))
 			req.Header.Set("Content-Type", "application/json")
 			rec := httptest.NewRecorder()

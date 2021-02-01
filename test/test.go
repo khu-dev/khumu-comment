@@ -15,30 +15,33 @@ import (
 )
 
 var (
-	UsersData map[string]*model.KhumuUserSimple
-	BoardData []*model.Board
-	ArticleData []*model.Article
+	UsersData    map[string]*model.KhumuUserSimple
+	BoardData    []*model.Board
+	ArticleData  []*model.Article
 	CommentsData map[string]*model.Comment
 	// parent Comment의 ID는 모두 1
 	ReplyCommentsData map[string]*model.Comment
 )
 
-func init(){
+func init() {
 	UsersData = map[string]*model.KhumuUserSimple{
 		"Jinsu": &model.KhumuUserSimple{
 			Username: "jinsu",
 			Nickname: "진수짱짱맨",
+			State:    "active",
 		},
 		"Somebody": &model.KhumuUserSimple{
 			Username: "somebody",
 			Nickname: "썸바디",
+			State:    "active",
 		},
 		"Puppy": &model.KhumuUserSimple{
 			Username: "puppy",
 			Nickname: "댕댕이",
+			State:    "active",
 		},
 	}
-	
+
 	BoardData = []*model.Board{
 		&model.Board{Name: "free", DisplayName: "자유게시판"},
 		&model.Board{Name: "department_computer_engineering", DisplayName: "컴퓨터공학과"},
@@ -46,25 +49,25 @@ func init(){
 
 	ArticleData = []*model.Article{
 		&model.Article{
-			ArticleID: 1,
-			BoardName: "free",
-			Title: "1번 게시물입니다.",
+			ArticleID:      1,
+			BoardName:      "free",
+			Title:          "1번 게시물입니다.",
 			AuthorUsername: "jinsu",
-			Content: "이것은 1번 게시물!",
+			Content:        "이것은 1번 게시물!",
 		},
 		&model.Article{
-			ArticleID: 2,
-			BoardName: "free",
-			Title: "2번 게시물입니다.",
+			ArticleID:      2,
+			BoardName:      "free",
+			Title:          "2번 게시물입니다.",
 			AuthorUsername: "somebody",
-			Content: "이것은 2번 게시물!",
+			Content:        "이것은 2번 게시물!",
 		},
 		&model.Article{
-			ArticleID: 3,
-			BoardName: "free",
-			Title: "3번 게시물입니다.",
+			ArticleID:      3,
+			BoardName:      "free",
+			Title:          "3번 게시물입니다.",
 			AuthorUsername: "puppy",
-			Content: "이것은 3번 게시물!",
+			Content:        "이것은 3번 게시물!",
 		},
 	}
 
@@ -73,9 +76,9 @@ func init(){
 			Kind: "anonymous",
 			//AuthorUsername: "jinsu",
 			AuthorUsername: "jinsu",
-			ArticleID: 1,
-			Content:   "테스트로 작성한 jinsu의 익명 코멘트",
-			ParentID:  nil,
+			ArticleID:      1,
+			Content:        "테스트로 작성한 jinsu의 익명 코멘트",
+			ParentID:       nil,
 		},
 		"JinsuNamedComment": &model.Comment{
 			Kind:           "named",
@@ -134,52 +137,52 @@ func init(){
 }
 
 // test 진행 시에 각 step에서 사용할 초기 데이터를 만든다.
-func SetUp(db *gorm.DB){
+func SetUp(db *gorm.DB) {
 	MigrateAll(db)
 	for _, userData := range UsersData {
 		err := db.Create(userData).Error
-		if err != nil{
+		if err != nil {
 			logrus.Fatal(err)
 		}
 	}
-	for _, boardData := range BoardData{
+	for _, boardData := range BoardData {
 		err := db.Create(boardData).Error
-		if err != nil{
+		if err != nil {
 			logrus.Fatal(err)
 		}
 	}
-	for _, articleData := range ArticleData{
+	for _, articleData := range ArticleData {
 		err := db.Omit("Board", "Author").Create(articleData).Error
-		if err != nil{
+		if err != nil {
 			logrus.Fatal(err)
 		}
 	}
-	for _, commentData := range CommentsData{
+	for _, commentData := range CommentsData {
 		err := db.Omit("Author", "Parent", "Children").Create(commentData).Error
-		if err != nil{
+		if err != nil {
 			logrus.Fatal(err)
 		}
 	}
 	// reply comment는 comment에 의존성이있다.
-	for _, rcData := range ReplyCommentsData{
+	for _, rcData := range ReplyCommentsData {
 		err := db.Omit("Author", "Parent", "Children").Create(rcData).Error
-		if err != nil{
+		if err != nil {
 			logrus.Fatal(err)
 		}
 	}
 }
 
 // test 진행 시에 각 step에서 진행한 내용을 초기화한다.
-func CleanUp(db *gorm.DB){
+func CleanUp(db *gorm.DB) {
 	err := db.Migrator().DropTable(&model.LikeComment{}, &model.Comment{}, &model.Article{}, &model.KhumuUserSimple{}, &model.Board{})
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 }
 
-func MigrateAll(db *gorm.DB){
+func MigrateAll(db *gorm.DB) {
 	err := db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 }

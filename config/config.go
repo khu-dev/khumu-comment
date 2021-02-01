@@ -16,14 +16,14 @@ const (
 )
 
 var (
-	Config *KhumuConfig
+	Config   *KhumuConfig
 	Location *time.Location
 )
 
 func init() {
 	Load()
 	l, err := time.LoadLocation("Asia/Seoul")
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	Location = l
@@ -56,7 +56,7 @@ func readConfigFileFromKhumuHome(relPath string) *[]byte {
 }
 func Load() {
 	var configRelPath string = "config/local.yaml" // 기본은 local.yaml
-	if os.Getenv("KHUMU_ENVIRONMENT") == "DEV"{
+	if os.Getenv("KHUMU_ENVIRONMENT") == "DEV" {
 		// KHUMU_HOME을 기준으로한 대한 상대 경로
 		configRelPath = "config/dev.yaml"
 	}
@@ -77,12 +77,12 @@ type KhumuConfig struct {
 		SQLite3 struct {
 			FilePath string `yaml:"filePath"`
 		} `yaml:"sqlite3"`
-		MySQL struct{
-			Host string `yaml:"host"`
-			Port int `yaml:"port"`
+		MySQL struct {
+			Host         string `yaml:"host"`
+			Port         int    `yaml:"port"`
 			DatabaseName string `yaml:"databaseName"`
-			User string `yaml:"user"`
-			Password string `yaml:"password"`
+			User         string `yaml:"user"`
+			Password     string `yaml:"password"`
 		}
 	}
 }

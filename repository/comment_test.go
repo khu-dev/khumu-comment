@@ -11,19 +11,19 @@ import (
 )
 
 var (
-	db              *gorm.DB
-	commentRepository      CommentRepositoryInterface
+	db                    *gorm.DB
+	commentRepository     CommentRepositoryInterface
 	likeCommentRepository LikeCommentRepositoryInterface
 )
 
-func TestMain(m *testing.M){
+func TestMain(m *testing.M) {
 	cont := BuildContainer()
-	err := cont.Invoke(func(database *gorm.DB, cr CommentRepositoryInterface, lcr LikeCommentRepositoryInterface){
+	err := cont.Invoke(func(database *gorm.DB, cr CommentRepositoryInterface, lcr LikeCommentRepositoryInterface) {
 		db = database
 		commentRepository = cr
 		likeCommentRepository = lcr
 	})
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 
@@ -31,29 +31,29 @@ func TestMain(m *testing.M){
 }
 
 // B는 Before each의 acronym
-func B(tb testing.TB){
+func B(tb testing.TB) {
 	test.SetUp(db)
 }
 
 // A는 After each의 acronym
-func A(tb testing.TB){
+func A(tb testing.TB) {
 	test.CleanUp(db)
 }
 
 // 처음 Test 환경을 만들 때에 필요한 SetUp 작업들
 // 주로 IoC 컨테이너
-func BuildContainer() (*dig.Container){
+func BuildContainer() *dig.Container {
 	cont := dig.New()
 	err := cont.Provide(NewTestGorm)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	err = cont.Provide(NewCommentRepositoryGorm)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	err = cont.Provide(NewLikeCommentRepositoryGorm)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 
@@ -63,17 +63,16 @@ func BuildContainer() (*dig.Container){
 func TestCommentRepositoryGorm_Create(t *testing.T) {
 	//parentID0 := 0
 	parentID1 := 1
-	t.Run("jinsu의_익명_댓글", func(t *testing.T){
+	t.Run("jinsu의_익명_댓글", func(t *testing.T) {
 		B(t)
 		defer A(t)
 
-
 		comment := &model.Comment{
-			Kind:           "anonymous",
-			Author: &model.KhumuUserSimple{Username: "jinsu"},
-			ArticleID:      1,
-			Content:        "테스트로 작성한 익명 코멘트입니다.",
-			ParentID:       &parentID1,
+			Kind:      "anonymous",
+			Author:    &model.KhumuUserSimple{Username: "jinsu"},
+			ArticleID: 1,
+			Content:   "테스트로 작성한 익명 코멘트입니다.",
+			ParentID:  &parentID1,
 		}
 		created, err := commentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -81,16 +80,16 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		assert.Equal(t, "jinsu", created.Author.Username)
 		assert.Equal(t, "테스트로 작성한 익명 코멘트입니다.", created.Content)
 	})
-	t.Run("jinsu의_기명_댓글", func(t *testing.T){
+	t.Run("jinsu의_기명_댓글", func(t *testing.T) {
 		B(t)
 		defer A(t)
 
 		comment := &model.Comment{
-			Kind:           "named",
-			Author: &model.KhumuUserSimple{Username: "jinsu"},
-			ArticleID:      1,
-			Content:        "테스트로 작성한 기명 코멘트입니다.",
-			ParentID:       &parentID1,
+			Kind:      "named",
+			Author:    &model.KhumuUserSimple{Username: "jinsu"},
+			ArticleID: 1,
+			Content:   "테스트로 작성한 기명 코멘트입니다.",
+			ParentID:  &parentID1,
 		}
 		created, err := commentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -98,16 +97,16 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		assert.Equal(t, "jinsu", created.Author.Username)
 		assert.Equal(t, "테스트로 작성한 기명 코멘트입니다.", created.Content)
 	})
-	t.Run("somebody의_익명_댓글", func(t *testing.T){
+	t.Run("somebody의_익명_댓글", func(t *testing.T) {
 		B(t)
 		defer A(t)
 
 		comment := &model.Comment{
-			Kind:           "anonymous",
-			Author: &model.KhumuUserSimple{Username: "somebody"},
-			ArticleID:      1,
-			Content:        "테스트로 작성한 somebody의 기명 코멘트입니다.",
-			ParentID:       &parentID1,
+			Kind:      "anonymous",
+			Author:    &model.KhumuUserSimple{Username: "somebody"},
+			ArticleID: 1,
+			Content:   "테스트로 작성한 somebody의 기명 코멘트입니다.",
+			ParentID:  &parentID1,
 		}
 		created, err := commentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -118,9 +117,9 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 }
 
 func TestCommentRepositoryGorm_Update(t *testing.T) {
-	t.Run("jinsu's anonymous comment", func(t *testing.T){
+	t.Run("jinsu's anonymous comment", func(t *testing.T) {
 		B(t)
-	defer A(t)
+		defer A(t)
 		opt := map[string]interface{}{
 			"content": "수정된 테스트로 작성된 익명 코멘트입니다.",
 		}
@@ -138,20 +137,20 @@ func TestCommentRepositoryGorm_Delete(t *testing.T) {
 
 	t.Run("Delete a comment", func(t *testing.T) {
 		B(t)
-	defer A(t)
+		defer A(t)
 
 		// set up
 		// 삭제할 코멘트와, 그 코멘트에 대한 좋아요 생성
-		func (){
+		func() {
 			commentToDelete, err = commentRepository.Create(&model.Comment{
-				Author: &model.KhumuUserSimple{Username: "jinsu"},
+				Author:  &model.KhumuUserSimple{Username: "jinsu"},
 				Content: "A comment to be deleted.",
 			})
 			assert.Nil(t, err)
 
 			likeToDelete, err = likeCommentRepository.Create(&model.LikeComment{
 				CommentID: commentToDelete.ID,
-				Username: "somebody",
+				Username:  "somebody",
 			})
 			assert.NotNil(t, likeToDelete)
 

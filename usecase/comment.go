@@ -10,9 +10,13 @@ import (
 import "github.com/khu-dev/khumu-comment/model"
 
 var (
-	DeletedCommentContent = "삭제된 댓글입니다."
-	AnonymousUsername = "익명"
+	DeletedCommentContent    string = "삭제된 댓글입니다."
+	AnonymousCommentUsername string = "익명"
+	AnonymousCommentNickname string = "익명"
+	DeletedCommentUsername   string = "삭제된 댓글의 작성자"
+	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
 )
+
 type CommentUseCaseInterface interface {
 	Create(comment *model.Comment) (*model.Comment, error)
 	List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error)
@@ -21,18 +25,18 @@ type CommentUseCaseInterface interface {
 	Delete(id int) (*model.Comment, error)
 }
 
-type LikeCommentUseCaseInterface interface{
+type LikeCommentUseCaseInterface interface {
 	// return value 중 bool이 true면 생성, false면 삭제
 	Toggle(like *model.LikeComment) (bool, error)
 }
 
 type CommentUseCase struct {
-	Repository repository.CommentRepositoryInterface
+	Repository            repository.CommentRepositoryInterface
 	LikeCommentRepository repository.LikeCommentRepositoryInterface
 }
 
-type LikeCommentUseCase struct{
-	Repository repository.LikeCommentRepositoryInterface
+type LikeCommentUseCase struct {
+	Repository        repository.LikeCommentRepositoryInterface
 	CommentRepository repository.CommentRepositoryInterface
 }
 
@@ -44,7 +48,9 @@ func NewCommentUseCase(repository repository.CommentRepositoryInterface, likeRep
 
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
 	newComment, err := uc.Repository.Create(comment)
-	if err!=nil{return newComment, err}
+	if err != nil {
+		return newComment, err
+	}
 	return newComment, nil
 }
 
@@ -61,7 +67,9 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 
 func (uc *CommentUseCase) Get(id int) (*model.Comment, error) {
 	comment, err := uc.Repository.Get(id)
-	if err != nil { return nil, err}
+	if err != nil {
+		return nil, err
+	}
 
 	uc.hideAuthor(comment, "") // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
 	return comment, nil
@@ -76,15 +84,16 @@ func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Com
 // 실제로 Delete 하지는 않고 State를 "deleted"로 변경
 func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
 	comment, err := uc.Repository.Update(id, map[string]interface{}{
-		"state": "deleted",
-		"content": model.DeletedCommentContent,
+		"state":   "deleted",
+		"content": DeletedCommentContent,
 	})
-	if err != nil { return nil, err}
+	if err != nil {
+		return nil, err
+	}
 
 	uc.hideAuthor(comment, "") // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
 	return comment, nil
 }
-
 
 func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) []*model.Comment {
 	var parents []*model.Comment
@@ -99,19 +108,19 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 }
 
 // 대부분의 comment usecase에서 사용되는 로직을 담당한다. 재귀적으로 자식 코멘트들에게도 적용된다.
-func (uc *CommentUseCase) handleComment(c *model.Comment, username string, currentDepth int){
+func (uc *CommentUseCase) handleComment(c *model.Comment, username string, currentDepth int) {
 	const maxDepth = 1
 	uc.hideAuthor(c, username)
 	likeCount := uc.getLikeCommentCount(c.ID)
 	c.LikeCommentCount = likeCount
 	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
-	if len(likes) >= 1{
+	if len(likes) >= 1 {
 		c.Liked = true
 	}
 	uc.setCreatedAtExpression(c)
-	if currentDepth < maxDepth{
-		for _, child := range c.Children{
-			uc.handleComment(child, username, currentDepth + 1)
+	if currentDepth < maxDepth {
+		for _, child := range c.Children {
+			uc.handleComment(child, username, currentDepth+1)
 		}
 	}
 }
@@ -120,47 +129,47 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string, curre
 // 그냥 무조건 hide 하고싶다면 username을 ""으로 전달
 func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
 	if c.State == "deleted" {
-		c.AuthorUsername = model.DeletedCommentUsername
-		c.Author.Username = model.DeletedCommentUsername
-		c.Author.Nickname = model.DeletedCommentNickname
+		c.AuthorUsername = DeletedCommentUsername
+		c.Author.Username = DeletedCommentUsername
+		c.Author.Nickname = DeletedCommentNickname
 	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
-		c.AuthorUsername = AnonymousUsername
-		c.Author.Username = AnonymousUsername
-		c.Author.Nickname = AnonymousUsername
+		c.AuthorUsername = AnonymousCommentUsername
+		c.Author.Username = AnonymousCommentUsername
+		c.Author.Nickname = AnonymousCommentNickname
 	}
 }
 
 // Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.
-func (uc *CommentUseCase) setCreatedAtExpression(c *model.Comment){
+func (uc *CommentUseCase) setCreatedAtExpression(c *model.Comment) {
 	// UTC 시간을 단순 한국시간으로 변경
 	now := time.Now().In(config.Location) // now는 근데 기본적으로 UTC긴한듯.
 	nowYear, nowMonth, nowDate := now.Date()
 	//log.Println(c.CreatedAt.In(repository.Location).Format("2006/01/02 15:04")) // => 한국시간대로 잘 나옴.
 	createdAt := c.CreatedAt.In(config.Location)
 	createdYear, createdMonth, createdDate := createdAt.Date()
-	if now.Sub(c.CreatedAt).Minutes() < 5{
+	if now.Sub(c.CreatedAt).Minutes() < 5 {
 		c.CreatedAtExpression = "지금"
-	} else if nowYear == createdYear && nowMonth == createdMonth && nowDate == createdDate{
+	} else if nowYear == createdYear && nowMonth == createdMonth && nowDate == createdDate {
 		c.CreatedAtExpression = createdAt.Format("15:04")
-	} else if nowYear == createdYear{
+	} else if nowYear == createdYear {
 		c.CreatedAtExpression = createdAt.Format("01/02 15:04")
-	} else{
+	} else {
 		c.CreatedAtExpression = createdAt.Format("2006/01/02 15:04")
 	}
 }
 
-func (uc *CommentUseCase) getLikeCommentCount(commentID int) int{
+func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: commentID})
 	return len(likes)
 }
 
 func NewLikeCommentUseCase(
 	likeRepo repository.LikeCommentRepositoryInterface,
-	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface{
+	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface {
 	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
 }
 
-func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
+func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error) {
 	var err error
 	logger := logrus.WithField("CommentID", like.CommentID)
 	logger.Debug("Toggle LikeComment")
@@ -175,15 +184,19 @@ func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error){
 			}
 		}
 		return false, err
-	}else{
+	} else {
 		// 생성
 		comment, err := uc.CommentRepository.Get(like.CommentID)
-		if err != nil { return false, err}
-		if comment.AuthorUsername == like.Username{
+		if err != nil {
+			return false, err
+		}
+		if comment.AuthorUsername == like.Username {
 			return false, errors.New("Error: " + like.Username + " requested to like his comment.")
 		}
 		_, err = uc.Repository.Create(like)
-		if err != nil{return false, err}
+		if err != nil {
+			return false, err
+		}
 
 		return true, err
 	}

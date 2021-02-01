@@ -12,13 +12,13 @@ import (
 	"time"
 )
 
-func NewGorm() *gorm.DB{
+func NewGorm() *gorm.DB {
 	var db *gorm.DB
 	var connectionError error
-	if config.Config.DB.Kind == "sqlite3"{
+	if config.Config.DB.Kind == "sqlite3" {
 		logrus.Println("Connecting DB to " + config.Config.DB.SQLite3.FilePath)
 		db, connectionError = gorm.Open(sqlite.Open(config.Config.DB.SQLite3.FilePath), &gorm.Config{})
-	} else if config.Config.DB.Kind == "mysql"{
+	} else if config.Config.DB.Kind == "mysql" {
 		dest := config.Config.DB.MySQL.Host + strconv.Itoa(config.Config.DB.MySQL.Port)
 		log.Println("Connecting DB to " + dest)
 		// loc을 통해 timezone을 설정해줘야만함.
@@ -35,16 +35,18 @@ func NewGorm() *gorm.DB{
 		log.Print("Failed to connect database. Retry after 3 seconds")
 		time.Sleep(time.Duration(3000) * time.Millisecond)
 		return NewGorm()
-	}else{
+	} else {
 		return db
 	}
 
 }
 
-func NewTestGorm() *gorm.DB{
+func NewTestGorm() *gorm.DB {
 	var db *gorm.DB
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
-	if err != nil{log.Panic(err)}
+	if err != nil {
+		log.Panic(err)
+	}
 	// this allows foreign key contraints
 	db.Exec("PRAGMA foreign_keys=ON")
 	return db

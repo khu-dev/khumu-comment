@@ -26,10 +26,11 @@ import (
 	"log"
 	"os"
 )
-func init(){
+
+func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: false, DisableQuote: true, ForceColors: true})
 }
-func main(){
+func main() {
 	logrus.Println("Args: ", len(os.Args), os.Args)
 	Run()
 }
@@ -37,11 +38,11 @@ func main(){
 func Run() {
 	logrus.Printf("Default config. %#v\n", config.Config)
 	cont := container.Build()
-	err := cont.Invoke(func(e *echo.Echo){
+	err := cont.Invoke(func(e *echo.Echo) {
 		e.Logger.Print("Started Server")
 		e.Logger.Fatal(e.Start(config.Config.Host + ":" + config.Config.Port))
 	})
-	if err != nil{
+	if err != nil {
 		log.Panic(err)
 	}
 }

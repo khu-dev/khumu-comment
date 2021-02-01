@@ -34,7 +34,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 				// 토큰 속의 유저가 존재하는 유저인지 확인해서 분기하는 http Handler 끼워넣기
 				func(context echo.Context) error {
 					if token, ok := context.Get(KhumuJWTConfig.ContextKey).(*jwt.Token); ok {
-						if mapClaim, ok := token.Claims.(jwt.MapClaims); ok{
+						if mapClaim, ok := token.Claims.(jwt.MapClaims); ok {
 							username := mapClaim["user_id"].(string)
 							user := a.UserRepository.GetUserForAuth(username)
 							if user != nil {
@@ -93,12 +93,12 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	return func(context echo.Context) error {
 		logger := logrus.WithField("middleware", "KhumuRequestLog")
 		req := context.Request()
-		if req.Header.Get("Content-Type") != ""{
+		if req.Header.Get("Content-Type") != "" {
 			logger.Println("Content-Type:", req.Header.Get("Content-Type"))
 		}
 
 		if (req.Method == http.MethodPost || req.Method == http.MethodPut || req.Method == http.MethodPatch) &&
-			strings.HasPrefix(req.Header.Get("Content-Type"), "application/json"){
+			strings.HasPrefix(req.Header.Get("Content-Type"), "application/json") {
 			rawBody, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				logger.Error(err)
@@ -111,7 +111,7 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 			// Restore the io.ReadCloser to it's original state
 			// Bind에서 한 번 또 읽었으니 원상복구
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
-			if err != nil{
+			if err != nil {
 				logger.Error("Body bind error:", err)
 				return err
 			}
@@ -122,6 +122,6 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func isAdmin(username string) bool{
+func isAdmin(username string) bool {
 	return username == "admin"
 }

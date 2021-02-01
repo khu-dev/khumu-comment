@@ -10,7 +10,7 @@ import (
 )
 
 // 의존성 주입시에 root router를 판별하기 위해 임베딩
-type RootRouter struct{*echo.Group}
+type RootRouter struct{ *echo.Group }
 
 func NewEcho(userRepository repository.UserRepositoryInterface,
 	commentUC usecase.CommentUseCaseInterface,
@@ -20,12 +20,12 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339} ${method} ${status} uri=${uri} latency=${latency}\n",
 		Skipper: func(context echo.Context) bool {
-	  		// health check log는 너무 verbose함.
-			if context.Request().URL.RequestURI() == "/healthz"{
+			// health check log는 너무 verbose함.
+			if context.Request().URL.RequestURI() == "/healthz" {
 				return true
 			}
 			return false
-	  },
+		},
 	}))
 	e.Use(KhumuRequestLog)
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
@@ -36,7 +36,7 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	return e
 }
 
-func NewRootRouter(echoServer *echo.Echo, userRepository repository.UserRepositoryInterface) *RootRouter{
+func NewRootRouter(echoServer *echo.Echo, userRepository repository.UserRepositoryInterface) *RootRouter {
 	g := RootRouter{Group: echoServer.Group("/api")}
 	authenticator := &Authenticator{UserRepository: userRepository}
 	g.Use(authenticator.Authenticate)
@@ -53,4 +53,3 @@ func serveHome(c echo.Context) error {
 	<li>Comment List <a href="http://localhost:9000/api/comments">http://localhost:9000/api/comments</a>
 	`)
 }
-

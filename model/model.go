@@ -9,7 +9,7 @@ type KhumuUser struct {
 	Username      string `gorm:"primaryKey"`
 	Email         string
 	IsActive      bool
-	Kind          string
+	State         string `gorm:"column:State"`
 	Nickname      string `gorm:"unique"`
 	StudentNumber string
 	Memo          string
@@ -32,7 +32,7 @@ func (*KhumuUserAuth) TableName() string {
 type KhumuUserSimple struct {
 	Username string `gorm:"primaryKey" json:"username"`
 	Nickname string `gorm:"unique" json:"nickname"`
-	State     string `gorm:"column:kind" json:"state"`
+	State    string `gorm:"column:state" json:"state"`
 }
 
 func (*KhumuUserSimple) TableName() string {
@@ -40,13 +40,13 @@ func (*KhumuUserSimple) TableName() string {
 }
 
 type Board struct {
-	Name string `gorm:"primaryKey"`
+	Name        string `gorm:"primaryKey"`
 	DisplayName string `gorm:"column:display_name"`
 }
 
 type Article struct {
 	ArticleID      int `gorm:"column:id"`
-	BoardName        string
+	BoardName      string
 	Board          Board `gorm:"foreignKey:BoardName"`
 	Title          string
 	AuthorUsername string    `gorm:"column:author_id"`
@@ -64,43 +64,36 @@ func (*Board) TableName() string {
 }
 
 type Comment struct {
-	ID             int             `gorm:"column:id" json:"id"`
+	ID int `gorm:"column:id" json:"id"`
 	// Kind: (anonymous, named)
-	Kind           string           `gorm:"column:kind; default:anonymous" json:"kind"`
+	Kind string `gorm:"column:kind; default:anonymous" json:"kind"`
 	// State: (exists, deleted)
-	State           string           `gorm:"column:state; default:exists" json:"state"`
-	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername; references:Username; constraint:OnDELETE:CASCADE" json:"author"`
-	AuthorUsername string           `gorm:"column:author_id" json:"-"`
-	ArticleID      int             `gorm:"column:article_id" json:"article"`
-	Content   string     `json:"content"`
-	ParentID  *int      `gorm:"column:parent_id;default:null" json:"parent"`
-	Parent *Comment `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
-	Children  []*Comment `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
-	LikeCommentCount int `gorm:"-" json:"like_comment_count"`
-	Liked bool `gorm:"-" json:"liked"`
-	CreatedAt time.Time  `gorm:"autoCreateTime" json:"-"`
-	CreatedAtExpression string `gorm:"-" json:"created_at"`
+	State               string           `gorm:"column:state; default:exists" json:"state"`
+	Author              *KhumuUserSimple `gorm:"foreignKey:AuthorUsername; references:Username; constraint:OnDELETE:CASCADE" json:"author"`
+	AuthorUsername      string           `gorm:"column:author_id" json:"-"`
+	ArticleID           int              `gorm:"column:article_id" json:"article"`
+	Content             string           `json:"content"`
+	ParentID            *int             `gorm:"column:parent_id;default:null" json:"parent"`
+	Parent              *Comment         `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
+	Children            []*Comment       `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
+	LikeCommentCount    int              `gorm:"-" json:"like_comment_count"`
+	Liked               bool             `gorm:"-" json:"liked"`
+	CreatedAt           time.Time        `gorm:"autoCreateTime" json:"-"`
+	CreatedAtExpression string           `gorm:"-" json:"created_at"`
 }
 
 func (*Comment) TableName() string {
 	return "comment_comment"
 }
 
-type LikeComment struct{
-	ID int `gorm:"primaryKey"`
-	CommentID int `gorm:"column:comment_id" json:"comment"`
-	Comment *Comment `gorm:"foreignKey: CommentID; references:ID; constraint:OnDelete:CASCADE;" json:"-"`
-	Username string `gorm:"column:user_id" json:"username"`
-	User *KhumuUserSimple `gorm:"foreignKey: Username; references:Username; constraint:OnDelete:CASCADE" json:"-"`
+type LikeComment struct {
+	ID        int              `gorm:"primaryKey"`
+	CommentID int              `gorm:"column:comment_id" json:"comment"`
+	Comment   *Comment         `gorm:"foreignKey: CommentID; references:ID; constraint:OnDelete:CASCADE;" json:"-"`
+	Username  string           `gorm:"column:user_id" json:"username"`
+	User      *KhumuUserSimple `gorm:"foreignKey: Username; references:Username; constraint:OnDelete:CASCADE" json:"-"`
 }
 
 func (*LikeComment) TableName() string {
 	return "comment_likecomment"
 }
-
-
-var (
-	DeletedCommentContent string = "삭제된 댓글입니다."
-	DeletedCommentUsername string = "삭제된 댓글의 작성자"
-	DeletedCommentNickname string = "삭제된 댓글의 작성자"
-)

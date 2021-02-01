@@ -33,71 +33,70 @@ import (
 //}
 
 var (
-	db *gorm.DB
-	commentUseCase CommentUseCaseInterface
+	db                 *gorm.DB
+	commentUseCase     CommentUseCaseInterface
 	likeCommentUseCase LikeCommentUseCaseInterface
 )
 
-func TestMain(m *testing.M){
+func TestMain(m *testing.M) {
 	cont := BuildContainer()
 	err := cont.Invoke(func(conn *gorm.DB, cuc CommentUseCaseInterface, lcuc LikeCommentUseCaseInterface) {
 		db = conn
 		commentUseCase = cuc
 		likeCommentUseCase = lcuc
 	})
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 
 	m.Run()
 }
 
-
 // B는 Before each의 acronym
-func B(tb testing.TB){
+func B(tb testing.TB) {
 	test.SetUp(db)
 }
 
 // A는 After each의 acronym
-func A(tb testing.TB){
+func A(tb testing.TB) {
 	test.CleanUp(db)
 }
 
-func BuildContainer() (*dig.Container){
+func BuildContainer() *dig.Container {
 	cont := dig.New()
 	err := cont.Provide(repository.NewTestGorm)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	err = cont.Provide(repository.NewCommentRepositoryGorm)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	err = cont.Provide(repository.NewLikeCommentRepositoryGorm)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	err = cont.Provide(NewCommentUseCase)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	err = cont.Provide(NewLikeCommentUseCase)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 	return cont
 }
 
-func TestCommentUseCase_Create(t *testing.T){
-	t.Run("My anonymous comment", func(t *testing.T){
+func TestCommentUseCase_Create(t *testing.T) {
+	t.Run("My anonymous comment", func(t *testing.T) {
 		B(t)
 		defer A(t)
 		c := &model.Comment{
-			Kind: "anonymous",
-			State: "exists",
+			Kind:           "anonymous",
+			State:          "exists",
 			AuthorUsername: "jinsu",
-			ArticleID: 1,
-			Content: "새로운 테스트 댓글",
+			ArticleID:      1,
+			Content:        "새로운 테스트 댓글",
 		}
 		newComment, err := commentUseCase.Create(c)
 		assert.Nil(t, err)
@@ -107,7 +106,7 @@ func TestCommentUseCase_Create(t *testing.T){
 		assert.Equal(t, c.Content, newComment.Content)
 	})
 
-	t.Run("My named comment", func(t *testing.T){
+	t.Run("My named comment", func(t *testing.T) {
 		B(t)
 		defer A(t)
 		c := &model.Comment{
@@ -125,15 +124,15 @@ func TestCommentUseCase_Create(t *testing.T){
 		assert.Equal(t, c.Content, newComment.Content)
 	})
 
-	t.Run("Others anonymous comment", func(t *testing.T){
+	t.Run("Others anonymous comment", func(t *testing.T) {
 		B(t)
 		defer A(t)
 		c := &model.Comment{
-			Kind: "named",
-			State: "exists",
+			Kind:           "named",
+			State:          "exists",
 			AuthorUsername: "jinsu",
-			ArticleID: 1,
-			Content: "새로운 테스트 댓글",
+			ArticleID:      1,
+			Content:        "새로운 테스트 댓글",
 		}
 		newComment, err := commentUseCase.Create(c)
 		assert.Nil(t, err)
@@ -172,20 +171,20 @@ func TestCommentUseCase_Delete(t *testing.T) {
 	var parent, child1, child2 *model.Comment
 	t.Run("Setup", func(t *testing.T) {
 		parent, err = commentUseCase.Create(&model.Comment{
-			Author: &model.KhumuUserSimple{Username: "jinsu"},
+			Author:  &model.KhumuUserSimple{Username: "jinsu"},
 			Content: "A parent comment to setup CommentRepositoryGorm_Delete.",
 		})
 		assert.Nil(t, err)
 
 		child1, err = commentUseCase.Create(&model.Comment{
-			Author: &model.KhumuUserSimple{Username: "somebody"},
+			Author:  &model.KhumuUserSimple{Username: "somebody"},
 			Content: "The first child comment to setup CommentRepositoryGorm_Delete.",
 		})
 		assert.Nil(t, err)
 		assert.NotNil(t, child1)
 
 		child2, err = commentUseCase.Create(&model.Comment{
-			Author: &model.KhumuUserSimple{Username: "somebody"},
+			Author:  &model.KhumuUserSimple{Username: "somebody"},
 			Content: "The second child comment to setup CommentRepositoryGorm_Delete.",
 		})
 		assert.Nil(t, err)
@@ -201,7 +200,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.NotNil(t, afterDeleted)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", afterDeleted.State)
-		assert.Equal(t, model.DeletedCommentContent, afterDeleted.Content)
+		assert.Equal(t, DeletedCommentContent, afterDeleted.Content)
 	})
 
 	// parent comment는 실제로 삭제되는 것이 아니라, kind가 deleted 로 변경될 뿐.
@@ -217,7 +216,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.NotNil(t, afterDeleted)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", afterDeleted.State)
-		assert.Equal(t, model.DeletedCommentContent, afterDeleted.Content)
+		assert.Equal(t, DeletedCommentContent, afterDeleted.Content)
 	})
 }
 
@@ -227,7 +226,6 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 	defer A(t)
 }
 
-
 // 시나리오
 // somebody가 jinsu의 댓글인 1번 댓글을 좋아요.
 func TestLikeCommentUseCase_Toggle(t *testing.T) {
@@ -236,44 +234,44 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 	t.Run("Somebody toggle(create&delete) jinsu's comment", func(t *testing.T) {
 		commentID := test.CommentsData["JinsuNamedComment"].ID
 		// toggle to create
-		func(){
+		func() {
 			created, err := likeCommentUseCase.Toggle(
-			&model.LikeComment{
-				CommentID: commentID,
-				Username: test.UsersData["Somebody"].Username,
-			})
+				&model.LikeComment{
+					CommentID: commentID,
+					Username:  test.UsersData["Somebody"].Username,
+				})
 			assert.Nil(t, err)
 			assert.True(t, created)
 		}()
 		// toggle to delete
-		func(){
+		func() {
 			deleted, err := likeCommentUseCase.Toggle(
-			&model.LikeComment{
-				CommentID: commentID,
-				Username: test.UsersData["Somebody"].Username,
-			})
+				&model.LikeComment{
+					CommentID: commentID,
+					Username:  test.UsersData["Somebody"].Username,
+				})
 			assert.Nil(t, err)
 			assert.False(t, deleted)
 		}()
 
 		// toggle to create again
-		func(){
+		func() {
 			created, err := likeCommentUseCase.Toggle(
-			&model.LikeComment{
-				CommentID: commentID,
-				Username: test.UsersData["Somebody"].Username,
-			})
+				&model.LikeComment{
+					CommentID: commentID,
+					Username:  test.UsersData["Somebody"].Username,
+				})
 			assert.Nil(t, err)
 			assert.True(t, created)
 		}()
 	})
 
-	t.Run("jinsu likes jinsu's comment", func(t *testing.T){
+	t.Run("jinsu likes jinsu's comment", func(t *testing.T) {
 		created, err := likeCommentUseCase.Toggle(
-		&model.LikeComment{
-			CommentID: test.CommentsData["JinsuNamedComment"].ID,
-			Username: test.UsersData["Jinsu"].Username,
-		})
+			&model.LikeComment{
+				CommentID: test.CommentsData["JinsuNamedComment"].ID,
+				Username:  test.UsersData["Jinsu"].Username,
+			})
 		assert.NotNil(t, err)
 		assert.False(t, created)
 	})
@@ -287,7 +285,7 @@ func TestCommentUseCase_List(t *testing.T) {
 		B(t)
 		defer A(t)
 		// create like count for test
-		func(){
+		func() {
 			// 1번 somebody가 jinsu의 코멘트에 좋아요
 			_, err := likeCommentUseCase.Toggle(&model.LikeComment{Username: "somebody", CommentID: test.CommentsData["JinsuNamedComment"].ID})
 			assert.NoError(t, err)
@@ -295,8 +293,8 @@ func TestCommentUseCase_List(t *testing.T) {
 		comments, err := commentUseCase.List("jinsu", nil)
 		assert.NoError(t, err)
 		foundDesiredComment := false
-		for _, c := range comments{
-			if c.ID == test.CommentsData["JinsuNamedComment"].ID{
+		for _, c := range comments {
+			if c.ID == test.CommentsData["JinsuNamedComment"].ID {
 				foundDesiredComment = true
 				assert.False(t, c.Liked)
 				assert.Equal(t, 1, c.LikeCommentCount)
