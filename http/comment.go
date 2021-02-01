@@ -143,15 +143,6 @@ func (r *CommentRouter) List(c echo.Context) error {
 	return c.JSON(200, CommentsResponse{Data: comments})
 }
 
-// @Tags Comment
-// @Summary Comment 조회합니다.
-// @Description
-// @name get-comment
-// @Produce  application/json
-// @Param id path int true "Comment ID"
-// @Router /api/comments/{id} [get]
-// @Success 200 {object} CommentResponse
-
 func (r *CommentRouter) Get(c echo.Context) error {
 	logrus.Debug("CommentRouter Get")
 	id, err := strconv.Atoi(c.Param("id"))
@@ -160,7 +151,7 @@ func (r *CommentRouter) Get(c echo.Context) error {
 		return err
 	}
 
-	comment, err := r.commentUC.Get(id)
+	comment, err := r.commentUC.Get(c.Get("user_id").(string), id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})

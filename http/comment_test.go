@@ -165,7 +165,7 @@ func TestCommentRouter_Delete(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 
 		// 테스트 시나리오 상 ID:1 댓글은 부모 댓글이다.
-		deletedStateParentComment, err := commentUseCase.Get(1)
+		deletedStateParentComment, err := commentUseCase.Get("jinsu", 1)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", deletedStateParentComment.State)
 		assert.Equal(t, usecase.DeletedCommentContent, deletedStateParentComment.Content)
@@ -184,7 +184,7 @@ func TestCommentRouter_Delete(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 
-		deletedStateChildComment, err := commentUseCase.Get(test.ReplyCommentsData["JinsuNamedReplyComment"].ID)
+		deletedStateChildComment, err := commentUseCase.Get("jinsu", test.ReplyCommentsData["JinsuNamedReplyComment"].ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", deletedStateChildComment.State)
 	})

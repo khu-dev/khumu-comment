@@ -20,8 +20,8 @@ var (
 type CommentUseCaseInterface interface {
 	Create(comment *model.Comment) (*model.Comment, error)
 	List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error)
-	Get(id int) (*model.Comment, error)
-	Update(id int, opt map[string]interface{}) (*model.Comment, error)
+	Get(username string, id int) (*model.Comment, error)
+	Update(username string, id int, opt map[string]interface{}) (*model.Comment, error)
 	Delete(id int) (*model.Comment, error)
 }
 
@@ -65,19 +65,19 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 	return parents, nil
 }
 
-func (uc *CommentUseCase) Get(id int) (*model.Comment, error) {
+func (uc *CommentUseCase) Get(username string, id int) (*model.Comment, error) {
 	comment, err := uc.Repository.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	uc.hideAuthor(comment, "") // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
+	uc.handleComment(comment, username, 0) // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
 	return comment, nil
 }
 
-func (uc *CommentUseCase) Update(id int, opt map[string]interface{}) (*model.Comment, error) {
+func (uc *CommentUseCase) Update(username string, id int, opt map[string]interface{}) (*model.Comment, error) {
 	updated, err := uc.Repository.Update(id, opt)
-	uc.hideAuthor(updated, "")
+	uc.handleComment(updated, username, 0)
 	return updated, err
 }
 
@@ -91,7 +91,7 @@ func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
 		return nil, err
 	}
 
-	uc.hideAuthor(comment, "") // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
+	uc.hideAuthor(comment) // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
 	return comment, nil
 }
 
@@ -110,7 +110,10 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 // 대부분의 comment usecase에서 사용되는 로직을 담당한다. 재귀적으로 자식 코멘트들에게도 적용된다.
 func (uc *CommentUseCase) handleComment(c *model.Comment, username string, currentDepth int) {
 	const maxDepth = 1
-	uc.hideAuthor(c, username)
+	if c.AuthorUsername == username{
+		c.IsAuthor = true
+	}
+	uc.hideAuthor(c)
 	likeCount := uc.getLikeCommentCount(c.ID)
 	c.LikeCommentCount = likeCount
 	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
@@ -125,14 +128,12 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string, curre
 	}
 }
 
-// username이 author의 username과 일치하면 hide
-// 그냥 무조건 hide 하고싶다면 username을 ""으로 전달
-func (uc *CommentUseCase) hideAuthor(c *model.Comment, username string) {
+func (uc *CommentUseCase) hideAuthor(c *model.Comment) {
 	if c.State == "deleted" {
 		c.AuthorUsername = DeletedCommentUsername
 		c.Author.Username = DeletedCommentUsername
 		c.Author.Nickname = DeletedCommentNickname
-	} else if c.Kind == "anonymous" && c.AuthorUsername != username {
+	} else if c.Kind == "anonymous"{
 		c.AuthorUsername = AnonymousCommentUsername
 		c.Author.Username = AnonymousCommentUsername
 		c.Author.Nickname = AnonymousCommentNickname

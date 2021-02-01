@@ -75,10 +75,12 @@ type Comment struct {
 	Content             string           `json:"content"`
 	ParentID            *int             `gorm:"column:parent_id;default:null" json:"parent"`
 	Parent              *Comment         `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
-	Children            []*Comment       `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relationship => Preload 필요
+	Children            []*Comment       `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relatio
+	CreatedAt           time.Time        `gorm:"autoCreateTime" json:"-"`// nship => Preload 필요
+	// 여기서 부턴 gorm과 상관 없는 field
+	IsAuthor bool `gorm:"-" json:"is_author"`
 	LikeCommentCount    int              `gorm:"-" json:"like_comment_count"`
 	Liked               bool             `gorm:"-" json:"liked"`
-	CreatedAt           time.Time        `gorm:"autoCreateTime" json:"-"`
 	CreatedAtExpression string           `gorm:"-" json:"created_at"`
 }
 

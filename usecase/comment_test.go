@@ -151,8 +151,8 @@ func TestCommentUseCase_Get(t *testing.T) {
 func TestCommentUseCase_Update(t *testing.T) {
 	B(t)
 	defer A(t)
-	toUpdate, _ := commentUseCase.Get(1)
-	updated, err := commentUseCase.Update(toUpdate.ID, map[string]interface{}{
+	toUpdate, _ := commentUseCase.Get("", 1)
+	updated, err := commentUseCase.Update("", toUpdate.ID, map[string]interface{}{
 		"content": "수정된 1번 코멘트입니다.",
 	})
 	assert.NoError(t, err)
@@ -196,7 +196,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.NotNil(t, deleted)
 		assert.Equal(t, child2.ID, deleted.ID)
 
-		afterDeleted, err := commentUseCase.Get(child2.ID)
+		afterDeleted, err := commentUseCase.Get("", child2.ID)
 		assert.NotNil(t, afterDeleted)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", afterDeleted.State)
@@ -212,7 +212,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.Equal(t, parent.ID, deletedParent.ID)
 
 		// 삭제된 댓글의 작성자는 무언가를 통해 익명처리가 되어야함.
-		afterDeleted, err := commentUseCase.Get(parent.ID)
+		afterDeleted, err := commentUseCase.Get("", parent.ID)
 		assert.NotNil(t, afterDeleted)
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", afterDeleted.State)
@@ -314,17 +314,19 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Equal(t, "jinsu", c.AuthorUsername)
 		assert.Equal(t, "jinsu", c.Author.Username)
 		assert.False(t, c.Liked) // 자신의 코멘트에 대한 liked
+		assert.True(t, c.IsAuthor)
 	})
-	t.Run("somebody 자기 댓글", func(t *testing.T) {
+	t.Run("somebody가 jinsu 댓글", func(t *testing.T) {
 		B(t)
 		defer A(t)
-		commentID := test.CommentsData["SomebodyAnonymousComment"].ID
+		commentID := test.CommentsData["JinsuAnonymousComment"].ID
 		comments, err := commentUseCase.List("somebody", &repository.CommentQueryOption{CommentID: commentID})
 		assert.NoError(t, err)
 		c := comments[0]
 		assert.Equal(t, "anonymous", c.Kind)
-		assert.Equal(t, "somebody", c.AuthorUsername)
-		assert.Equal(t, "somebody", c.Author.Username)
-		//isAuthor 필드 도입
+		assert.Equal(t, AnonymousCommentUsername, c.AuthorUsername)
+		assert.Equal(t, AnonymousCommentUsername, c.Author.Username)
+		assert.Equal(t, AnonymousCommentNickname, c.Author.Nickname)
+		assert.False(t, c.IsAuthor)
 	})
 }
