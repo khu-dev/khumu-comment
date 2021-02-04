@@ -71,39 +71,44 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 
 ### 1. clean architecture를 적절히 적용하자.
 
-> 의존 순서 및 상위 계층 정도를 기준으로 각 계층의 역할에 대해 나열해보았습니다.
+![khumu-comment-class-diagram.png](khumu-comment-class-diagram.png)
 
-* **http**
-  * 주로 http 통신 자체에 대한 로직을 담고있습니다. 가장 상위 계층입니다.
-  * Router, Middleware, Authentication, Authorization 와 같은 작업을 다룹니다.
-  * `struct` => `json` 으로 `marshal` 한 뒤 그 정보를 바탕으로 Response를 구성하는 로직을 담기도 합니다. 
-    (e.g. `Comment` struct를 받아서 json으로 변환한 뒤 Response의 body를 작성하는 작업을 진행합니다.   
+가장 상위 계층부터 가장 하위 계층, 그리고 계층과 독립된 config나 container 순으로 정리해보겠습니다.
 
-* **usecase**
-  * repository 계층으로부터 단순히 model을 얻어온 뒤 json으로 직렬화되기 전까지의 로직, 즉 대부분의 비즈니스 로직(_? 맞는진 잘 모르겠음. 애플리케이션 로직?_)을 담당합니다.
-  * 예를 들어 repository에서 얻어온 `Comment` 배열 중 자신이 작성자가 아닌 익명 댓글은 author의 username 필드의 값을 `익명` 으로 변경합니다.
+* **model**
+  * khumu의 comment라는 도메인에서 사용하는 모델을 정의합니다.
+  * 아무런 다른 계층도 참조하지 않는 최상위 계층입니다.
+  * DB Table에 활용되거나 API Response 포함되는 등 다양하게 사용될 수 있지만, 이 계층은 하위 계층들이 자신을 어떻게 사용하는지 전혀 알 필요가 없습니다.
+  * 순수하게 우리의 도메인 코드로 정의되어있습니다.
 
 * **repository**
-  * Database와 직접 작업을 하는 계층입니다. 
-  * 어떤 DB(orm)에 대해서도 동작할 수 있도록 인터페이스로 설정되어있습니다.(그렇다고 이 계층에서만 인터페이스를 사용하는 것은 아닙니다.)
-  * 예를 들어 DB에서 Select 혹은 Find하는 명령과 직결된 작업을 수행합니다.
-  * 예를 들어 연결하고자하는 DB가 SQLite3이든, MySQL이든 상위 계층을 repository interface를 인자로 받기 때문에
-    어떤 database를 이용하든 상위계층은 동일하게 동작할 수 있습니다.
+  * Data source와 직접 작업을 하는 계층입니다. 
+  * `interface`와 그에 대한 구현체를 정의함으로써 유연하게 동작합니다. (다형성과 의존성 역전)
+    * `inferface`를 정의함으로써 `MySQL`, `SQLite3`, `Memory`의 `array`나 `map` 그 어떤 걸 사용하든 유연하게 대처할 수 있습니다.
+  * repository를 이용하는 계층은 interface만을 이용하기 때문에 구현체가 변경되어도 코드를 변경할 필요가 없습니다.
+* **usecase**
+  * 대부분의 비즈니스 로직이 이곳에 위치합니다.
+    * e.g. 익명 댓글의 작성자가 본인이면 `is_author: true`로 변환
+    * e.g. 단순한 array 형태의 댓글을 children 댓글을 포함한 parent 댓글들의 array로 변환합니다.
+    * e.g. 익명 댓글의 경우 작성자의 username와 nickname을 감춥니다.
+  * 하위 계층인 repository에 의존합니다. 하지만 의존성 역전 원리(DIP)에 의해 하위 계층의 구현체에 의존하는 것이 아니라 추상적인 repository interface에 의존합니다.
+  * usecase가 의존성 역전이 되는 경우는 아직 없지만, 하위 계층의 test를 위해 mock을 지원해야할 수 있기 때문에 interface로 사용 중입니다.
+
+* **http**
+  * 주로 http 통신 자체에 대한 로직을 담고있습니다. 가장 하위 계층입니다.
+  * Router, Middleware, Authentication, Authorization 와 같은 작업을 다룹니다.
+  * `struct` => `json` 으로 `marshal` 한 뒤 그 정보를 바탕으로 Response를 구성하는 로직을 담기도 합니다.
+    (e.g. `Comment` struct를 받아서 json으로 변환한 뒤 Response의 body를 작성하는 작업을 진행합니다.   
+* 주로 요청에 대한 작업을 usecase를 통해 진행합니다.
   
-* **model**
-  * Database에서 사용하는 Table에 대한 정의입니다.
-  * 클린 아키텍쳐와 관련된 얘기는 아니지만, 한 Table도 여러 type에서 이용할 수 있습니다. 
-    모든 type이 Table로 migrate 되는 것은 아니고, migrate할 type만 골라서 migrate합니다.
-  * 위의 다른 계층들 중 아무 계층도 참조하지 않는 최하위 계층입니다.
-
 * **container**
-  * 컨테이너는 위의 모든 계층들과 달리 상위 계층, 하위 계층의 개념을 갖지 않고, IoC Container와 관련된 작업을 수행하는 패키지입니다.
-  * IoC 컨테이너에 대한 정의와 의존성 주입을 담당합니다.
-  * 개발자는 수작업으로 의존성을 주입해주거나, struct를 생성할 필요 없이 container가 type을 기반으로 자신(container)에 해당 타입의 변수가 존재하면
-    그것을 이용할 수 있게해주고, 없다면 생성한 뒤 이용할 수 있게 해줍니다.
-  * 현재는 uber의 `dig` 패키지를 의존성 주입 패키지로 사용 중입니다. 구글의 `wire` 가 꽤 유명한 것 같지만, 가독성을 해칠 것 같고, 유연하지 않은 듯하여 배제했습니다.
-    uber의 `fx` 는 `dig` 를 한 단계 더 감싼 패키지인듯한데, 마찬가지로 유연성이 떨어지는 느낌을 받았습니다. 
-
+  * 컨테이너는 위의 모든 계층들과 달리 상위 계층, 하위 계층의 개념을 갖지 않고 의존성 주입을 관리해줍니다.
+    * 개발자는 수작업으로 의존성을 주입해주거나, struct를 생성할 필요 없이 container가 type을 기반으로 자신(container)에 해당 타입의 변수가 존재하면
+      그것을 이용할 수 있게해주고, 없다면 생성한 뒤 이용할 수 있게 해줍니다.
+  * DI framework인 dig가 의존성 주입을 제어한다는 면에서 IoC(제어의 역전)이 발생합니다.
+    * 현재는 uber의 `dig` 패키지를 의존성 주입 패키지로 사용 중입니다. 구글의 `wire` 가 꽤 유명한 것 같지만, 가독성을 해칠 것 같고, 유연하지 않은 듯하여 배제했습니다.
+      uber의 `fx` 는 `dig` 를 한 단계 더 감싼 패키지인듯한데, 마찬가지로 유연성이 떨어지는 느낌을 받았습니다. 
+  * IoC Container와 관련된 작업을 수행하는 패키지입니다.
 * **config** : 프로그램에 대한 설정 정보나 그 정보를 불러오는 작업을 담당합니다.
 
 ### 2. TDD(Test Driven Development)를 통해 개발하자.
@@ -213,3 +218,7 @@ func NewCommentRouter(root *RootRouter, uc CommentUseCaseInterface) *CommentRout
     return commentRouter
 }
 ```
+
+## How to contribute
+
+microservice로 진행되는 프로젝트이며 아직 local에서 완전히 comment 서버만을 돌리기 위한 초기 환경 구축은 지원되지 않고 있기 때문에 기여는 쉽지 않을 것으로 예상됩니다.
