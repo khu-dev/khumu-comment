@@ -60,6 +60,7 @@ func BuildContainer() *dig.Container {
 	cont.Provide(repository.NewTestGorm)
 	cont.Provide(repository.NewCommentRepositoryGorm)
 	cont.Provide(repository.NewLikeCommentRepositoryGorm)
+	cont.Provide(repository.NewRedisEventMessageRepository)
 	cont.Provide(usecase.NewCommentUseCase)
 	cont.Provide(usecase.NewLikeCommentUseCase)
 

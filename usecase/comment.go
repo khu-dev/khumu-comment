@@ -33,17 +33,21 @@ type LikeCommentUseCaseInterface interface {
 type CommentUseCase struct {
 	Repository            repository.CommentRepositoryInterface
 	LikeCommentRepository repository.LikeCommentRepositoryInterface
+	EventMessageRepository repository.EventMessageRepository
 }
 
 type LikeCommentUseCase struct {
 	Repository        repository.LikeCommentRepositoryInterface
 	CommentRepository repository.CommentRepositoryInterface
+	EventMessageRepository repository.EventMessageRepository
 }
 
 type SomeoneLikesHisCommentError string
 
-func NewCommentUseCase(repository repository.CommentRepositoryInterface, likeRepository repository.LikeCommentRepositoryInterface) CommentUseCaseInterface {
-	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository}
+func NewCommentUseCase(repository repository.CommentRepositoryInterface,
+	likeRepository repository.LikeCommentRepositoryInterface,
+	eventMessageRepository repository.EventMessageRepository) CommentUseCaseInterface {
+	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, EventMessageRepository: eventMessageRepository}
 }
 
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
@@ -51,6 +55,13 @@ func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error)
 	if err != nil {
 		return newComment, err
 	}
+
+	uc.EventMessageRepository.PublishCommentEvent(&model.EventMessage{
+		ResourceKind: "comment",
+		EventKind: "create",
+		Resource: newComment,
+	})
+
 	return newComment, nil
 }
 
@@ -65,6 +76,7 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 	return parents, nil
 }
 
+// 지금의 Get은 Children은 가져오지 못함
 func (uc *CommentUseCase) Get(username string, id int) (*model.Comment, error) {
 	comment, err := uc.Repository.Get(id)
 	if err != nil {

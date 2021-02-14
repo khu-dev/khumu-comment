@@ -76,6 +76,10 @@ func BuildContainer() *dig.Container {
 	if err != nil {
 		logrus.Fatal(err)
 	}
+	err = cont.Provide(repository.NewRedisEventMessageRepository)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 	err = cont.Provide(NewCommentUseCase)
 	if err != nil {
 		logrus.Fatal(err)

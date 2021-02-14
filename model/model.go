@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -98,4 +99,16 @@ type LikeComment struct {
 
 func (*LikeComment) TableName() string {
 	return "comment_likecomment"
+}
+
+// eventmessage가 event를 publish 할 때 사용
+type EventMessage struct {
+	ResourceKind string `json:"resource_kind"`
+	EventKind string `json:"event_kind"`
+	Resource *Comment `json:"resource"`
+}
+
+// redis는 encoding.BinaryMarshaler를 구현한 type만을 Marshal 가능하다.
+func (e *EventMessage) MarshalBinary() (data []byte, err error){
+	return json.Marshal(e)
 }
