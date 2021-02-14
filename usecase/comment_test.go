@@ -109,42 +109,6 @@ func TestCommentUseCase_Create(t *testing.T) {
 		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
 		assert.Equal(t, c.Content, newComment.Content)
 	})
-
-	t.Run("My named comment", func(t *testing.T) {
-		B(t)
-		defer A(t)
-		c := &model.Comment{
-			Kind:           "named",
-			State:          "exists",
-			AuthorUsername: "jinsu",
-			ArticleID:      1,
-			Content:        "새로운 테스트 댓글",
-		}
-		newComment, err := commentUseCase.Create(c)
-		assert.Nil(t, err)
-		assert.NotNil(t, newComment)
-		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
-		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
-		assert.Equal(t, c.Content, newComment.Content)
-	})
-
-	t.Run("Others anonymous comment", func(t *testing.T) {
-		B(t)
-		defer A(t)
-		c := &model.Comment{
-			Kind:           "named",
-			State:          "exists",
-			AuthorUsername: "jinsu",
-			ArticleID:      1,
-			Content:        "새로운 테스트 댓글",
-		}
-		newComment, err := commentUseCase.Create(c)
-		assert.Nil(t, err)
-		assert.NotNil(t, newComment)
-		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
-		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
-		assert.Equal(t, c.Content, newComment.Content)
-	})
 }
 
 func TestCommentUseCase_Get(t *testing.T) {

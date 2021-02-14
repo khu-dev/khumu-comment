@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/khu-dev/khumu-comment/model"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -161,7 +160,6 @@ func TestCommentRepositoryGorm_List(t *testing.T) {
 	assert.NotZero(t, comments[1].Author.Username)
 	t.Run("List comments written by somebody", func(t *testing.T) {
 		comments = commentRepository.List(&CommentQueryOption{AuthorUsername: "somebody"})
-		logrus.Warn(comments)
 		assert.GreaterOrEqual(t, len(comments), 1)
 		assert.Equal(t, comments[0].AuthorUsername, "somebody")
 		assert.Equal(t, comments[0].Author.Username, "somebody")

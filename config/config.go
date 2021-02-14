@@ -26,6 +26,7 @@ func init() {
 		log.Fatal(err)
 	}
 	Location = l
+	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: false, DisableQuote: true, ForceColors: true})
 }
 
 func Load() {

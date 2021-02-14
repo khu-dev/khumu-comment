@@ -26,10 +26,6 @@ import (
 	"log"
 	"os"
 )
-
-func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: false, DisableQuote: true, ForceColors: true})
-}
 func main() {
 	logrus.Println("Args: ", len(os.Args), os.Args)
 	Run()

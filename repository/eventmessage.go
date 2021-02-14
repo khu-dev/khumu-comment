@@ -39,6 +39,8 @@ func (h RedisEventMessageRepository) PublishCommentEvent(message *model.EventMes
     err := h.publishCommentEvent(message)
     if err != nil{
         logrus.Error(err)
+    } else{
+        logrus.Info("Publish comment event:", message)
     }
 }
 
