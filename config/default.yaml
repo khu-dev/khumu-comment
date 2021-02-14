@@ -11,3 +11,9 @@ db:
     databaseName: test # Define YOUR_MYSQL_DATABASE_NAME
     user: root # Define YOUR_MYSQL_USER
     password: root # Define YOUR_MYSQL_PASSWORD
+redis:
+  address: "redis.khumu.jinsu.me:6379"
+  password: ""
+  db: 0
+  commentChannel: comment
+  likeCommentChannel: like_comment

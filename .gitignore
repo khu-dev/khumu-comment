@@ -23,5 +23,5 @@ _testmain.go
 *.db
 *.sqlite3
 config/*
-!config/local.yaml
+!config/default.yaml
 khumu-comment

@@ -2,22 +2,21 @@ package config
 
 import (
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"github.com/spf13/viper"
 	"log"
 	"os"
-	"path"
-	"path/filepath"
+	"strings"
 	"time"
-)
-
-const (
-	DefaultKhumuHome string = "/home/jinsu/git/khumu/khumu-comment"
 )
 
 var (
 	Config   *KhumuConfig
 	Location *time.Location
+	// 개발 단계에서 편의상 개발자들의 home path를 설정
+	devKhumuConfigPath []string = []string{
+		"/home/jinsu/git/khumu/khumu-comment/config",
+	}
+
 )
 
 func init() {
@@ -29,42 +28,26 @@ func init() {
 	Location = l
 }
 
-// env.KHUMU_HOME의 경로로부터 config/local.yaml or config/dev.yaml을 읽어옵니다.
-func readConfigFileFromKhumuHome(relPath string) *[]byte {
-	if Config == nil {
-		Config = &KhumuConfig{}
-	}
-
-	khumuHome := os.Getenv("KHUMU_HOME")
-	if khumuHome == "" {
-		khumuHome = DefaultKhumuHome
-	}
-	logrus.Print("KHUMU_HOME is ", khumuHome)
-
-	filename, err := filepath.Abs(path.Join(khumuHome, relPath))
-	logrus.Println("Open config file ", filename)
-	if err != nil {
-		logrus.Panic(err)
-	}
-
-	yamlFileData, err := ioutil.ReadFile(filename)
-	if err != nil {
-		logrus.Panic(err)
-	}
-
-	return &yamlFileData
-}
 func Load() {
-	var configRelPath string = "config/local.yaml" // 기본은 local.yaml
-	if os.Getenv("KHUMU_ENVIRONMENT") == "DEV" {
-		// KHUMU_HOME을 기준으로한 대한 상대 경로
-		configRelPath = "config/dev.yaml"
+	for _, configPath := range devKhumuConfigPath{
+		viper.AddConfigPath(configPath)
 	}
-	yamlDataPtr := readConfigFileFromKhumuHome(configRelPath)
-	Config = &KhumuConfig{}
-	err := yaml.Unmarshal(*yamlDataPtr, Config)
-	if err != nil {
-		logrus.Panic(err)
+	viper.AddConfigPath(os.Getenv("KHUMU_CONFIG_PATH"))
+	viper.SetConfigType("yaml")
+	khumuEnvironment := strings.ToLower(os.Getenv("KHUMU_ENVIRONMENT"))
+	if khumuEnvironment == ""{
+		khumuEnvironment = "default"
+	}
+	viper.SetConfigName(khumuEnvironment)
+	err := viper.ReadInConfig()
+	if err != nil{
+		logrus.Fatal(err)
+	}
+
+	Config = new(KhumuConfig)
+	err = viper.Unmarshal(Config)
+	if err != nil{
+		logrus.Fatal(err)
 	}
 }
 
@@ -84,5 +67,12 @@ type KhumuConfig struct {
 			User         string `yaml:"user"`
 			Password     string `yaml:"password"`
 		}
+	}
+	Redis struct{
+		Address string
+		Password string
+		DB int
+		CommentChannel string
+		LikeCommentChannel string
 	}
 }

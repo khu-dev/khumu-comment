@@ -1,23 +1,17 @@
 # KHUMU Comment API Server
 
-**khumu-comment**는 MSA로 개발중인 khumu의 comment 관련 API를 제공하는 서버이고, `Echo` 라는 Golang의 웹프렘워크를 바탕으로 개발 중입니다.
-khumu API 서버 중 khumu-command-center 가 article을 비롯한 대부분의 API를 제공하고있으며, article을 제공하는 서버와 comment를 제공하는 서버를 분리시켜 마이크로서비스 형태로 개발하고자 
-khumu-comment 서버를 이렇게 따로 개발하고 있습니다.
+**khumu-comment**는 MSA로 개발중인 khumu의 comment 관련 API를 제공하는 서버이고, `Echo` 라는 Golang의 웹프렘워크를 바탕으로 개발되고 있다. TDD와 Clean architecture를 바탕으로 개발을 진행 중이다.
 
-## API Documentation: 
-
-https://documenter.getpostman.com/view/13384984/TVsvfkxs
+API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 
 ## ⚙️설정
 
-`config/default.yaml` 을 통해 필요한 설정을 작성한다.
+`config/{{KHUMU_ENVIRONMENT}}.yaml` 을 통해 필요한 설정을 작성한다. KHUMU_ENVIRONMENT의 기본값은 `default`이다. 따라서 기본적으로는 `config/default.yaml`을 설정으로 로드한다.
 
-`config/test.yaml` 을 통해 테스트할 때 사용할 설정을 작성한다.
-
-`KHUMU_HOME` 환경변수를 통해 루트 경로를 설정한다. 예를 들어 config는 `$KHUMU_HOME/config/local.yaml` 과 같이 작동한다.
+`KHUMU_CONFIG_PATH` 환경변수를 통해 `config` 이외의 config file이 위치한 path를 설정할 수 있다. 단순히 상대 경로를 이용하기에는 test code를 통한 테스트 시에 상대 경로가 올바르게 지정되지 못한다는 이슈가 있다.
+따라서 개발자들의 경우 편의에 따라 자신의 local에서의 config path 경로를 config 패키지의 `devKhumuConfigPath`에 추가하도록 한다.
 
 `KHUMU_SECRET` 환경변수를 통해 jwt를 verify할 secret을 설정한다.
-
 
 ## 💯 테스트를 진행하는 방법
 
@@ -62,9 +56,8 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 ## 📚 개발 팁 및 메모
 
 * go test 대신 [gotest](https://github.com/rakyll/gotest)를 이용하면 좀 더 가시성 좋게 test를 진행할 수 있다.
-
-* `{"message": "Not Found"}` 응답을 받는 경우 `echo` 가 해당 경로에 대해 route 할 수 없을 때 발생하는데, 주로 주소의 맨 끝 `/` 의 차이인듯한데
-  이 레포의 컨벤션은 맨 뒤에 `/` 를 제거하는 것을 기본으로한다.
+* Jetbrains사의 GoLand를 이용하면 IDE에서 좀 더 편리하게 원하는 unit test를 실행할 수 있다.
+* `{"message": "Not Found"}` 응답을 받는 경우 `echo` 가 해당 경로에 대해 route 할 수 없을 때 발생하는데, 주로 주소의 맨 끝 `/` 의 차이인 경우가 있었다. 이 레포의 컨벤션은 맨 뒤에 `/` 를 제거하는 것을 기본으로한다.
 
 
 ## 🚀 개발 방향성 및 원칙
@@ -79,28 +72,26 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
   * khumu의 comment라는 도메인에서 사용하는 모델을 정의합니다.
   * 아무런 다른 계층도 참조하지 않는 최상위 계층입니다.
   * DB Table에 활용되거나 API Response 포함되는 등 다양하게 사용될 수 있지만, 이 계층은 하위 계층들이 자신을 어떻게 사용하는지 전혀 알 필요가 없습니다.
-  * 순수하게 우리의 도메인 코드로 정의되어있습니다.
-
-* **repository**
-  * Data source와 직접 작업을 하는 계층입니다. 
-  * `interface`와 그에 대한 구현체를 정의함으로써 유연하게 동작합니다. (다형성과 의존성 역전)
-    * `inferface`를 정의함으로써 `MySQL`, `SQLite3`, `Memory`의 `array`나 `map` 그 어떤 걸 사용하든 유연하게 대처할 수 있습니다.
-  * repository를 이용하는 계층은 interface만을 이용하기 때문에 구현체가 변경되어도 코드를 변경할 필요가 없습니다.
+  * 순수하게 우리 도메인의 코드로 정의되어 있습니다.
 * **usecase**
   * 대부분의 비즈니스 로직이 이곳에 위치합니다.
     * e.g. 익명 댓글의 작성자가 본인이면 `is_author: true`로 변환
     * e.g. 단순한 array 형태의 댓글을 children 댓글을 포함한 parent 댓글들의 array로 변환합니다.
     * e.g. 익명 댓글의 경우 작성자의 username와 nickname을 감춥니다.
+  * model과 마찬가지로 순수 우리 도메인의 코드로 정의되어 있습니다.
   * 하위 계층인 repository에 의존합니다. 하지만 의존성 역전 원리(DIP)에 의해 하위 계층의 구현체에 의존하는 것이 아니라 추상적인 repository interface에 의존합니다.
   * usecase가 의존성 역전이 되는 경우는 아직 없지만, 하위 계층의 test를 위해 mock을 지원해야할 수 있기 때문에 interface로 사용 중입니다.
-
+* **repository**
+  * 외부 Data source와 직접 작업을 하는 계층입니다. 
+  * `interface`와 그에 대한 구현체를 정의함으로써 유연하게 동작합니다. (다형성과 의존성 역전)
+    * `inferface`를 정의함으로써 `MySQL`, `SQLite3`, `Memory`의 `array`나 `map` 그 어떤 걸 사용하든 유연하게 대처할 수 있습니다.
+  * repository를 이용하는 계층은 직접 구현체를 이용하지 않고 interface만을 이용하기 때문에 구현체가 변경되어도 코드를 변경할 필요가 없습니다.
 * **http**
-  * 주로 http 통신 자체에 대한 로직을 담고있습니다. 가장 하위 계층입니다.
+  * 주로 http 통신 자체에 대한 로직을 담고있습니다. repository와 함께 가장 하위 계층입니다.
   * Router, Middleware, Authentication, Authorization 와 같은 작업을 다룹니다.
   * `struct` => `json` 으로 `marshal` 한 뒤 그 정보를 바탕으로 Response를 구성하는 로직을 담기도 합니다.
     (e.g. `Comment` struct를 받아서 json으로 변환한 뒤 Response의 body를 작성하는 작업을 진행합니다.   
 * 주로 요청에 대한 작업을 usecase를 통해 진행합니다.
-  
 * **container**
   * 컨테이너는 위의 모든 계층들과 달리 상위 계층, 하위 계층의 개념을 갖지 않고 의존성 주입을 관리해줍니다.
     * 개발자는 수작업으로 의존성을 주입해주거나, struct를 생성할 필요 없이 container가 type을 기반으로 자신(container)에 해당 타입의 변수가 존재하면
@@ -143,7 +134,6 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 
   * `github.com/khu-dev/khumu-comment/test`  패키지에 초기 데이터 형식과 필요한 몇 가지 함수를 정의해놓았다.
 
-  * 독립적인 유닛 테스트가 가능해져 GoLand에서 지원하는 test를 바로 실행시켜주는 기능도 편리하게 이용 가능해졌다.
 
 
 ## 📚 Golang 개발 이야기

@@ -29,7 +29,7 @@ jobs:
 
       - name: Test and Build a binary
         run: |
-          KHUMU_HOME=$(pwd) go test ./... -v
+          KHUMU_CONFIG_PATH=$(pwd)/config go test ./... -v
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o khumu-comment main.go
 
       - name: 🍦 Login to DockerHub
