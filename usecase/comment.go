@@ -31,14 +31,14 @@ type LikeCommentUseCaseInterface interface {
 }
 
 type CommentUseCase struct {
-	Repository            repository.CommentRepositoryInterface
-	LikeCommentRepository repository.LikeCommentRepositoryInterface
+	Repository             repository.CommentRepositoryInterface
+	LikeCommentRepository  repository.LikeCommentRepositoryInterface
 	EventMessageRepository repository.EventMessageRepository
 }
 
 type LikeCommentUseCase struct {
-	Repository        repository.LikeCommentRepositoryInterface
-	CommentRepository repository.CommentRepositoryInterface
+	Repository             repository.LikeCommentRepositoryInterface
+	CommentRepository      repository.CommentRepositoryInterface
 	EventMessageRepository repository.EventMessageRepository
 }
 
@@ -64,8 +64,8 @@ func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error)
 
 	uc.EventMessageRepository.PublishCommentEvent(&model.EventMessage{
 		ResourceKind: "comment",
-		EventKind: "create",
-		Resource: newComment,
+		EventKind:    "create",
+		Resource:     newComment,
 	})
 
 	return newComment, nil
@@ -128,7 +128,7 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 // 대부분의 comment usecase에서 사용되는 로직을 담당한다. 재귀적으로 자식 코멘트들에게도 적용된다.
 func (uc *CommentUseCase) handleComment(c *model.Comment, username string, currentDepth int) {
 	const maxDepth = 1
-	if c.AuthorUsername == username{
+	if c.AuthorUsername == username {
 		c.IsAuthor = true
 	}
 	if c.Kind == "anonymous" || c.State == "deleted" {
@@ -157,7 +157,7 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment) {
 		c.AuthorUsername = DeletedCommentUsername
 		c.Author.Username = DeletedCommentUsername
 		c.Author.Nickname = DeletedCommentNickname
-	} else if c.Kind == "anonymous"{
+	} else if c.Kind == "anonymous" {
 		c.AuthorUsername = AnonymousCommentUsername
 		c.Author.Username = AnonymousCommentUsername
 		c.Author.Nickname = AnonymousCommentNickname

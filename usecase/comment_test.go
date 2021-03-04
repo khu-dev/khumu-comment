@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	mockCommentRepository *repository.MockCommentRepositoryInterface
-	mockLikeCommentRepository *repository.MockLikeCommentRepositoryInterface
-	mockEventMessageRepository *repository.MockEventMessageRepository
+	mockCommentRepository       *repository.MockCommentRepositoryInterface
+	mockLikeCommentRepository   *repository.MockLikeCommentRepositoryInterface
+	mockEventMessageRepository  *repository.MockEventMessageRepository
 	redisEventMessageRepository *repository.RedisEventMessageRepository
-	commentUseCase     *CommentUseCase
-	likeCommentUseCase *LikeCommentUseCase
-	ctrl *gomock.Controller
+	commentUseCase              *CommentUseCase
+	likeCommentUseCase          *LikeCommentUseCase
+	ctrl                        *gomock.Controller
 )
 
 func TestMain(m *testing.M) {
@@ -39,20 +39,20 @@ func BeforeCommentUseCaseTest(t *testing.T) {
 	mockLikeCommentRepository = repository.NewMockLikeCommentRepositoryInterface(ctrl)
 	mockEventMessageRepository = repository.NewMockEventMessageRepository(ctrl)
 	commentUseCase = &CommentUseCase{
-		Repository: mockCommentRepository,
-		LikeCommentRepository: mockLikeCommentRepository,
+		Repository:             mockCommentRepository,
+		LikeCommentRepository:  mockLikeCommentRepository,
 		EventMessageRepository: mockEventMessageRepository,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{
-		Repository: mockLikeCommentRepository,
-		CommentRepository: mockCommentRepository,
+		Repository:             mockLikeCommentRepository,
+		CommentRepository:      mockCommentRepository,
 		EventMessageRepository: mockEventMessageRepository,
 	}
 
 	mockEventMessageRepository.EXPECT().PublishCommentEvent(gomock.Any()).DoAndReturn(
 		func(message interface{}) {
 			t.Log("그냥 테스트라서 푸시 알림 패스")
-	}).AnyTimes()
+		}).AnyTimes()
 	//test.setUp(db
 	// = make([]*model.Comment, 0)
 	//for _, comment := range test.CommentsData {
@@ -100,7 +100,6 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 	}
 }
 
-
 func TestCommentUseCase_Create(t *testing.T) {
 	t.Run("My anonymous comment", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
@@ -114,7 +113,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 		}
 
 		mockCommentRepository.EXPECT().Create(gomock.Any()).DoAndReturn(
-			func(comment *model.Comment) (*model.Comment, error){
+			func(comment *model.Comment) (*model.Comment, error) {
 				c := *comment
 				c.Author = &model.KhumuUserSimple{Username: c.AuthorUsername}
 				return &c, nil
@@ -134,7 +133,6 @@ func TestCommentUseCase_Update(t *testing.T) {
 	BeforeCommentUseCaseTest(t)
 	defer A(t)
 	// Update는 대부분 repository 계층에서만 확인해도 될 듯.
-
 
 	//before := *test.Comment1JinsuAnnonymous
 	//updateData := map[string]interface{}{
@@ -170,38 +168,38 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 	commentID := test.Comment1JinsuAnnonymous.ID
 	mockCommentRepository.EXPECT().Get(gomock.Any()).Return(test.Comment1JinsuAnnonymous, nil).AnyTimes()
 	likeComments := make([]*model.LikeComment, 0)
-	mockLikeCommentRepository.EXPECT().Create(gomock.Any()).DoAndReturn(func(c *model.LikeComment) (*model.LikeComment, error){
+	mockLikeCommentRepository.EXPECT().Create(gomock.Any()).DoAndReturn(func(c *model.LikeComment) (*model.LikeComment, error) {
 		likeComments = append(likeComments, c)
 		return c, nil
 	}).AnyTimes()
 	// 그냥 한 칸 줄이기만함.
-	mockLikeCommentRepository.EXPECT().Delete(gomock.Any()).DoAndReturn(func(id int) (*model.LikeComment, error){
+	mockLikeCommentRepository.EXPECT().Delete(gomock.Any()).DoAndReturn(func(id int) (*model.LikeComment, error) {
 		deleted := likeComments[id]
 		likeComments = append(likeComments[:id], likeComments[id+1:]...)
 		return deleted, nil
 	}).AnyTimes()
 	// 거의 로직을 구현해버렸네.....
-	mockLikeCommentRepository.EXPECT().List(gomock.Any()).DoAndReturn(func(option *repository.LikeCommentQueryOption) []*model.LikeComment{
+	mockLikeCommentRepository.EXPECT().List(gomock.Any()).DoAndReturn(func(option *repository.LikeCommentQueryOption) []*model.LikeComment {
 		answers := make([]*model.LikeComment, 0)
-		if option.Username != "" && option.CommentID != 0{
+		if option.Username != "" && option.CommentID != 0 {
 			for _, like := range likeComments {
-				if like.Username == option.Username && like.CommentID == option.CommentID{
+				if like.Username == option.Username && like.CommentID == option.CommentID {
 					answers = append(answers, like)
 				}
 			}
 		} else if option.Username != "" {
 			for _, like := range likeComments {
-				if like.Username == option.Username{
+				if like.Username == option.Username {
 					answers = append(answers, like)
 				}
 			}
 		} else if option.CommentID != 0 {
 			for _, like := range likeComments {
-				if like.CommentID == option.CommentID{
+				if like.CommentID == option.CommentID {
 					answers = append(answers, like)
 				}
 			}
-		} else{
+		} else {
 			answers = likeComments
 		}
 		return answers

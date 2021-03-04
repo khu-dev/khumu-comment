@@ -16,7 +16,6 @@ var (
 	devKhumuConfigPath []string = []string{
 		"/home/jinsu/git/khumu/khumu-comment/config",
 	}
-
 )
 
 func init() {
@@ -30,24 +29,24 @@ func init() {
 }
 
 func Load() {
-	for _, configPath := range devKhumuConfigPath{
+	for _, configPath := range devKhumuConfigPath {
 		viper.AddConfigPath(configPath)
 	}
 	viper.AddConfigPath(os.Getenv("KHUMU_CONFIG_PATH"))
 	viper.SetConfigType("yaml")
 	khumuEnvironment := strings.ToLower(os.Getenv("KHUMU_ENVIRONMENT"))
-	if khumuEnvironment == ""{
+	if khumuEnvironment == "" {
 		khumuEnvironment = "default"
 	}
 	viper.SetConfigName(khumuEnvironment)
 	err := viper.ReadInConfig()
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 
 	Config = new(KhumuConfig)
 	err = viper.Unmarshal(Config)
-	if err != nil{
+	if err != nil {
 		logrus.Fatal(err)
 	}
 }
@@ -69,11 +68,11 @@ type KhumuConfig struct {
 			Password     string `yaml:"password"`
 		}
 	}
-	Redis struct{
-		Address string
-		Password string
-		DB int
-		CommentChannel string
+	Redis struct {
+		Address            string
+		Password           string
+		DB                 int
+		CommentChannel     string
 		LikeCommentChannel string
 	}
 }

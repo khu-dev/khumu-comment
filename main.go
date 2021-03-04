@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "github.com/khu-dev/khumu-comment/cmd"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/container"
 	"github.com/labstack/echo/v4"
@@ -9,7 +8,7 @@ import (
 	"os"
 )
 
-func main(){
+func main() {
 	logrus.Println("Args: ", len(os.Args), os.Args)
 	logrus.Printf("Default config. %#v\n", config.Config)
 	cont := container.Build()

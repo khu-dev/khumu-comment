@@ -10,21 +10,22 @@ import (
 )
 
 var (
-	gormCommentRepository *CommentRepositoryGorm
+	gormCommentRepository     *CommentRepositoryGorm
 	gormLikeCommentRepository *LikeCommentRepositoryGorm
 )
+
 func BeforeGormCommentRepository(tb testing.TB) {
 	db := NewTestGorm()
 	migrateAll(tb, db)
-	gormCommentRepository = NewCommentRepositoryGorm(db).(*CommentRepositoryGorm) 
+	gormCommentRepository = NewCommentRepositoryGorm(db).(*CommentRepositoryGorm)
 	gormLikeCommentRepository = NewLikeCommentRepositoryGorm(db).(*LikeCommentRepositoryGorm)
 	test.SetUp()
 }
-func migrateAll(tb testing.TB, db *gorm.DB){
+func migrateAll(tb testing.TB, db *gorm.DB) {
 	err := db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
 	if err != nil {
 		tb.Fatal(err)
-	} else{
+	} else {
 		tb.Log("Migrate all!")
 	}
 }
@@ -35,7 +36,6 @@ func AfterGormCommentRepository(tb testing.TB) {
 		logrus.Fatal(err)
 	}
 }
-
 
 func TestCommentRepositoryGorm_Create(t *testing.T) {
 	//parentID0 := 0
@@ -66,11 +66,11 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		defer AfterGormCommentRepository(t)
 
 		comment := &model.Comment{
-			Kind:      "named",
+			Kind:           "named",
 			AuthorUsername: "jinsu",
-			ArticleID: 1,
-			Content:   "테스트로 작성한 기명 코멘트입니다.",
-			ParentID:  &parentID1,
+			ArticleID:      1,
+			Content:        "테스트로 작성한 기명 코멘트입니다.",
+			ParentID:       &parentID1,
 		}
 		created, err := gormCommentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -84,11 +84,11 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		defer AfterGormCommentRepository(t)
 
 		comment := &model.Comment{
-			Kind:      "anonymous",
-			AuthorUsername:   "somebody",
-			ArticleID: 1,
-			Content:   "테스트로 작성한 somebody의 기명 코멘트입니다.",
-			ParentID:  &parentID1,
+			Kind:           "anonymous",
+			AuthorUsername: "somebody",
+			ArticleID:      1,
+			Content:        "테스트로 작성한 somebody의 기명 코멘트입니다.",
+			ParentID:       &parentID1,
 		}
 		created, err := gormCommentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -189,7 +189,7 @@ func TestCommentRepositoryGorm_Get(t *testing.T) {
 func TestCommentRepositoryGorm_List(t *testing.T) {
 	BeforeGormCommentRepository(t)
 	defer AfterGormCommentRepository(t)
-	for _, c := range test.Comments{
+	for _, c := range test.Comments {
 		gormCommentRepository.Create(c)
 	}
 

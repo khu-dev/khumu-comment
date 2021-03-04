@@ -57,8 +57,8 @@ func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, 
 	}
 	// Omit했던 녀석들에 대한 Join
 	err = r.DB.Preload("Author").Preload("Parent").Preload("Children").Find(comment).Error
-		logrus.Info(comment.Author)
-		logrus.Info(comment.AuthorUsername)
+	logrus.Info(comment.Author)
+	logrus.Info(comment.AuthorUsername)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -96,9 +96,9 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 
 	for _, c := range comments {
 		// copy 작업을 해주지 않으면 같은 author는 같은 주소값을 참조하게됨.
-		if c.Author == nil{
+		if c.Author == nil {
 			logrus.Warn("Author가 nil입니다. 테스트 환경에서 SQLite3를 쓰는 경우 외엔 오류입니다.")
-		} else{
+		} else {
 			tmpAuthor := *(c.Author)
 			c.Author = &tmpAuthor
 		}
@@ -111,7 +111,6 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 			child.Children = make([]*model.Comment, 0)
 		}
 	}
-
 
 	return comments
 }

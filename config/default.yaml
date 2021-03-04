@@ -12,8 +12,8 @@ db:
     user: root # Define YOUR_MYSQL_USER
     password: root # Define YOUR_MYSQL_PASSWORD
 redis:
-  address: "redis.khumu.jinsu.me:6379"
+  address: "example.com:6379"
   password: ""
   db: 0
-  commentChannel: comment
-  likeCommentChannel: like_comment
+  commentChannel: your_comment_channel
+  likeCommentChannel: your_like_comment

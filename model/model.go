@@ -69,20 +69,20 @@ type Comment struct {
 	// Kind: (anonymous, named)
 	Kind string `gorm:"column:kind; default:anonymous" json:"kind"`
 	// State: (exists, deleted)
-	State               string           `gorm:"column:state; default:exists" json:"state"`
-	Author              *KhumuUserSimple `gorm:"foreignKey:AuthorUsername; references:Username; constraint:OnDELETE:CASCADE" json:"author"`
-	AuthorUsername      string           `gorm:"column:author_id" json:"-"`
-	ArticleID           int              `gorm:"column:article_id" json:"article"`
-	Content             string           `json:"content"`
-	ParentID            *int             `gorm:"column:parent_id;default:null" json:"parent"`
-	Parent              *Comment         `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
-	Children            []*Comment       `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relatio
-	CreatedAt           time.Time        `gorm:"autoCreateTime" json:"-"`// nship => Preload 필요
+	State          string           `gorm:"column:state; default:exists" json:"state"`
+	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername; references:Username; constraint:OnDELETE:CASCADE" json:"author"`
+	AuthorUsername string           `gorm:"column:author_id" json:"-"`
+	ArticleID      int              `gorm:"column:article_id" json:"article"`
+	Content        string           `json:"content"`
+	ParentID       *int             `gorm:"column:parent_id;default:null" json:"parent"`
+	Parent         *Comment         `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
+	Children       []*Comment       `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relatio
+	CreatedAt      time.Time        `gorm:"autoCreateTime" json:"-"`                           // nship => Preload 필요
 	// 여기서 부턴 gorm과 상관 없는 field
-	IsAuthor bool `gorm:"-" json:"is_author"`
-	LikeCommentCount    int              `gorm:"-" json:"like_comment_count"`
-	Liked               bool             `gorm:"-" json:"liked"`
-	CreatedAtExpression string           `gorm:"-" json:"created_at"`
+	IsAuthor            bool   `gorm:"-" json:"is_author"`
+	LikeCommentCount    int    `gorm:"-" json:"like_comment_count"`
+	Liked               bool   `gorm:"-" json:"liked"`
+	CreatedAtExpression string `gorm:"-" json:"created_at"`
 }
 
 func (*Comment) TableName() string {
@@ -103,12 +103,12 @@ func (*LikeComment) TableName() string {
 
 // eventmessage가 event를 publish 할 때 사용
 type EventMessage struct {
-	ResourceKind string `json:"resource_kind"`
-	EventKind string `json:"event_kind"`
-	Resource *Comment `json:"resource"`
+	ResourceKind string   `json:"resource_kind"`
+	EventKind    string   `json:"event_kind"`
+	Resource     *Comment `json:"resource"`
 }
 
 // redis는 encoding.BinaryMarshaler를 구현한 type만을 Marshal 가능하다.
-func (e *EventMessage) MarshalBinary() (data []byte, err error){
+func (e *EventMessage) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(e)
 }
