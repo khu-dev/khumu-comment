@@ -14,6 +14,7 @@ import (
 var (
 	mockCommentRepository *repository.MockCommentRepositoryInterface
 	mockLikeCommentRepository *repository.MockLikeCommentRepositoryInterface
+	eventMessageRepository repository.EventMessageRepository
 	commentUseCase     *CommentUseCase
 	likeCommentUseCase *LikeCommentUseCase
 	ctrl *gomock.Controller
@@ -34,10 +35,13 @@ func BeforeCommentUseCaseTest(t *testing.T) {
 
 	mockCommentRepository = repository.NewMockCommentRepositoryInterface(ctrl)
 	mockLikeCommentRepository = repository.NewMockLikeCommentRepositoryInterface(ctrl)
+	eventMessageRepository = repository.NewRedisEventMessageRepository()
 	commentUseCase = &CommentUseCase{
 		Repository: mockCommentRepository,
 		LikeCommentRepository: mockLikeCommentRepository,
+		EventMessageRepository: eventMessageRepository,
 	}
+
 	//test.setUp(db
 	// = make([]*model.Comment, 0)
 	//for _, comment := range test.CommentsData {
@@ -98,6 +102,15 @@ func TestCommentUseCase_Create(t *testing.T) {
 			ArticleID:      1,
 			Content:        "새로운 테스트 댓글",
 		}
+
+		mockCommentRepository.EXPECT().Create(gomock.Any()).DoAndReturn(
+			func(comment *model.Comment) (*model.Comment, error){
+				c := *comment
+				c.Author = &model.KhumuUserSimple{Username: c.AuthorUsername}
+				return &c, nil
+			},
+		)
+		
 		newComment, err := commentUseCase.Create(c)
 		assert.Nil(t, err)
 		assert.NotNil(t, newComment)
