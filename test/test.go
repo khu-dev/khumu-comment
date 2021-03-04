@@ -10,179 +10,216 @@ package test
 
 import (
 	"github.com/khu-dev/khumu-comment/model"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 var (
-	UsersData    map[string]*model.KhumuUserSimple
-	BoardData    []*model.Board
-	ArticleData  []*model.Article
-	CommentsData map[string]*model.Comment
+	UserJinsu    *model.KhumuUserSimple
+	UserSomebody *model.KhumuUserSimple
+	UserPuppy    *model.KhumuUserSimple
+	Users        []*model.KhumuUserSimple
+
+	BoardFree                          *model.Board
+	BoardDepartmentComputerEngineering *model.Board
+	Boards                             []*model.Board
+
+	Articles []*model.Article
+
+	Comment1JinsuAnnonymous               *model.Comment
+	Comment2JinsuNamed                    *model.Comment
+	Comment3SomebodyAnonymous             *model.Comment
+	Comment4PuppyAnonymous                *model.Comment
+	Comment5JinsuAnonymousFromComment1    *model.Comment
+	Comment6JinsuNamedFromComment1        *model.Comment
+	Comment7SomebodyAnonymousFromComment1 *model.Comment
+	Comment8PuppyAnonymousFromComment1    *model.Comment
+
+	Comments []*model.Comment
 	// parent Comment의 ID는 모두 1
-	ReplyCommentsData map[string]*model.Comment
 )
 
 func init() {
-	UsersData = map[string]*model.KhumuUserSimple{
-		"Jinsu": &model.KhumuUserSimple{
-			Username: "jinsu",
-			Nickname: "진수짱짱맨",
-			State:    "active",
-		},
-		"Somebody": &model.KhumuUserSimple{
-			Username: "somebody",
-			Nickname: "썸바디",
-			State:    "active",
-		},
-		"Puppy": &model.KhumuUserSimple{
-			Username: "puppy",
-			Nickname: "댕댕이",
-			State:    "active",
-		},
-	}
+}
 
-	BoardData = []*model.Board{
-		&model.Board{Name: "free", DisplayName: "자유게시판"},
-		&model.Board{Name: "department_computer_engineering", DisplayName: "컴퓨터공학과"},
-	}
+// test 진행 시에 각 step에서 사용할 초기 데이터를 만든다.
+func SetUp() {
 
-	ArticleData = []*model.Article{
+	Users = make([]*model.KhumuUserSimple, 0)
+	Boards = make([]*model.Board, 0)
+	Articles = make([]*model.Article, 0)
+	Comments = make([]*model.Comment, 0)
+
+	UserJinsu = &model.KhumuUserSimple{
+		Username: "jinsu",
+		Nickname: "진수짱짱맨",
+		State:    "active",
+	}
+	Users = append(Users, UserJinsu)
+
+	UserSomebody = &model.KhumuUserSimple{
+		Username: "somebody",
+		Nickname: "썸바디",
+		State:    "active",
+	}
+	Users = append(Users, UserSomebody)
+
+	UserPuppy = &model.KhumuUserSimple{
+		Username: "puppy",
+		Nickname: "댕댕이",
+		State:    "active",
+	}
+	Users = append(Users, UserPuppy)
+
+	BoardFree = &model.Board{Name: "free", DisplayName: "자유게시판"}
+	Boards = append(Boards, BoardFree)
+	BoardDepartmentComputerEngineering = &model.Board{Name: "department_computer_engineering", DisplayName: "컴퓨터공학과"}
+	Boards = append(Boards, BoardDepartmentComputerEngineering)
+
+	Articles = make([]*model.Article, 0)
+	Articles = append(Articles,
 		&model.Article{
 			ArticleID:      1,
 			BoardName:      "free",
 			Title:          "1번 게시물입니다.",
 			AuthorUsername: "jinsu",
 			Content:        "이것은 1번 게시물!",
-		},
+		})
+	Articles = append(Articles,
 		&model.Article{
 			ArticleID:      2,
 			BoardName:      "free",
 			Title:          "2번 게시물입니다.",
 			AuthorUsername: "somebody",
 			Content:        "이것은 2번 게시물!",
-		},
+		})
+	Articles = append(Articles,
 		&model.Article{
 			ArticleID:      3,
 			BoardName:      "free",
 			Title:          "3번 게시물입니다.",
 			AuthorUsername: "puppy",
 			Content:        "이것은 3번 게시물!",
-		},
-	}
+		})
 
-	CommentsData = map[string]*model.Comment{
-		"JinsuAnonymousComment": &model.Comment{
-			Kind: "anonymous",
-			//AuthorUsername: "jinsu",
-			AuthorUsername: "jinsu",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 jinsu의 익명 코멘트",
-			ParentID:       nil,
+	Comments = make([]*model.Comment, 0)
+
+	Comment1JinsuAnnonymous = &model.Comment{
+		ID:             1,
+		Kind:           "anonymous",
+		AuthorUsername: "jinsu",
+		Author: &model.KhumuUserSimple{
+			Username: "jinsu",
+			Nickname: "진수짱짱맨",
+			State:    "active",
 		},
-		"JinsuNamedComment": &model.Comment{
-			Kind:           "named",
-			AuthorUsername: "jinsu",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 jinsu의 기명 코멘트",
-			ParentID:       nil,
-		},
-		"SomebodyAnonymousComment": &model.Comment{
-			Kind:           "anonymous",
-			AuthorUsername: "somebody",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 somebody의 익명 코멘트",
-			ParentID:       nil,
-		},
-		"PuppyAnonymousComment": &model.Comment{
-			Kind:           "anonymous",
-			AuthorUsername: "puppy",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 puppy의 익명 코멘트",
-			ParentID:       nil,
-		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 jinsu의 익명 코멘트",
+		ParentID:  nil,
 	}
+	Comments = append(Comments, Comment1JinsuAnnonymous)
+
+	Comment2JinsuNamed = &model.Comment{
+		ID:             2,
+		Kind:           "named",
+		AuthorUsername: "jinsu",
+		Author: &model.KhumuUserSimple{
+			Username: "jinsu",
+			Nickname: "진수짱짱맨",
+			State:    "active",
+		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 jinsu의 기명 코멘트",
+		ParentID:  nil,
+	}
+	Comments = append(Comments, Comment2JinsuNamed)
+
+	Comment3SomebodyAnonymous = &model.Comment{
+		ID:             3,
+		Kind:           "anonymous",
+		AuthorUsername: "somebody",
+		Author: &model.KhumuUserSimple{
+			Username: "somebody",
+			Nickname: "썸바디",
+			State:    "active",
+		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 somebody의 익명 코멘트",
+		ParentID:  nil,
+	}
+	Comments = append(Comments, Comment3SomebodyAnonymous)
+
+	Comment4PuppyAnonymous = &model.Comment{
+		ID:             4,
+		Kind:           "anonymous",
+		AuthorUsername: "puppy",
+		Author: &model.KhumuUserSimple{
+			Username: "puppy",
+			Nickname: "댕댕이",
+			State:    "active",
+		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 puppy의 익명 코멘트",
+		ParentID:  nil,
+	}
+	Comments = append(Comments, Comment4PuppyAnonymous)
 
 	parentID := 1
-	ReplyCommentsData = map[string]*model.Comment{
-		"JinsuAnonymousReplyComment": &model.Comment{
-			Kind:           "anonymous",
-			AuthorUsername: "jinsu",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 jinsu의 익명 대댓글",
-			ParentID:       &parentID,
+	Comment5JinsuAnonymousFromComment1 = &model.Comment{
+		ID:             5,
+		Kind:           "anonymous",
+		AuthorUsername: "jinsu",
+		Author: &model.KhumuUserSimple{
+			Username: "jinsu",
+			Nickname: "진수짱짱맨",
+			State:    "active",
 		},
-		"JinsuNamedReplyComment": &model.Comment{
-			Kind:           "anonymous",
-			AuthorUsername: "jinsu",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 jinsu의 기명 대댓글",
-			ParentID:       &parentID,
-		},
-		"SomebodyAnonymousReplyComment": &model.Comment{
-			Kind:           "anonymous",
-			AuthorUsername: "somebody",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 somebody의 익명 코멘트",
-			ParentID:       &parentID,
-		},
-		"PuppyAnonymousReplyComment": &model.Comment{
-			Kind:           "anonymous",
-			AuthorUsername: "puppy",
-			ArticleID:      1,
-			Content:        "테스트로 작성한 puppy의 익명 코멘트",
-			ParentID:       &parentID,
-		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 jinsu의 익명 대댓글",
+		ParentID:  &parentID,
 	}
-}
+	Comments = append(Comments, Comment5JinsuAnonymousFromComment1)
 
-// test 진행 시에 각 step에서 사용할 초기 데이터를 만든다.
-func SetUp(db *gorm.DB) {
-	MigrateAll(db)
-	for _, userData := range UsersData {
-		err := db.Create(userData).Error
-		if err != nil {
-			logrus.Fatal(err)
-		}
+	Comment6JinsuNamedFromComment1 = &model.Comment{
+		ID:             6,
+		Kind:           "anonymous",
+		AuthorUsername: "jinsu",
+		Author: &model.KhumuUserSimple{
+			Username: "jinsu",
+			Nickname: "진수짱짱맨",
+			State:    "active",
+		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 jinsu의 기명 대댓글",
+		ParentID:  &parentID,
 	}
-	for _, boardData := range BoardData {
-		err := db.Create(boardData).Error
-		if err != nil {
-			logrus.Fatal(err)
-		}
-	}
-	for _, articleData := range ArticleData {
-		err := db.Omit("Board", "Author").Create(articleData).Error
-		if err != nil {
-			logrus.Fatal(err)
-		}
-	}
-	for _, commentData := range CommentsData {
-		err := db.Omit("Author", "Parent", "Children").Create(commentData).Error
-		if err != nil {
-			logrus.Fatal(err)
-		}
-	}
-	// reply comment는 comment에 의존성이있다.
-	for _, rcData := range ReplyCommentsData {
-		err := db.Omit("Author", "Parent", "Children").Create(rcData).Error
-		if err != nil {
-			logrus.Fatal(err)
-		}
-	}
-}
+	Comments = append(Comments, Comment6JinsuNamedFromComment1)
 
-// test 진행 시에 각 step에서 진행한 내용을 초기화한다.
-func CleanUp(db *gorm.DB) {
-	err := db.Migrator().DropTable(&model.LikeComment{}, &model.Comment{}, &model.Article{}, &model.KhumuUserSimple{}, &model.Board{})
-	if err != nil {
-		logrus.Fatal(err)
+	Comment7SomebodyAnonymousFromComment1 = &model.Comment{
+		ID:             7,
+		Kind:           "anonymous",
+		AuthorUsername: "somebody",
+		Author: &model.KhumuUserSimple{
+			Username: "somebody",
+			Nickname: "썸바디",
+			State:    "active",
+		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 somebody의 익명 코멘트",
+		ParentID:  &parentID,
 	}
-}
+	Comments = append(Comments, Comment7SomebodyAnonymousFromComment1)
 
-func MigrateAll(db *gorm.DB) {
-	err := db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
-	if err != nil {
-		logrus.Fatal(err)
+	Comment8PuppyAnonymousFromComment1 = &model.Comment{
+		ID:             8,
+		Kind:           "anonymous",
+		AuthorUsername: "puppy",
+		Author: &model.KhumuUserSimple{
+			Username: "puppy",
+			Nickname: "댕댕이",
+			State:    "active",
+		},
+		ArticleID: 1,
+		Content:   "테스트로 작성한 puppy의 익명 코멘트",
+		ParentID:  &parentID,
 	}
+	Comments = append(Comments, Comment8PuppyAnonymousFromComment1)
 }

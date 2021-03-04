@@ -1,0 +1,103 @@
+# test를 진행할 때 필요한 기본 데이터를 제공한다.
+#
+# 기본적인 흐름
+# 3 유저 jinsu somebody puppy 존재
+# 1번 article에 3 user가 각각 comment 단다.
+# 이 흐름들은 주로 test 코드의 Create 부분에서 실행된다.
+# like-comment의 경우 Toggle인 경우도 있다.
+
+
+Users:
+- Username: "jinsu"
+  Nickname: "진수짱짱맨"
+  State:    "active"
+
+- Username: "somebody"
+  Nickname: "썸바디"
+  State:    "active"
+
+- Username: "puppy"
+  Nickname: "댕댕이"
+  State:    "active"
+
+Boards:
+- Name: "free"
+  DisplayName: "자유게시판"
+- Name: "department_computer_engineering"
+  DisplayName: "컴퓨터공학과"
+
+Articles:
+- ArticleID:      1
+  BoardName:      "free"
+  Title:          "1번 게시물입니다."
+  AuthorUsername: "jinsu"
+  Content:        "이것은 1번 게시물!"
+
+- ArticleID:      2
+  BoardName:      "free"
+  Title:          "2번 게시물입니다."
+  AuthorUsername: "somebody"
+  Content:        "이것은 2번 게시물!"
+
+- ArticleID:      3
+  BoardName:      "free"
+  Title:          "3번 게시물입니다."
+  AuthorUsername: "puppy"
+  Content:        "이것은 3번 게시물!"
+
+Comments:
+- ID: 1
+  Kind: "anonymous"
+  AuthorUsername: "jinsu"
+  ArticleID: 1
+  Content: "테스트로 작성한 jinsu의 익명 코멘트"
+  ParentID: {}
+
+- ID: 2
+  Kind: "named"
+  AuthorUsername: "jinsu"
+  ArticleID: 1
+  Content: "테스트로 작성한 jinsu의 기명 코멘트"
+  ParentID: {}
+
+- ID: 3
+  Kind: "anonymous"
+  AuthorUsername: "somebody"
+  ArticleID: 1
+  Content: "테스트로 작성한 somebody의 익명 코멘트"
+  ParentID: {}
+
+- ID: 4
+  Kind: "anonymous"
+  AuthorUsername: "puppy"
+  ArticleID: 1
+  Content: "테스트로 작성한 puppy의 익명 코멘트"
+  ParentID: {}
+
+- ID: 5
+  Kind: "anonymous"
+  AuthorUsername: "jinsu"
+  ArticleID: 1
+  Content: "테스트로 작성한 jinsu의 익명 대댓글"
+  ParentID: {}
+
+- ID: 6
+  Kind: "anonymous"
+  AuthorUsername: "jinsu"
+  ArticleID: 1
+  Content: "테스트로 작성한 jinsu의 기명 대댓글"
+  ParentID: {}
+
+- ID: 7
+  Kind: "anonymous"
+  AuthorUsername: "somebody"
+  ArticleID: 1
+  Content: "테스트로 작성한 somebody의 익명 코멘트"
+  ParentID: {}
+
+- ID: 8
+  Kind: "anonymous"
+  AuthorUsername: "puppy"
+  ArticleID: 1
+  Content: "테스트로 작성한 puppy의 익명 코멘트"
+  ParentID: {}

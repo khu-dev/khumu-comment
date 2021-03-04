@@ -1,99 +1,95 @@
-// repository 계층과 분리된 채 usecase 계층만의 테스트를 진행
-// repository를 간단히 mock 한 뒤 기명, 익명 kind의 comment 들이
-// desired한 방향으로 얻어지는 지 확인해본다.
+// 현재는 거의 usecase level에서 repository 계층까지 테스트하는 셈인데
+// 좀 더 순수한 service 계층의 logic을 테스트할 수 있도록 바뀌었으면 좋겠다.
 package usecase
 
 import (
+	"github.com/golang/mock/gomock"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/dig"
-	"gorm.io/gorm"
 	"testing"
 )
 
-// 언젠가 모킹을 사용할 것이라면 이 타입을 구현. 메소드는 현재 사용하지 않으므로 주석처리했다.
-//type CommentRepositoryMock struct{}
-//func (r *CommentRepositoryMock) Create(comment *model.Comment) (*model.Comment, error){
-//	return nil, nil
-//}
-//func (r *CommentRepositoryMock) List(opt *repository.CommentQueryOption) []*model.Comment{
-//	return nil
-//}
-//func (r *CommentRepositoryMock) Get(id int) (*model.Comment, error){
-//	return nil, nil
-//}
-//func (r *CommentRepositoryMock) Update(id int, opt map[string]interface{}) (*model.Comment, error){
-//	return nil, nil
-//}
-//func (r *CommentRepositoryMock) Delete(id int) (*model.Comment, error){
-//	return nil, nil
-//}
-
 var (
-	db                 *gorm.DB
-	commentUseCase     CommentUseCaseInterface
-	likeCommentUseCase LikeCommentUseCaseInterface
+	mockCommentRepository *repository.MockCommentRepositoryInterface
+	mockLikeCommentRepository *repository.MockLikeCommentRepositoryInterface
+	commentUseCase     *CommentUseCase
+	likeCommentUseCase *LikeCommentUseCase
+	ctrl *gomock.Controller
 )
 
 func TestMain(m *testing.M) {
-	cont := BuildContainer()
-	err := cont.Invoke(func(conn *gorm.DB, cuc CommentUseCaseInterface, lcuc LikeCommentUseCaseInterface) {
-		db = conn
-		commentUseCase = cuc
-		likeCommentUseCase = lcuc
-	})
-	if err != nil {
-		logrus.Fatal(err)
+	commentUseCase = &CommentUseCase{
+		Repository: mockCommentRepository,
+		//LikeCommentRepository: likeCommentUseCase
 	}
 
 	m.Run()
 }
 
 // B는 Before each의 acronym
-func B(tb testing.TB) {
-	test.SetUp(db)
+func BeforeCommentUseCaseTest(t *testing.T) {
+	ctrl = gomock.NewController(t)
+
+	mockCommentRepository = repository.NewMockCommentRepositoryInterface(ctrl)
+	mockLikeCommentRepository = repository.NewMockLikeCommentRepositoryInterface(ctrl)
+	commentUseCase = &CommentUseCase{
+		Repository: mockCommentRepository,
+		LikeCommentRepository: mockLikeCommentRepository,
+	}
+	//test.setUp(db
+	// = make([]*model.Comment, 0)
+	//for _, comment := range test.CommentsData {
+	//	data = append(data, comment)
+	//}
 }
 
 // A는 After each의 acronym
 func A(tb testing.TB) {
-	test.CleanUp(db)
+	//test.CleanUp(db)
 }
 
-func BuildContainer() *dig.Container {
-	cont := dig.New()
-	err := cont.Provide(repository.NewTestGorm)
-	if err != nil {
-		logrus.Fatal(err)
+//func (m *MyMockedObject) DoSomething(number int) (bool, error) {
+//
+//  args := m.Called(number)
+//  return args.Bool(0), args.Error(1)
+//
+//}
+
+func TestCommentUseCase_Get(t *testing.T) {}
+
+func TestLikeCommentUseCase_List(t *testing.T) {
+	BeforeCommentUseCaseTest(t)
+	test.SetUp()
+	mockCommentRepository.EXPECT().List(gomock.Any()).Return(test.Comments).AnyTimes()
+	mockLikeCommentRepository.EXPECT().List(gomock.Any()).Return([]*model.LikeComment{}).AnyTimes()
+	comments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{})
+	assert.NoError(t, err)
+	for _, comment := range comments {
+
+		assert.Equal(t, comment.AuthorUsername, comment.Author.Username)
+		if comment.Kind == "named" {
+			assert.NotEqual(t, AnonymousCommentUsername, comment.Author.Username)
+			assert.NotEqual(t, AnonymousCommentNickname, comment.Author.Nickname)
+			assert.NotEqual(t, DeletedCommentNickname, comment.Author.Username)
+			assert.NotEqual(t, DeletedCommentUsername, comment.Author.Nickname)
+		} else if comment.Kind == "anonymous" {
+			assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
+		} else if comment.Content == "deleted" {
+			assert.Equal(t, DeletedCommentNickname, comment.Author.Username)
+			assert.Equal(t, DeletedCommentContent, comment.Content)
+		}
+		if comment.ID == test.Comment1JinsuAnnonymous.ID {
+			assert.True(t, comment.IsAuthor)
+		}
 	}
-	err = cont.Provide(repository.NewCommentRepositoryGorm)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	err = cont.Provide(repository.NewLikeCommentRepositoryGorm)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	err = cont.Provide(repository.NewRedisEventMessageRepository)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	err = cont.Provide(NewCommentUseCase)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	err = cont.Provide(NewLikeCommentUseCase)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	return cont
 }
+
 
 func TestCommentUseCase_Create(t *testing.T) {
 	t.Run("My anonymous comment", func(t *testing.T) {
-		B(t)
+		BeforeCommentUseCaseTest(t)
 		defer A(t)
 		c := &model.Comment{
 			Kind:           "anonymous",
@@ -111,13 +107,8 @@ func TestCommentUseCase_Create(t *testing.T) {
 	})
 }
 
-func TestCommentUseCase_Get(t *testing.T) {
-	B(t)
-	defer A(t)
-}
-
 func TestCommentUseCase_Update(t *testing.T) {
-	B(t)
+	BeforeCommentUseCaseTest(t)
 	defer A(t)
 	toUpdate, _ := commentUseCase.Get("", 1)
 	updated, err := commentUseCase.Update("", toUpdate.ID, map[string]interface{}{
@@ -133,7 +124,7 @@ func TestCommentUseCase_Update(t *testing.T) {
 // parent comment 삭제 시 parent comment의 state는 deleted
 // 남아있던 child comment는 여전히 parent를 참조.
 func TestCommentUseCase_Delete(t *testing.T) {
-	B(t)
+	BeforeCommentUseCaseTest(t)
 	defer A(t)
 	var err error
 	var parent, child1, child2 *model.Comment
@@ -188,113 +179,107 @@ func TestCommentUseCase_Delete(t *testing.T) {
 	})
 }
 
-func TestLikeCommentUseCase_List(t *testing.T) {
-	// Nothing.
-	B(t)
-	defer A(t)
-}
-
 // 시나리오
 // somebody가 jinsu의 댓글인 1번 댓글을 좋아요.
-func TestLikeCommentUseCase_Toggle(t *testing.T) {
-	B(t)
-	defer A(t)
-	t.Run("Somebody toggle(create&delete) jinsu's comment", func(t *testing.T) {
-		commentID := test.CommentsData["JinsuNamedComment"].ID
-		// toggle to create
-		func() {
-			created, err := likeCommentUseCase.Toggle(
-				&model.LikeComment{
-					CommentID: commentID,
-					Username:  test.UsersData["Somebody"].Username,
-				})
-			assert.Nil(t, err)
-			assert.True(t, created)
-		}()
-		// toggle to delete
-		func() {
-			deleted, err := likeCommentUseCase.Toggle(
-				&model.LikeComment{
-					CommentID: commentID,
-					Username:  test.UsersData["Somebody"].Username,
-				})
-			assert.Nil(t, err)
-			assert.False(t, deleted)
-		}()
-
-		// toggle to create again
-		func() {
-			created, err := likeCommentUseCase.Toggle(
-				&model.LikeComment{
-					CommentID: commentID,
-					Username:  test.UsersData["Somebody"].Username,
-				})
-			assert.Nil(t, err)
-			assert.True(t, created)
-		}()
-	})
-
-	t.Run("jinsu likes jinsu's comment", func(t *testing.T) {
-		created, err := likeCommentUseCase.Toggle(
-			&model.LikeComment{
-				CommentID: test.CommentsData["JinsuNamedComment"].ID,
-				Username:  test.UsersData["Jinsu"].Username,
-			})
-		assert.NotNil(t, err)
-		assert.False(t, created)
-	})
-}
-
-// 시나리오
-// 기존에 somebody가 jinsu의 1번 댓글을 좋아요.
-// => 좋아요 1개
-func TestCommentUseCase_List(t *testing.T) {
-	t.Run("Article에 대한 LikeCount 필드", func(t *testing.T) {
-		B(t)
-		defer A(t)
-		// create like count for test
-		func() {
-			// 1번 somebody가 jinsu의 코멘트에 좋아요
-			_, err := likeCommentUseCase.Toggle(&model.LikeComment{Username: "somebody", CommentID: test.CommentsData["JinsuNamedComment"].ID})
-			assert.NoError(t, err)
-		}()
-		comments, err := commentUseCase.List("jinsu", nil)
-		assert.NoError(t, err)
-		foundDesiredComment := false
-		for _, c := range comments {
-			if c.ID == test.CommentsData["JinsuNamedComment"].ID {
-				foundDesiredComment = true
-				assert.False(t, c.Liked)
-				assert.Equal(t, 1, c.LikeCommentCount)
-			}
-		}
-		assert.True(t, foundDesiredComment)
-	})
-	t.Run("jinsu 자기 댓글", func(t *testing.T) {
-		B(t)
-		defer A(t)
-		commentID := test.CommentsData["JinsuNamedComment"].ID
-		comments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{CommentID: commentID})
-		assert.NoError(t, err)
-		logrus.Error(comments)
-		c := comments[0]
-		assert.Equal(t, "named", c.Kind)
-		assert.Equal(t, "jinsu", c.AuthorUsername)
-		assert.Equal(t, "jinsu", c.Author.Username)
-		assert.False(t, c.Liked) // 자신의 코멘트에 대한 liked
-		assert.True(t, c.IsAuthor)
-	})
-	t.Run("somebody가 jinsu 댓글", func(t *testing.T) {
-		B(t)
-		defer A(t)
-		commentID := test.CommentsData["JinsuAnonymousComment"].ID
-		comments, err := commentUseCase.List("somebody", &repository.CommentQueryOption{CommentID: commentID})
-		assert.NoError(t, err)
-		c := comments[0]
-		assert.Equal(t, "anonymous", c.Kind)
-		assert.Equal(t, AnonymousCommentUsername, c.AuthorUsername)
-		assert.Equal(t, AnonymousCommentUsername, c.Author.Username)
-		assert.Equal(t, AnonymousCommentNickname, c.Author.Nickname)
-		assert.False(t, c.IsAuthor)
-	})
-}
+//func TestLikeCommentUseCase_Toggle(t *testing.T) {
+//	BeforeCommentUseCaseTest(t)
+//	defer A(t)
+//	t.Run("Somebody toggle(create&delete) jinsu's comment", func(t *testing.T) {
+//		commentID := test.CommentsData["JinsuNamedComment"].ID
+//		// toggle to create
+//		func() {
+//			created, err := likeCommentUseCase.Toggle(
+//				&model.LikeComment{
+//					CommentID: commentID,
+//					Username:  test.UsersData["Somebody"].Username,
+//				})
+//			assert.Nil(t, err)
+//			assert.True(t, created)
+//		}()
+//		// toggle to delete
+//		func() {
+//			deleted, err := likeCommentUseCase.Toggle(
+//				&model.LikeComment{
+//					CommentID: commentID,
+//					Username:  test.UsersData["Somebody"].Username,
+//				})
+//			assert.Nil(t, err)
+//			assert.False(t, deleted)
+//		}()
+//
+//		// toggle to create again
+//		func() {
+//			created, err := likeCommentUseCase.Toggle(
+//				&model.LikeComment{
+//					CommentID: commentID,
+//					Username:  test.UsersData["Somebody"].Username,
+//				})
+//			assert.Nil(t, err)
+//			assert.True(t, created)
+//		}()
+//	})
+//
+//	t.Run("jinsu likes jinsu's comment", func(t *testing.T) {
+//		created, err := likeCommentUseCase.Toggle(
+//			&model.LikeComment{
+//				CommentID: test.CommentsData["JinsuNamedComment"].ID,
+//				Username:  test.UsersData["Jinsu"].Username,
+//			})
+//		assert.NotNil(t, err)
+//		assert.False(t, created)
+//	})
+//}
+//
+//// 시나리오
+//// 기존에 somebody가 jinsu의 1번 댓글을 좋아요.
+//// => 좋아요 1개
+//func TestCommentUseCase_List(t *testing.T) {
+//	t.Run("Article에 대한 LikeCount 필드", func(t *testing.T) {
+//		BeforeCommentUseCaseTest(t)
+//		defer A(t)
+//		// create like count for test
+//		func() {
+//			// 1번 somebody가 jinsu의 코멘트에 좋아요
+//			_, err := likeCommentUseCase.Toggle(&model.LikeComment{Username: "somebody", CommentID: test.CommentsData["JinsuNamedComment"].ID})
+//			assert.NoError(t, err)
+//		}()
+//		comments, err := commentUseCase.List("jinsu", nil)
+//		assert.NoError(t, err)
+//		foundDesiredComment := false
+//		for _, c := range comments {
+//			if c.ID == test.CommentsData["JinsuNamedComment"].ID {
+//				foundDesiredComment = true
+//				assert.False(t, c.Liked)
+//				assert.Equal(t, 1, c.LikeCommentCount)
+//			}
+//		}
+//		assert.True(t, foundDesiredComment)
+//	})
+//	t.Run("jinsu 자기 댓글", func(t *testing.T) {
+//		BeforeCommentUseCaseTest(t)
+//		defer A(t)
+//		commentID := test.CommentsData["JinsuNamedComment"].ID
+//		comments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{CommentID: commentID})
+//		assert.NoError(t, err)
+//		logrus.Error(comments)
+//		c := comments[0]
+//		assert.Equal(t, "named", c.Kind)
+//		assert.Equal(t, "jinsu", c.AuthorUsername)
+//		assert.Equal(t, "jinsu", c.Author.Username)
+//		assert.False(t, c.Liked) // 자신의 코멘트에 대한 liked
+//		assert.True(t, c.IsAuthor)
+//	})
+//	t.Run("somebody가 jinsu 댓글", func(t *testing.T) {
+//		BeforeCommentUseCaseTest(t)
+//		defer A(t)
+//		commentID := test.CommentsData["JinsuAnonymousComment"].ID
+//		comments, err := commentUseCase.List("somebody", &repository.CommentQueryOption{CommentID: commentID})
+//		assert.NoError(t, err)
+//		c := comments[0]
+//		assert.Equal(t, "anonymous", c.Kind)
+//		assert.Equal(t, AnonymousCommentUsername, c.AuthorUsername)
+//		assert.Equal(t, AnonymousCommentUsername, c.Author.Username)
+//		assert.Equal(t, AnonymousCommentNickname, c.Author.Nickname)
+//		assert.False(t, c.IsAuthor)
+//	})
+//}

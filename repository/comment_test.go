@@ -15,7 +15,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 
 		comment := &model.Comment{
 			Kind:      "anonymous",
-			Author:    &model.KhumuUserSimple{Username: "jinsu"},
+			AuthorUsername: "jinsu",
 			ArticleID: 1,
 			Content:   "테스트로 작성한 익명 코멘트입니다.",
 			ParentID:  &parentID1,
@@ -32,7 +32,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 
 		comment := &model.Comment{
 			Kind:      "named",
-			Author:    &model.KhumuUserSimple{Username: "jinsu"},
+			AuthorUsername: "jinsu",
 			ArticleID: 1,
 			Content:   "테스트로 작성한 기명 코멘트입니다.",
 			ParentID:  &parentID1,
@@ -49,7 +49,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 
 		comment := &model.Comment{
 			Kind:      "anonymous",
-			Author:    &model.KhumuUserSimple{Username: "somebody"},
+			AuthorUsername:   "somebody",
 			ArticleID: 1,
 			Content:   "테스트로 작성한 somebody의 기명 코멘트입니다.",
 			ParentID:  &parentID1,
@@ -89,7 +89,7 @@ func TestCommentRepositoryGorm_Delete(t *testing.T) {
 		// 삭제할 코멘트와, 그 코멘트에 대한 좋아요 생성
 		func() {
 			commentToDelete, err = commentRepository.Create(&model.Comment{
-				Author:  &model.KhumuUserSimple{Username: "jinsu"},
+				AuthorUsername: "jinsu",
 				Content: "A comment to be deleted.",
 			})
 			assert.Nil(t, err)

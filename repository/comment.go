@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -34,6 +33,7 @@ type CommentQueryOption struct {
 type LikeCommentRepositoryGorm struct {
 	DB *gorm.DB
 }
+
 type LikeCommentQueryOption struct {
 	CommentID int
 	Username  string
@@ -49,17 +49,16 @@ func NewLikeCommentRepositoryGorm(db *gorm.DB) LikeCommentRepositoryInterface {
 
 // 기본적으로는 AuthorUsername만을 이용해서 쿼리하되 Author 필드를 채워주긴 할 것임.
 func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, error) {
-	if comment.Author == nil && comment.AuthorUsername == "" {
-		return nil, errors.New("Please input author username")
-	} else if comment.Author == nil {
-		comment.Author = &model.KhumuUserSimple{
-			Username: comment.AuthorUsername,
-		}
-	} else if comment.AuthorUsername == "" {
-		comment.AuthorUsername = comment.Author.Username
-	}
-
+	// Omit을 통해 해당 field들이 upsert 되지 않고, AuthorUsername, ParentID등만을 이용하도록 함.
 	err := r.DB.Omit("Author", "Parent", "Children").Create(comment).Error
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	// Omit했던 녀석들에 대한 Join
+	err = r.DB.Preload("Author").Preload("Parent").Preload("Children").Find(comment).Error
+		logrus.Info(comment.Author)
+		logrus.Info(comment.AuthorUsername)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -107,6 +106,8 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 			child.Children = make([]*model.Comment, 0)
 		}
 	}
+
+
 	return comments
 }
 
@@ -166,6 +167,7 @@ func (r *CommentRepositoryGorm) Delete(id int) (*model.Comment, error) {
 func (r *LikeCommentRepositoryGorm) Create(like *model.LikeComment) (*model.LikeComment, error) {
 	like.Comment = nil
 	like.User = nil
+	//like.User = &model.KhumuUserSimple{Username: like.Username}
 	err := r.DB.Omit("User", "Comment").Save(like).Error
 	return like, err
 }

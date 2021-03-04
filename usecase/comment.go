@@ -50,6 +50,12 @@ func NewCommentUseCase(repository repository.CommentRepositoryInterface,
 	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, EventMessageRepository: eventMessageRepository}
 }
 
+func NewCommentUseCaseImpl(repository repository.CommentRepositoryInterface,
+	likeRepository repository.LikeCommentRepositoryInterface,
+	eventMessageRepository repository.EventMessageRepository) *CommentUseCase {
+	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, EventMessageRepository: eventMessageRepository}
+}
+
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
 	newComment, err := uc.Repository.Create(comment)
 	if err != nil {
@@ -125,7 +131,10 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string, curre
 	if c.AuthorUsername == username{
 		c.IsAuthor = true
 	}
-	uc.hideAuthor(c)
+	if c.Kind == "anonymous" || c.Kind == "deleted" {
+		uc.hideAuthor(c)
+	}
+
 	likeCount := uc.getLikeCommentCount(c.ID)
 	c.LikeCommentCount = likeCount
 	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
@@ -150,6 +159,8 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment) {
 		c.Author.Username = AnonymousCommentUsername
 		c.Author.Nickname = AnonymousCommentNickname
 	}
+	logrus.Info(c.Author.Username)
+	logrus.Info(c.AuthorUsername)
 }
 
 // Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.
@@ -179,6 +190,12 @@ func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 func NewLikeCommentUseCase(
 	likeRepo repository.LikeCommentRepositoryInterface,
 	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface {
+	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
+}
+
+func NewLikeCommentUseCaseImpl(
+	likeRepo repository.LikeCommentRepositoryInterface,
+	commentRepo repository.CommentRepositoryInterface) *LikeCommentUseCase {
 	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
 }
 
