@@ -57,8 +57,6 @@ func (r *CommentRepositoryGorm) Create(comment *model.Comment) (*model.Comment, 
 	}
 	// Omit했던 녀석들에 대한 Join
 	err = r.DB.Preload("Author").Preload("Parent").Preload("Children").Find(comment).Error
-	logrus.Info(comment.Author)
-	logrus.Info(comment.AuthorUsername)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err

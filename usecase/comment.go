@@ -50,15 +50,11 @@ func NewCommentUseCase(repository repository.CommentRepositoryInterface,
 	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, EventMessageRepository: eventMessageRepository}
 }
 
-func NewCommentUseCaseImpl(repository repository.CommentRepositoryInterface,
-	likeRepository repository.LikeCommentRepositoryInterface,
-	eventMessageRepository repository.EventMessageRepository) *CommentUseCase {
-	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, EventMessageRepository: eventMessageRepository}
-}
-
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
+	logrus.Infof("Start Create Comment(%#v)", comment)
 	newComment, err := uc.Repository.Create(comment)
 	if err != nil {
+		logrus.Error(newComment, err)
 		return newComment, err
 	}
 
@@ -72,6 +68,7 @@ func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error)
 }
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
+	logrus.WithField("username", username).Infof("Start List CommentQueryOption(%#v)", opt)
 	comments := uc.Repository.List(opt)
 	parents := uc.listParentWithChildren(comments)
 
@@ -84,6 +81,7 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 
 // 지금의 Get은 Children은 가져오지 못함
 func (uc *CommentUseCase) Get(username string, id int) (*model.Comment, error) {
+	logrus.WithField("username", username).Infof("Start Get Comment(id:%#v)", id)
 	comment, err := uc.Repository.Get(id)
 	if err != nil {
 		return nil, err
@@ -94,6 +92,7 @@ func (uc *CommentUseCase) Get(username string, id int) (*model.Comment, error) {
 }
 
 func (uc *CommentUseCase) Update(username string, id int, opt map[string]interface{}) (*model.Comment, error) {
+	logrus.WithField("username", username).WithField("id", id).Infof("Start Get CommentQueryOption(%#v)", opt)
 	updated, err := uc.Repository.Update(id, opt)
 	uc.handleComment(updated, username, 0)
 	return updated, err
@@ -101,6 +100,7 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 
 // 실제로 Delete 하지는 않고 State를 "deleted"로 변경
 func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
+	logrus.Infof("Start Get Comment(id:%#v)", id)
 	comment, err := uc.Repository.Update(id, map[string]interface{}{
 		"state":   "deleted",
 		"content": DeletedCommentContent,
