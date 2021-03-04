@@ -109,7 +109,7 @@ func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
 		return nil, err
 	}
 
-	uc.hideAuthor(comment) // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
+	uc.handleComment(comment, comment.AuthorUsername, 0)
 	return comment, nil
 }
 
@@ -131,8 +131,11 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string, curre
 	if c.AuthorUsername == username{
 		c.IsAuthor = true
 	}
-	if c.Kind == "anonymous" || c.Kind == "deleted" {
+	if c.Kind == "anonymous" || c.State == "deleted" {
 		uc.hideAuthor(c)
+	}
+	if c.State == "deleted" {
+		c.Content = DeletedCommentContent
 	}
 
 	likeCount := uc.getLikeCommentCount(c.ID)
@@ -159,8 +162,6 @@ func (uc *CommentUseCase) hideAuthor(c *model.Comment) {
 		c.Author.Username = AnonymousCommentUsername
 		c.Author.Nickname = AnonymousCommentNickname
 	}
-	logrus.Info(c.Author.Username)
-	logrus.Info(c.AuthorUsername)
 }
 
 // Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.

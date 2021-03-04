@@ -1,10 +1,6 @@
-// test를 진행할 때 필요한 기본 데이터를 제공한다.
-//
-// 기본적인 흐름
-// 3 유저 jinsu, somebody, puppy 존재
-// 1번 article에 3 user가 각각 comment 단다.
-// 이 흐름들은 주로 test 코드의 Create 부분에서 실행된다.
-// like-comment의 경우 Toggle인 경우도 있다.
+// test를 진행할 때 필요한 기본 데이터를 메모리에 적재한다.
+// repository 계층에선 필요 없는 편이다.
+// 다른 계층에선 repository의 실제 데이터 대신 이곳의 데이터를 이용할 수 있다.
 
 package test
 

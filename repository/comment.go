@@ -96,8 +96,13 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 
 	for _, c := range comments {
 		// copy 작업을 해주지 않으면 같은 author는 같은 주소값을 참조하게됨.
-		tmpAuthor := *(c.Author)
-		c.Author = &tmpAuthor
+		if c.Author == nil{
+			logrus.Warn("Author가 nil입니다. 테스트 환경에서 SQLite3를 쓰는 경우 외엔 오류입니다.")
+		} else{
+			tmpAuthor := *(c.Author)
+			c.Author = &tmpAuthor
+		}
+
 		if len(c.Children) == 0 {
 			c.Children = make([]*model.Comment, 0)
 		} // slice를 초기화해주지 않으면 empty의 경우 null이 되어버림.

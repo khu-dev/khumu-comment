@@ -7,13 +7,16 @@ import (
     "testing"
 )
 
+var (
+    redisEventMessageRepository *RedisEventMessageRepository
+)
 func TestRedisEventMessageRepository_publishCommentEvent(t *testing.T) {
-    B(t)
-    defer A(t)
-    tmpComment := test.CommentsData["JinsuAnonymousComment"]
-    assert.NotNil(t, eventMessageRepository)
+    test.SetUp()
+    redisEventMessageRepository = NewRedisEventMessageRepository().(*RedisEventMessageRepository)
+    tmpComment := test.Comment1JinsuAnnonymous
+    assert.NotNil(t, redisEventMessageRepository)
     assert.NotNil(t, tmpComment)
-    err := eventMessageRepository.publishCommentEvent(&model.EventMessage{
+    err := redisEventMessageRepository.publishCommentEvent(&model.EventMessage{
         ResourceKind:"comment",
         EventKind: "create",
         Resource: tmpComment,

@@ -8,17 +8,15 @@ import (
     "github.com/sirupsen/logrus"
 )
 
-type (
-	EventMessageRepository interface{
-        PublishCommentEvent(message *model.EventMessage)
-        publishCommentEvent(message *model.EventMessage) error
-        //PublishLikeCommentEvent(message *model.EventMessage)
-    }
-    RedisEventMessageRepository struct{
+type EventMessageRepository interface {
+    PublishCommentEvent(message *model.EventMessage)
+    publishCommentEvent(message *model.EventMessage) error
+    //PublishLikeCommentEvent(message *model.EventMessage)
+}
+type RedisEventMessageRepository struct{
         client *redis.Client
         ctx context.Context
     }
-)
 
 func NewRedisEventMessageRepository() EventMessageRepository{
     h := &RedisEventMessageRepository{

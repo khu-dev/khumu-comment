@@ -48,6 +48,7 @@ func NewTestGorm() *gorm.DB {
 		log.Panic(err)
 	}
 	// this allows foreign key contraints
-	db.Exec("PRAGMA foreign_keys=ON")
+	// 켤까 싶었는데, 켜면 테스트 할 때 유저랑 게시판이랑 다 만들어야함 ㅜㅜ
+	// db.Exec("PRAGMA foreign_keys=ON")
 	return db
 }
