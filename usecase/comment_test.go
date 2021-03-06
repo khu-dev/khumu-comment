@@ -172,7 +172,7 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 		likeComments = append(likeComments, c)
 		return c, nil
 	}).AnyTimes()
-	// 그냥 한 칸 줄이기만함.
+	// mock으로 그냥 한 칸 줄이기만함.
 	mockLikeCommentRepository.EXPECT().Delete(gomock.Any()).DoAndReturn(func(id int) (*model.LikeComment, error) {
 		deleted := likeComments[id]
 		likeComments = append(likeComments[:id], likeComments[id+1:]...)
@@ -181,6 +181,7 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 	// 거의 로직을 구현해버렸네.....
 	mockLikeCommentRepository.EXPECT().List(gomock.Any()).DoAndReturn(func(option *repository.LikeCommentQueryOption) []*model.LikeComment {
 		answers := make([]*model.LikeComment, 0)
+		// 쿼리 조건 판별
 		if option.Username != "" && option.CommentID != 0 {
 			for _, like := range likeComments {
 				if like.Username == option.Username && like.CommentID == option.CommentID {

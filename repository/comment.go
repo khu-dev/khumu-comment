@@ -84,6 +84,7 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 
 	var comments []*model.Comment
 	preloaded := r.DB.Preload("Author"). // Author가 사용하는 foreignKey를 이용해 Preload
+						Preload("Children").
 						Preload("Children.Author"). // nested preload
 						Preload("Children.Children")
 	if len(conditions) == 0 {
@@ -105,6 +106,14 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 			c.Children = make([]*model.Comment, 0)
 		} // slice를 초기화해주지 않으면 empty의 경우 null이 되어버림.
 		for _, child := range c.Children {
+			// Author를 복제하지 않으면 같은 Author를 갖는 애들이 모두 같은 Author 자체를 참조하게된다.
+			if c.Author == nil {
+			logrus.Warn("Child 댓글의 Author가 nil입니다. 테스트 환경에서 SQLite3를 쓰는 경우 외엔 오류입니다.")
+			} else {
+				tmpAuthor := *(child.Author)
+				child.Author = &tmpAuthor
+			}
+
 			// 현재 비즈니스 로직상에선 max depth가 1이므로 child의 Children은 존재하지 않는다.
 			child.Children = make([]*model.Comment, 0)
 		}
