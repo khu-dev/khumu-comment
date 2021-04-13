@@ -17,3 +17,5 @@ redis:
   db: 0
   commentChannel: your_comment_channel
   likeCommentChannel: your_like_comment
+sns:
+  topicArn: arn:aws:sns:ap-northeast-2:xxx

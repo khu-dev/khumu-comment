@@ -3,6 +3,7 @@ package usecase
 import (
 	"errors"
 	"github.com/khu-dev/khumu-comment/config"
+	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -33,7 +34,8 @@ type LikeCommentUseCaseInterface interface {
 type CommentUseCase struct {
 	Repository             repository.CommentRepositoryInterface
 	LikeCommentRepository  repository.LikeCommentRepositoryInterface
-	EventMessageRepository repository.EventMessageRepository
+	//EventMessageRepository repository.EventMessageRepository
+	SnsClient external.SnsClient
 }
 
 type LikeCommentUseCase struct {
@@ -46,8 +48,8 @@ type SomeoneLikesHisCommentError string
 
 func NewCommentUseCase(repository repository.CommentRepositoryInterface,
 	likeRepository repository.LikeCommentRepositoryInterface,
-	eventMessageRepository repository.EventMessageRepository) CommentUseCaseInterface {
-	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, EventMessageRepository: eventMessageRepository}
+	snsClient external.SnsClient) CommentUseCaseInterface {
+	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, SnsClient: snsClient}
 }
 
 func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
@@ -58,11 +60,12 @@ func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error)
 		return newComment, err
 	}
 
-	uc.EventMessageRepository.PublishCommentEvent(&model.EventMessage{
-		ResourceKind: "comment",
-		EventKind:    "create",
-		Resource:     newComment,
-	})
+	uc.SnsClient.PublishMessage(newComment)
+	//uc.EventMessageRepository.PublishCommentEvent(&model.EventMessage{
+	//	ResourceKind: "comment",
+	//	EventKind:    "create",
+	//	Resource:     newComment,
+	//})
 
 	return newComment, nil
 }

@@ -4,6 +4,7 @@ package usecase
 
 import (
 	"github.com/golang/mock/gomock"
+	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
@@ -14,7 +15,7 @@ import (
 var (
 	mockCommentRepository       *repository.MockCommentRepositoryInterface
 	mockLikeCommentRepository   *repository.MockLikeCommentRepositoryInterface
-	mockEventMessageRepository  *repository.MockEventMessageRepository
+	mockSnsClient  *external.MockSnsClient
 	redisEventMessageRepository *repository.RedisEventMessageRepository
 	commentUseCase              *CommentUseCase
 	likeCommentUseCase          *LikeCommentUseCase
@@ -37,19 +38,18 @@ func BeforeCommentUseCaseTest(t *testing.T) {
 
 	mockCommentRepository = repository.NewMockCommentRepositoryInterface(ctrl)
 	mockLikeCommentRepository = repository.NewMockLikeCommentRepositoryInterface(ctrl)
-	mockEventMessageRepository = repository.NewMockEventMessageRepository(ctrl)
+	mockSnsClient = external.NewMockSnsClient(ctrl)
 	commentUseCase = &CommentUseCase{
 		Repository:             mockCommentRepository,
 		LikeCommentRepository:  mockLikeCommentRepository,
-		EventMessageRepository: mockEventMessageRepository,
+		SnsClient: mockSnsClient,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{
 		Repository:             mockLikeCommentRepository,
 		CommentRepository:      mockCommentRepository,
-		EventMessageRepository: mockEventMessageRepository,
 	}
 
-	mockEventMessageRepository.EXPECT().PublishCommentEvent(gomock.Any()).DoAndReturn(
+	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
 		func(message interface{}) {
 			t.Log("그냥 테스트라서 푸시 알림 패스")
 		}).AnyTimes()

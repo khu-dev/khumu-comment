@@ -14,7 +14,7 @@ var (
 	Location *time.Location
 	// 개발 단계에서 편의상 개발자들의 home path를 설정
 	devKhumuConfigPath []string = []string{
-		"/home/jinsu/git/khumu/khumu-comment/config",
+		"/home/jinsu/workspace/khumu/khumu-comment/config",
 	}
 )
 
@@ -74,5 +74,8 @@ type KhumuConfig struct {
 		DB                 int
 		CommentChannel     string
 		LikeCommentChannel string
+	}
+	Sns struct{
+		TopicArn string
 	}
 }
