@@ -3,17 +3,14 @@ package config
 import (
 	"github.com/umi0410/ezconfig"
 	"log"
+	"os"
+	"strings"
 	"time"
 )
 
 var (
 	Config   *KhumuConfig
 	Location *time.Location
-	// 개발 단계에서 편의상 개발자들의 home path를 설정
-	devKhumuConfigPath []string = []string{
-		"./config",
-		"/home/jinsu/workspace/khumu/khumu-comment/config",
-	}
 )
 
 func init() {
@@ -24,7 +21,8 @@ func init() {
 	Location = l
 
 	Config =  &KhumuConfig{}
-	ezconfig.LoadConfig("KHUMU", Config)
+	wd, _ := os.Getwd()
+	ezconfig.LoadConfig("KHUMU", Config, []string{wd, strings.ToLower(os.Getenv("KHUMU_CONFIG_PATH"))})
 }
 
 type KhumuConfig struct {
