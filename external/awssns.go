@@ -57,6 +57,8 @@ func (client *SnsClientImpl) PublishMessage(comment *model.Comment) {
         logrus.Error("Publish error:", err)
         return
     }
-    logrus.Info(result)
+    logrus.Info("Publish SNS Message " + *input.Message)
+    logrus.Info(input.MessageAttributes)
 
+    logrus.Info(result)
 }

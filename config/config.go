@@ -1,11 +1,8 @@
 package config
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	"github.com/umi0410/ezconfig"
 	"log"
-	"os"
-	"strings"
 	"time"
 )
 
@@ -14,41 +11,20 @@ var (
 	Location *time.Location
 	// 개발 단계에서 편의상 개발자들의 home path를 설정
 	devKhumuConfigPath []string = []string{
+		"./config",
 		"/home/jinsu/workspace/khumu/khumu-comment/config",
 	}
 )
 
 func init() {
-	Load()
 	l, err := time.LoadLocation("Asia/Seoul")
 	if err != nil {
 		log.Fatal(err)
 	}
 	Location = l
-	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: false, DisableQuote: true, ForceColors: true})
-}
 
-func Load() {
-	for _, configPath := range devKhumuConfigPath {
-		viper.AddConfigPath(configPath)
-	}
-	viper.AddConfigPath(os.Getenv("KHUMU_CONFIG_PATH"))
-	viper.SetConfigType("yaml")
-	khumuEnvironment := strings.ToLower(os.Getenv("KHUMU_ENVIRONMENT"))
-	if khumuEnvironment == "" {
-		khumuEnvironment = "default"
-	}
-	viper.SetConfigName(khumuEnvironment)
-	err := viper.ReadInConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	Config = new(KhumuConfig)
-	err = viper.Unmarshal(Config)
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	Config =  &KhumuConfig{}
+	ezconfig.LoadConfig("KHUMU", Config)
 }
 
 type KhumuConfig struct {

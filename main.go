@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: false, DisableQuote: true, ForceColors: true})
 	logrus.Println("Args: ", len(os.Args), os.Args)
 	logrus.Printf("Default config. %#v\n", config.Config)
 	cont := container.Build()
