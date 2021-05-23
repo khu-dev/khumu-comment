@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"gopkg.in/guregu/null.v4"
 	"time"
 )
 
@@ -45,6 +46,10 @@ type Board struct {
 	DisplayName string `gorm:"column:display_name"`
 }
 
+func (*Board) TableName() string {
+	return "board_board"
+}
+
 type Article struct {
 	ArticleID      int `gorm:"column:id"`
 	BoardName      string
@@ -60,9 +65,17 @@ func (*Article) TableName() string {
 	return "article_article"
 }
 
-func (*Board) TableName() string {
-	return "board_board"
+type StudyArticle struct {
+	Id      int `gorm:"column:id"`
+	AuthorUsername string    `gorm:"column:author_id"`
+	CreatedAt      time.Time
 }
+
+func (*StudyArticle) TableName() string {
+	return "article_studyarticle"
+}
+
+
 
 type Comment struct {
 	ID int `gorm:"column:id" json:"id"`
@@ -72,9 +85,10 @@ type Comment struct {
 	State          string           `gorm:"column:state; default:exists" json:"state"`
 	Author         *KhumuUserSimple `gorm:"foreignKey:AuthorUsername; references:Username; constraint:OnDELETE:CASCADE" json:"author"`
 	AuthorUsername string           `gorm:"column:author_id" json:"-"`
-	ArticleID      int              `gorm:"column:article_id" json:"article"`
+	ArticleID      null.Int              `gorm:"column:article_id" json:"article"`
+	StudyArticleID null.Int  `gorm:"column:study_article_id" json:"study_article"`
 	Content        string           `json:"content"`
-	ParentID       *int             `gorm:"column:parent_id;default:null" json:"parent"`
+	ParentID       null.Int              `gorm:"column:parent_id;default:null" json:"parent"`
 	Parent         *Comment         `gorm:"foreignKey: ParentID;constraint: OnDelete: CASCADE" json:",omitempty"`
 	Children       []*Comment       `gorm:"foreignKey:ParentID;references:ID" json:"children"` //Has-Many relatio
 	CreatedAt      time.Time        `gorm:"autoCreateTime" json:"-"`                           // nship => Preload 필요

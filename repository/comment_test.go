@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"database/sql"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/test"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"testing"
 )
@@ -21,6 +23,7 @@ func BeforeGormCommentRepository(tb testing.TB) {
 	gormLikeCommentRepository = NewLikeCommentRepositoryGorm(db).(*LikeCommentRepositoryGorm)
 	test.SetUp()
 }
+
 func migrateAll(tb testing.TB, db *gorm.DB) {
 	err := db.AutoMigrate(&model.Board{}, &model.KhumuUser{}, &model.Article{}, &model.Comment{}, &model.LikeComment{})
 	if err != nil {
@@ -39,7 +42,7 @@ func AfterGormCommentRepository(tb testing.TB) {
 
 func TestCommentRepositoryGorm_Create(t *testing.T) {
 	//parentID0 := 0
-	parentID1 := 1
+	var parentID1 int64 = 1
 	t.Run("jinsu의_익명_댓글", func(t *testing.T) {
 		BeforeGormCommentRepository(t)
 		defer AfterGormCommentRepository(t)
@@ -68,9 +71,9 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		comment := &model.Comment{
 			Kind:           "named",
 			AuthorUsername: "jinsu",
-			ArticleID:      1,
+			ArticleID: null.Int{sql.NullInt64{1, true}},
 			Content:        "테스트로 작성한 기명 코멘트입니다.",
-			ParentID:       &parentID1,
+			ParentID:       null.Int{sql.NullInt64{parentID1, true}},
 		}
 		created, err := gormCommentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -86,9 +89,9 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		comment := &model.Comment{
 			Kind:           "anonymous",
 			AuthorUsername: "somebody",
-			ArticleID:      1,
+			ArticleID: null.Int{sql.NullInt64{1, true}},
 			Content:        "테스트로 작성한 somebody의 기명 코멘트입니다.",
-			ParentID:       &parentID1,
+			ParentID:       null.Int{sql.NullInt64{parentID1, true}},
 		}
 		created, err := gormCommentRepository.Create(comment)
 		assert.Nil(t, err)
@@ -96,6 +99,29 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		assert.Equal(t, "somebody", created.AuthorUsername)
 		//assert.Equal(t, "somebody", created.Author.Username)
 		assert.Equal(t, "테스트로 작성한 somebody의 기명 코멘트입니다.", created.Content)
+	})
+	t.Run("jinsu의_익명_스터디_댓글", func(t *testing.T) {
+		BeforeGormCommentRepository(t)
+		defer AfterGormCommentRepository(t)
+
+		comment := test.Comment1JinsuAnnonymous
+		comment.State = "exists"
+		comment.ArticleID = null.Int{sql.NullInt64{}}
+		comment.StudyArticleID = null.Int{sql.NullInt64{1, true}}
+		//		comment := &model.Comment{
+		//	Kind:      "anonymous",
+		//	AuthorUsername: "jinsu",
+		//	ArticleID: 1,
+		//	Content:   "테스트로 작성한 익명 코멘트입니다.",
+		//	ParentID:  &parentID1,
+		//}
+		created, err := gormCommentRepository.Create(comment)
+		assert.Nil(t, err)
+		assert.Equal(t, "anonymous", created.Kind)
+		assert.Equal(t, "jinsu", created.AuthorUsername)
+		// test상 foreinkey 제약도 안 걸고, User도 생성 안했으면 nil이라 생략
+		//assert.Equal(t, "jinsu", created.Author.Username)
+		assert.Equal(t, comment.Content, created.Content)
 	})
 }
 

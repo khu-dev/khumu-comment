@@ -120,7 +120,7 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 	var parents []*model.Comment
 
 	for _, comment := range allComments {
-		if comment.ParentID == nil {
+		if comment.ParentID.Valid == false {
 			parents = append(parents, comment)
 		}
 	}

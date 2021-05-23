@@ -3,12 +3,14 @@
 package usecase
 
 import (
+	"database/sql"
 	"github.com/golang/mock/gomock"
 	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/guregu/null.v4"
 	"testing"
 )
 
@@ -76,6 +78,7 @@ func TestCommentUseCase_Get(t *testing.T) {}
 
 func TestLikeCommentUseCase_List(t *testing.T) {
 	BeforeCommentUseCaseTest(t)
+	defer A(t)
 	mockCommentRepository.EXPECT().List(gomock.Any()).Return(test.Comments).AnyTimes()
 	mockLikeCommentRepository.EXPECT().List(gomock.Any()).Return([]*model.LikeComment{}).AnyTimes()
 	comments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{})
@@ -101,14 +104,41 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 }
 
 func TestCommentUseCase_Create(t *testing.T) {
-	t.Run("My anonymous comment", func(t *testing.T) {
+	t.Run("My anonymous article comment", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
 		c := &model.Comment{
 			Kind:           "anonymous",
 			State:          "exists",
 			AuthorUsername: "jinsu",
-			ArticleID:      1,
+			ArticleID: null.Int{sql.NullInt64{1, true}},
+			Content:        "새로운 테스트 댓글",
+		}
+
+		mockCommentRepository.EXPECT().Create(gomock.Any()).DoAndReturn(
+			func(comment *model.Comment) (*model.Comment, error) {
+				c := *comment
+				c.Author = &model.KhumuUserSimple{Username: c.AuthorUsername}
+				return &c, nil
+			},
+		)
+
+		newComment, err := commentUseCase.Create(c)
+		assert.Nil(t, err)
+		assert.NotNil(t, newComment)
+		assert.Equal(t, c.AuthorUsername, newComment.AuthorUsername)
+		assert.Equal(t, c.AuthorUsername, newComment.Author.Username)
+		assert.Equal(t, c.Content, newComment.Content)
+	})
+
+	t.Run("My anonymous study article comment", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		c := &model.Comment{
+			Kind:           "anonymous",
+			State:          "exists",
+			AuthorUsername: "jinsu",
+			StudyArticleID: null.Int{sql.NullInt64{Int64: 1}},
 			Content:        "새로운 테스트 댓글",
 		}
 

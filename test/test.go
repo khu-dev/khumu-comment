@@ -5,7 +5,9 @@
 package test
 
 import (
+	"database/sql"
 	"github.com/khu-dev/khumu-comment/model"
+	"gopkg.in/guregu/null.v4"
 )
 
 var (
@@ -107,9 +109,9 @@ func SetUp() {
 			Nickname: "진수짱짱맨",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 jinsu의 익명 코멘트",
-		ParentID:  nil,
+		ParentID:  null.Int{sql.NullInt64{}},
 	}
 	Comments = append(Comments, Comment1JinsuAnnonymous)
 
@@ -122,9 +124,9 @@ func SetUp() {
 			Nickname: "진수짱짱맨",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 jinsu의 기명 코멘트",
-		ParentID:  nil,
+		ParentID:  null.Int{sql.NullInt64{}},
 	}
 	Comments = append(Comments, Comment2JinsuNamed)
 
@@ -137,9 +139,9 @@ func SetUp() {
 			Nickname: "썸바디",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 somebody의 익명 코멘트",
-		ParentID:  nil,
+		ParentID:  null.Int{sql.NullInt64{}},
 	}
 	Comments = append(Comments, Comment3SomebodyAnonymous)
 
@@ -152,13 +154,13 @@ func SetUp() {
 			Nickname: "댕댕이",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 puppy의 익명 코멘트",
-		ParentID:  nil,
+		ParentID:  null.Int{sql.NullInt64{}},
 	}
 	Comments = append(Comments, Comment4PuppyAnonymous)
 
-	parentID := 1
+	var parentID int64 = 1
 	Comment5JinsuAnonymousFromComment1 = &model.Comment{
 		ID:             5,
 		Kind:           "anonymous",
@@ -168,9 +170,9 @@ func SetUp() {
 			Nickname: "진수짱짱맨",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 jinsu의 익명 대댓글",
-		ParentID:  &parentID,
+		ParentID:  null.Int{sql.NullInt64{parentID, true}},
 	}
 	Comments = append(Comments, Comment5JinsuAnonymousFromComment1)
 
@@ -183,9 +185,9 @@ func SetUp() {
 			Nickname: "진수짱짱맨",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 jinsu의 기명 대댓글",
-		ParentID:  &parentID,
+		ParentID:  null.Int{sql.NullInt64{parentID, true}},
 	}
 	Comments = append(Comments, Comment6JinsuNamedFromComment1)
 
@@ -198,9 +200,9 @@ func SetUp() {
 			Nickname: "썸바디",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 somebody의 익명 코멘트",
-		ParentID:  &parentID,
+		ParentID:  null.Int{sql.NullInt64{parentID, true}},
 	}
 	Comments = append(Comments, Comment7SomebodyAnonymousFromComment1)
 
@@ -213,9 +215,9 @@ func SetUp() {
 			Nickname: "댕댕이",
 			State:    "active",
 		},
-		ArticleID: 1,
+		ArticleID: null.Int{sql.NullInt64{1, true}},
 		Content:   "테스트로 작성한 puppy의 익명 코멘트",
-		ParentID:  &parentID,
+		ParentID:  null.Int{sql.NullInt64{parentID, true}},
 	}
 	Comments = append(Comments, Comment8PuppyAnonymousFromComment1)
 }

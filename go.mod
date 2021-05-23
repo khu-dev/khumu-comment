@@ -28,6 +28,7 @@ require (
 	go.uber.org/dig v1.10.0
 	golang.org/x/sys v0.0.0-20210507014357-30e306a8bba5 // indirect
 	golang.org/x/text v0.3.6 // indirect
+	gopkg.in/guregu/null.v4 v4.0.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.0.3
