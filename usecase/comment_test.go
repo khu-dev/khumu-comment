@@ -17,7 +17,7 @@ import (
 var (
 	mockCommentRepository       *repository.MockCommentRepositoryInterface
 	mockLikeCommentRepository   *repository.MockLikeCommentRepositoryInterface
-	mockSnsClient  *external.MockSnsClient
+	mockSnsClient               *external.MockSnsClient
 	redisEventMessageRepository *repository.RedisEventMessageRepository
 	commentUseCase              *CommentUseCase
 	likeCommentUseCase          *LikeCommentUseCase
@@ -42,13 +42,13 @@ func BeforeCommentUseCaseTest(t *testing.T) {
 	mockLikeCommentRepository = repository.NewMockLikeCommentRepositoryInterface(ctrl)
 	mockSnsClient = external.NewMockSnsClient(ctrl)
 	commentUseCase = &CommentUseCase{
-		Repository:             mockCommentRepository,
-		LikeCommentRepository:  mockLikeCommentRepository,
-		SnsClient: mockSnsClient,
+		Repository:            mockCommentRepository,
+		LikeCommentRepository: mockLikeCommentRepository,
+		SnsClient:             mockSnsClient,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{
-		Repository:             mockLikeCommentRepository,
-		CommentRepository:      mockCommentRepository,
+		Repository:        mockLikeCommentRepository,
+		CommentRepository: mockCommentRepository,
 	}
 
 	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
@@ -111,7 +111,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Kind:           "anonymous",
 			State:          "exists",
 			AuthorUsername: "jinsu",
-			ArticleID: null.Int{sql.NullInt64{1, true}},
+			ArticleID:      null.Int{sql.NullInt64{1, true}},
 			Content:        "새로운 테스트 댓글",
 		}
 

@@ -1,12 +1,14 @@
 package usecase
 
 import (
+	"context"
 	"errors"
-	"github.com/khu-dev/khumu-comment/config"
+	"github.com/khu-dev/khumu-comment/data"
+	"github.com/khu-dev/khumu-comment/data/mapper"
+	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 import "github.com/khu-dev/khumu-comment/model"
 
@@ -19,7 +21,7 @@ var (
 )
 
 type CommentUseCaseInterface interface {
-	Create(comment *model.Comment) (*model.Comment, error)
+	Create(commentInput *data.CommentInput) (*data.CommentOutput, error)
 	List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error)
 	Get(username string, id int) (*model.Comment, error)
 	Update(username string, id int, opt map[string]interface{}) (*model.Comment, error)
@@ -32,10 +34,11 @@ type LikeCommentUseCaseInterface interface {
 }
 
 type CommentUseCase struct {
-	Repository             repository.CommentRepositoryInterface
-	LikeCommentRepository  repository.LikeCommentRepositoryInterface
+	Repository            repository.CommentRepositoryInterface
+	LikeCommentRepository repository.LikeCommentRepositoryInterface
 	//EventMessageRepository repository.EventMessageRepository
-	SnsClient external.SnsClient
+	SnsClient     external.SnsClient
+	EntRepository *ent.Client
 }
 
 type LikeCommentUseCase struct {
@@ -48,26 +51,31 @@ type SomeoneLikesHisCommentError string
 
 func NewCommentUseCase(repository repository.CommentRepositoryInterface,
 	likeRepository repository.LikeCommentRepositoryInterface,
-	snsClient external.SnsClient) CommentUseCaseInterface {
-	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, SnsClient: snsClient}
+	snsClient external.SnsClient,
+	repo *ent.Client) CommentUseCaseInterface {
+	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, SnsClient: snsClient, EntRepository: repo}
 }
 
-func (uc *CommentUseCase) Create(comment *model.Comment) (*model.Comment, error) {
-	logrus.Infof("Start Create Comment(%#v)", comment)
-	newComment, err := uc.Repository.Create(comment)
+func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.CommentOutput, error) {
+	logrus.Infof("Start Create Comment(%#v)", commentInput)
+	//articleId := 1
+	newComment, err := uc.EntRepository.Comment.Create().
+		SetNillableArticleID(commentInput.Article).
+		//SetArticleID(&articleId).
+		SetAuthorID(commentInput.Author).
+		//SetAuthorID("bo314").
+		SetContent(commentInput.Content).
+		//SetContent("hello").
+		SetState("exists").
+		Save(context.Background())
 	if err != nil {
 		logrus.Error(newComment, err)
-		return newComment, err
+		return nil, err
 	}
+	newComment.Edges.Article = newComment.QueryArticle().Select("id").OnlyX(context.Background())
+	newComment.Edges.Author = newComment.QueryAuthor().Select("username").OnlyX(context.Background())
 
-	uc.SnsClient.PublishMessage(newComment)
-	//uc.EventMessageRepository.PublishCommentEvent(&model.EventMessage{
-	//	ResourceKind: "comment",
-	//	EventKind:    "create",
-	//	Resource:     newComment,
-	//})
-
-	return newComment, nil
+	return mapper.CommentModelToOutput(newComment, nil), nil
 }
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
@@ -130,61 +138,54 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) [
 
 // 대부분의 comment usecase에서 사용되는 로직을 담당한다. 재귀적으로 자식 코멘트들에게도 적용된다.
 func (uc *CommentUseCase) handleComment(c *model.Comment, username string, currentDepth int) {
-	const maxDepth = 1
-	if c.AuthorUsername == username {
-		c.IsAuthor = true
-	}
-	if c.Kind == "anonymous" || c.State == "deleted" {
-		uc.hideAuthor(c)
-	}
-	if c.State == "deleted" {
-		c.Content = DeletedCommentContent
-	}
-
-	likeCount := uc.getLikeCommentCount(c.ID)
-	c.LikeCommentCount = likeCount
-	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
-	if len(likes) >= 1 {
-		c.Liked = true
-	}
-	uc.setCreatedAtExpression(c)
-	if currentDepth < maxDepth {
-		for _, child := range c.Children {
-			uc.handleComment(child, username, currentDepth+1)
-		}
-	}
+	//const maxDepth = 1
+	//if c.AuthorUsername == username {
+	//	c.IsAuthor = true
+	//}
+	//if c.Kind == "anonymous" || c.State == "deleted" {
+	//	uc.hideAuthor(c)
+	//}
+	//if c.State == "deleted" {
+	//	c.Content = DeletedCommentContent
+	//}
+	//
+	//likeCount := uc.getLikeCommentCount(c.ID)
+	//c.LikeCommentCount = likeCount
+	//likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: c.ID, Username: username})
+	//if len(likes) >= 1 {
+	//	c.Liked = true
+	//}
+	//uc.setCreatedAtExpression(c)
+	//if currentDepth < maxDepth {
+	//	for _, child := range c.Children {
+	//		uc.handleComment(child, username, currentDepth+1)
+	//	}
+	//}
 }
 
-func (uc *CommentUseCase) hideAuthor(c *model.Comment) {
-	if c.State == "deleted" {
-		c.AuthorUsername = DeletedCommentUsername
-		c.Author.Username = DeletedCommentUsername
-		c.Author.Nickname = DeletedCommentNickname
-	} else if c.Kind == "anonymous" {
-		c.AuthorUsername = AnonymousCommentUsername
-		c.Author.Username = AnonymousCommentUsername
-		c.Author.Nickname = AnonymousCommentNickname
+// mapper의 단순 mapping 작업 뿐만 아니라 서비스 로직이 깃든다.
+func (uc *CommentUseCase) Model2Output(comment *ent.Comment) *data.CommentOutput {
+	ctx := context.Background()
+	comment.Edges.Article = comment.QueryArticle().Select("id").OnlyX(ctx)
+	comment.Edges.Author = comment.QueryAuthor().Select("username").OnlyX(ctx)
+
+	output := mapper.CommentModelToOutput(comment, nil)
+
+	// hide author
+	if comment.State == "deleted" {
+		output.Author.Username = DeletedCommentUsername
+		output.Author.Nickname = DeletedCommentNickname
+	} else if comment.Kind == "anonymous" {
+		output.Author.Username = AnonymousCommentUsername
+		output.Author.Nickname = AnonymousCommentNickname
 	}
+
+	output.CreatedAt = mapper.NewCreatedAtExpression(comment.CreatedAt)
+
+	return output
 }
 
-// Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.
-func (uc *CommentUseCase) setCreatedAtExpression(c *model.Comment) {
-	// UTC 시간을 단순 한국시간으로 변경
-	now := time.Now().In(config.Location) // now는 근데 기본적으로 UTC긴한듯.
-	nowYear, nowMonth, nowDate := now.Date()
-	//log.Println(c.CreatedAt.In(repository.Location).Format("2006/01/02 15:04")) // => 한국시간대로 잘 나옴.
-	createdAt := c.CreatedAt.In(config.Location)
-	createdYear, createdMonth, createdDate := createdAt.Date()
-	if now.Sub(c.CreatedAt).Minutes() < 5 {
-		c.CreatedAtExpression = "지금"
-	} else if nowYear == createdYear && nowMonth == createdMonth && nowDate == createdDate {
-		c.CreatedAtExpression = createdAt.Format("15:04")
-	} else if nowYear == createdYear {
-		c.CreatedAtExpression = createdAt.Format("01/02 15:04")
-	} else {
-		c.CreatedAtExpression = createdAt.Format("2006/01/02 15:04")
-	}
-}
+
 
 func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: commentID})

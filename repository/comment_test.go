@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
+	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/test"
 	"github.com/sirupsen/logrus"
@@ -71,7 +73,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		comment := &model.Comment{
 			Kind:           "named",
 			AuthorUsername: "jinsu",
-			ArticleID: null.Int{sql.NullInt64{1, true}},
+			ArticleID:      null.Int{sql.NullInt64{1, true}},
 			Content:        "테스트로 작성한 기명 코멘트입니다.",
 			ParentID:       null.Int{sql.NullInt64{parentID1, true}},
 		}
@@ -89,7 +91,7 @@ func TestCommentRepositoryGorm_Create(t *testing.T) {
 		comment := &model.Comment{
 			Kind:           "anonymous",
 			AuthorUsername: "somebody",
-			ArticleID: null.Int{sql.NullInt64{1, true}},
+			ArticleID:      null.Int{sql.NullInt64{1, true}},
 			Content:        "테스트로 작성한 somebody의 기명 코멘트입니다.",
 			ParentID:       null.Int{sql.NullInt64{parentID1, true}},
 		}
@@ -229,4 +231,51 @@ func TestCommentRepositoryGorm_List(t *testing.T) {
 		assert.Equal(t, comments[0].AuthorUsername, "somebody")
 		//assert.Equal(t, comments[0].Author.Username, "somebody")
 	})
+}
+
+func TestEntgo(t *testing.T) {
+	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	if err != nil {
+		logrus.Fatalf("failed opening connection to sqlite: %v", err)
+	}
+	defer client.Close()
+	// Run the auto migration tool.
+	if err := client.Schema.Create(context.Background()); err != nil {
+		logrus.Fatalf("failed creating schema resources: %v", err)
+	}
+
+	user, err := client.User.Create().
+		SetUsername("jinsu").
+		SetPassword("123123").
+		SetStudentNumber("2016101168").
+		Save(context.Background())
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Warn(user)
+
+	user2, err := client.User.Create().
+		SetUsername("jinsu2").
+		SetPassword("123123").
+		SetStudentNumber("2016101168").
+		Save(context.Background())
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Warn(user2)
+
+	comment, err := client.Comment.Create().
+		SetAuthor(user).
+		SetContent("hello, world").
+		SetState("exists").
+		Save(context.Background())
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Warn(comment)
+	author, err := comment.QueryAuthor().All(context.Background())
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Warn("Author:", author)
 }

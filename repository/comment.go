@@ -108,7 +108,7 @@ func (r *CommentRepositoryGorm) List(opt *CommentQueryOption) []*model.Comment {
 		for _, child := range c.Children {
 			// Author를 복제하지 않으면 같은 Author를 갖는 애들이 모두 같은 Author 자체를 참조하게된다.
 			if c.Author == nil {
-			logrus.Warn("Child 댓글의 Author가 nil입니다. 테스트 환경에서 SQLite3를 쓰는 경우 외엔 오류입니다.")
+				logrus.Warn("Child 댓글의 Author가 nil입니다. 테스트 환경에서 SQLite3를 쓰는 경우 외엔 오류입니다.")
 			} else {
 				tmpAuthor := *(child.Author)
 				child.Author = &tmpAuthor

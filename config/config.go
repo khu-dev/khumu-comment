@@ -20,7 +20,7 @@ func init() {
 	}
 	Location = l
 
-	Config =  &KhumuConfig{}
+	Config = &KhumuConfig{}
 	wd, _ := os.Getwd()
 	ezconfig.LoadConfig("KHUMU", Config, []string{wd, strings.ToLower(os.Getenv("KHUMU_CONFIG_PATH"))})
 }
@@ -49,7 +49,7 @@ type KhumuConfig struct {
 		CommentChannel     string
 		LikeCommentChannel string
 	}
-	Sns struct{
+	Sns struct {
 		TopicArn string
 	}
 }

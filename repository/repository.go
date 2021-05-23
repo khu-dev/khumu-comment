@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"entgo.io/ent/dialect/sql"
 	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
+	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
@@ -38,7 +40,31 @@ func NewGorm() *gorm.DB {
 	} else {
 		return db
 	}
+}
 
+func NewEnt() *ent.Client {
+
+	drv, err := sql.Open("mysql",
+		fmt.Sprintf("%s:%s@tcp(%s)/%s",
+			config.Config.DB.MySQL.User,
+			config.Config.DB.MySQL.Password,
+			config.Config.DB.MySQL.Host,
+			config.Config.DB.MySQL.DatabaseName,
+		))
+	if err != nil {
+		logrus.Panic(err)
+	}
+	// Get the underlying sql.DB object of the driver.
+	db := drv.DB()
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(100)
+	db.SetConnMaxLifetime(time.Hour)
+	ent.Debug()
+	ent.Log(func(i ...interface{}) {
+		logrus.Warn(i...)
+	})
+	client := ent.NewClient(ent.Driver(drv))
+	return client
 }
 
 func NewTestGorm() *gorm.DB {

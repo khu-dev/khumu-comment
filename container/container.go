@@ -18,6 +18,11 @@ func Build() *dig.Container {
 		log.Panic(err)
 	}
 
+	err = c.Provide(repository.NewEnt)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	// sns
 	err = c.Provide(external.NewSnsClient)
 	if err != nil {

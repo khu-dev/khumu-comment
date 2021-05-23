@@ -2,13 +2,13 @@ package http
 
 import (
 	"errors"
+	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -38,6 +38,11 @@ type CommentResponse struct {
 	Message string         `json:"message"`
 }
 
+type EntCommentResponse struct {
+	Data    *data.CommentOutput `json:"data"` //this contains any format of comments
+	Message string       `json:"message"`
+}
+
 type CommentsResponse struct {
 	Data    []*model.Comment `json:"data"` //this contains any format of comments
 	Message string           `json:"message"`
@@ -48,47 +53,26 @@ type LikeCommentResponse struct {
 	Message string `json:"message"`
 }
 
-// @Tags Comment
-// @Summary Comment를 생성합니다.
-// @Description 사용 가능한 필드는 주로 Get API의 응답에 있는 필드와 유사합니다.
-// @Description author field는 요청자의 Authorization header의 값을 이용합니다.
-// @name create-comment
-// @Accept  application/json
-// @Produce  application/json
-// @Param article body int true "어떤 게시물의 댓글인지"
-// @Param kind body string false "익명인지, 기명인지"
-// @Param content body string true "댓글 내용"
-// @Router /api/comments [post]
-// @Success 200 {object} CommentResponse
 func (r *CommentRouter) Create(c echo.Context) error {
 	logrus.Debug("CommentRouter_Create")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
-	var comment *model.Comment = &model.Comment{}
-	err := c.Bind(comment)
+	var commentInput *data.CommentInput = &data.CommentInput{}
+	err := c.Bind(commentInput)
 
 	if err != nil {
-		log.Print(err)
-		return err
+		logrus.Error(err)
+		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
-
-	comment.AuthorUsername = c.Get("user_id").(string)
-	comment, err = r.commentUC.Create(comment)
+	commentInput.Author = c.Get("user_id").(string)
+	comment, err := r.commentUC.EntCreate(commentInput)
 	if err != nil {
-		log.Print(err)
-		return err
+		logrus.Error(err)
+		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 
-	return c.JSON(200, CommentResponse{Data: comment})
+	return c.JSON(200, EntCommentResponse{Data: comment})
 }
 
-// @Tags comment
-// @Summary Comment List를 조회합니다.
-// @Description
-// @name list-comment
-// @Produce  application/json
-// @Param article query int true "admin group이 아닌 이상은 게시물 id를 꼭 정의해야합니다."
-// @Router /api/comments [get]
-// @Success 200 {object} CommentsResponse
 func (r *CommentRouter) List(c echo.Context) error {
 	logrus.Debug("CommentRouter_List")
 	username := c.Get("user_id").(string)

@@ -1,11 +1,11 @@
 package repository
 
 import (
-    "github.com/khu-dev/khumu-comment/model"
-    "github.com/khu-dev/khumu-comment/test"
-    "github.com/stretchr/testify/assert"
-    "os"
-    "testing"
+	"github.com/khu-dev/khumu-comment/model"
+	"github.com/khu-dev/khumu-comment/test"
+	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
 var (
