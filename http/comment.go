@@ -33,18 +33,14 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	return commentRouter
 }
 
-type CommentResponse struct {
-	Data    *model.Comment `json:"data"` //this contains any format of comments
-	Message string         `json:"message"`
-}
 
-type EntCommentResponse struct {
+type CommentResponse struct {
 	Data    *data.CommentOutput `json:"data"` //this contains any format of comments
 	Message string       `json:"message"`
 }
 
 type CommentsResponse struct {
-	Data    []*model.Comment `json:"data"` //this contains any format of comments
+	Data    []*data.CommentOutput `json:"data"` //this contains any format of comments
 	Message string           `json:"message"`
 }
 
@@ -64,13 +60,13 @@ func (r *CommentRouter) Create(c echo.Context) error {
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 	commentInput.Author = c.Get("user_id").(string)
-	comment, err := r.commentUC.EntCreate(commentInput)
+	comment, err := r.commentUC.Create(commentInput)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 
-	return c.JSON(200, EntCommentResponse{Data: comment})
+	return c.JSON(200, CommentResponse{Data: comment})
 }
 
 func (r *CommentRouter) List(c echo.Context) error {
@@ -119,11 +115,6 @@ func (r *CommentRouter) List(c echo.Context) error {
 		return err
 	}
 
-	// 개수가 0인 경우 그냥 리턴하면 data: null이 되어버림.
-	// 따라서 empty slice를 새로 만들어준다.
-	if len(comments) == 0 {
-		comments = make([]*model.Comment, 0)
-	}
 	return c.JSON(200, CommentsResponse{Data: comments})
 }
 
@@ -150,13 +141,14 @@ func (r *CommentRouter) Get(c echo.Context) error {
 
 func (r *CommentRouter) Delete(c echo.Context) error {
 	logrus.Debug("CommentRouter Delete")
+	username := c.Get("user_id").(string)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		logrus.Error(err)
 		return err
 	}
 
-	_, err = r.commentUC.Delete(id)
+	err = r.commentUC.Delete(username, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})

@@ -6,6 +6,7 @@ import (
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/data/mapper"
 	"github.com/khu-dev/khumu-comment/ent"
+	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
@@ -18,14 +19,15 @@ var (
 	AnonymousCommentNickname string = "익명"
 	DeletedCommentUsername   string = "삭제된 댓글의 작성자"
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
+	ErrUnAuthorized = errors.New("권한이 존재하지 않습니다")
 )
 
 type CommentUseCaseInterface interface {
 	Create(commentInput *data.CommentInput) (*data.CommentOutput, error)
-	List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error)
-	Get(username string, id int) (*model.Comment, error)
-	Update(username string, id int, opt map[string]interface{}) (*model.Comment, error)
-	Delete(id int) (*model.Comment, error)
+	List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error)
+	Get(username string, id int) (*data.CommentOutput, error)
+	Update(username string, id int, opt map[string]interface{}) (*data.CommentOutput, error)
+	Delete(username string, id int) error
 }
 
 type LikeCommentUseCaseInterface interface {
@@ -38,7 +40,7 @@ type CommentUseCase struct {
 	LikeCommentRepository repository.LikeCommentRepositoryInterface
 	//EventMessageRepository repository.EventMessageRepository
 	SnsClient     external.SnsClient
-	EntRepository *ent.Client
+	Repo *ent.Client
 }
 
 type LikeCommentUseCase struct {
@@ -53,13 +55,13 @@ func NewCommentUseCase(repository repository.CommentRepositoryInterface,
 	likeRepository repository.LikeCommentRepositoryInterface,
 	snsClient external.SnsClient,
 	repo *ent.Client) CommentUseCaseInterface {
-	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, SnsClient: snsClient, EntRepository: repo}
+	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, SnsClient: snsClient, Repo: repo}
 }
 
 func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.CommentOutput, error) {
 	logrus.Infof("Start Create Comment(%#v)", commentInput)
 	//articleId := 1
-	newComment, err := uc.EntRepository.Comment.Create().
+	newComment, err := uc.Repo.Comment.Create().
 		SetNillableArticleID(commentInput.Article).
 		//SetArticleID(&articleId).
 		SetAuthorID(commentInput.Author).
@@ -72,56 +74,73 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		logrus.Error(newComment, err)
 		return nil, err
 	}
-	newComment.Edges.Article = newComment.QueryArticle().Select("id").OnlyX(context.Background())
-	newComment.Edges.Author = newComment.QueryAuthor().Select("username").OnlyX(context.Background())
 
-	return mapper.CommentModelToOutput(newComment, nil), nil
+	return uc.ModelToOutput(newComment), nil
 }
 
-func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
-	logrus.WithField("username", username).Infof("Start List CommentQueryOption(%#v)", opt)
-	comments := uc.Repository.List(opt)
-	parents := uc.listParentWithChildren(comments)
-
-	for _, p := range parents {
-		uc.handleComment(p, username, 0)
-	}
-
-	return parents, nil
+func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error) {
+	//logrus.WithField("username", username).Infof("Start List CommentQueryOption(%#v)", opt)
+	//comments := uc.Repository.List(opt)
+	//parents := uc.listParentWithChildren(comments)
+	//
+	//for _, p := range parents {
+	//	uc.handleComment(p, username, 0)
+	//}
+	//
+	//return parents, nil
+	return nil, nil
 }
 
 // 지금의 Get은 Children은 가져오지 못함
-func (uc *CommentUseCase) Get(username string, id int) (*model.Comment, error) {
-	logrus.WithField("username", username).Infof("Start Get Comment(id:%#v)", id)
-	comment, err := uc.Repository.Get(id)
-	if err != nil {
-		return nil, err
-	}
-
-	uc.handleComment(comment, username, 0) // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
-	return comment, nil
+func (uc *CommentUseCase) Get(username string, id int) (*data.CommentOutput, error) {
+	//logrus.WithField("username", username).Infof("Start Get Comment(id:%#v)", id)
+	//comment, err := uc.Repository.Get(id)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//uc.handleComment(comment, username, 0) // ""는 어떠한 author username과도 다르기때문에 숨겨진다.
+	//return comment, nil
+	return nil, nil
 }
 
-func (uc *CommentUseCase) Update(username string, id int, opt map[string]interface{}) (*model.Comment, error) {
-	logrus.WithField("username", username).WithField("id", id).Infof("Start Get CommentQueryOption(%#v)", opt)
-	updated, err := uc.Repository.Update(id, opt)
-	uc.handleComment(updated, username, 0)
-	return updated, err
+func (uc *CommentUseCase) Update(username string, id int, opt map[string]interface{}) (*data.CommentOutput, error) {
+	//logrus.WithField("username", username).WithField("id", id).Infof("Start Get CommentQueryOption(%#v)", opt)
+	//updated, err := uc.Repository.Update(id, opt)
+	//uc.handleComment(updated, username, 0)
+	//return updated, err
+	return nil, nil
 }
 
 // 실제로 Delete 하지는 않고 State를 "deleted"로 변경
-func (uc *CommentUseCase) Delete(id int) (*model.Comment, error) {
+func (uc *CommentUseCase) Delete(username string, id int) error {
+	ctx := context.Background()
 	logrus.Infof("Start Get Comment(id:%#v)", id)
-	comment, err := uc.Repository.Update(id, map[string]interface{}{
-		"state":   "deleted",
-		"content": DeletedCommentContent,
-	})
+	commentExisting, err := uc.Repo.Comment.Query().
+		WithAuthor(func(query *ent.KhumuUserQuery) {
+			query.Select("username")
+		}).
+		Select("id").
+		Where(comment.ID(id)).First(ctx)
+	// 해당 아이디의 엔티티 존재 X
 	if err != nil {
-		return nil, err
+		return  err
 	}
 
-	uc.handleComment(comment, comment.AuthorUsername, 0)
-	return comment, nil
+	if commentExisting.Edges.Author.ID != username{
+		return ErrUnAuthorized
+	}
+
+	_, err = uc.Repo.Comment.Update().
+		Where(comment.ID(id)).
+		SetState("deleted").
+		SetContent(DeletedCommentContent).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (uc *CommentUseCase) listParentWithChildren(allComments []*model.Comment) []*model.Comment {
@@ -164,7 +183,7 @@ func (uc *CommentUseCase) handleComment(c *model.Comment, username string, curre
 }
 
 // mapper의 단순 mapping 작업 뿐만 아니라 서비스 로직이 깃든다.
-func (uc *CommentUseCase) Model2Output(comment *ent.Comment) *data.CommentOutput {
+func (uc *CommentUseCase) ModelToOutput(comment *ent.Comment) *data.CommentOutput {
 	ctx := context.Background()
 	comment.Edges.Article = comment.QueryArticle().Select("id").OnlyX(ctx)
 	comment.Edges.Author = comment.QueryAuthor().Select("username").OnlyX(ctx)
