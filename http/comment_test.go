@@ -1,7 +1,7 @@
 // http layer에 대한 테스트는 생략하는 방향으로 변경
+// 필요한 부분만 따로 따로 수행
 
 package http
-
 //
 //import (
 //	"bytes"

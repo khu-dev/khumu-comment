@@ -1,12 +1,13 @@
 package usecase
 
 import (
-    "github.com/golang/mock/gomock"
-    "github.com/khu-dev/khumu-comment/ent"
-    "github.com/khu-dev/khumu-comment/ent/enttest"
-    "github.com/khu-dev/khumu-comment/external"
-    "github.com/khu-dev/khumu-comment/test"
-    "testing"
+	"github.com/golang/mock/gomock"
+	"github.com/khu-dev/khumu-comment/ent"
+	"github.com/khu-dev/khumu-comment/ent/enttest"
+	"github.com/khu-dev/khumu-comment/external"
+	"github.com/khu-dev/khumu-comment/test"
+	_ "github.com/mattn/go-sqlite3"
+	"testing"
 )
 
 var (

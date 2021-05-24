@@ -4,10 +4,7 @@ package usecase
 
 import (
 	"context"
-	"github.com/golang/mock/gomock"
 	"github.com/khu-dev/khumu-comment/data"
-	"github.com/khu-dev/khumu-comment/ent"
-	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
@@ -44,7 +41,6 @@ func TestCommentUseCase_Get(t *testing.T) {
 		// 기본적으로는 익명 댓글임.
 		assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
 		assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
-		assert.Equal(t, DeletedCommentContent, comment.Content)
 	})
 
 	t.Run("익명 댓글", func(t *testing.T) {
@@ -55,7 +51,6 @@ func TestCommentUseCase_Get(t *testing.T) {
 		// 기본적으로는 익명 댓글임.
 		assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
 		assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
-		assert.Equal(t, DeletedCommentContent, comment.Content)
 	})
 
 	t.Run("삭제된 댓글", func(t *testing.T) {
