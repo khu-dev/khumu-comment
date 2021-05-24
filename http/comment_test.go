@@ -39,7 +39,7 @@ func BeforeCommentRouterTest(t testing.TB) {
 		c = test.Comment1JinsuAnnonymous
 		return c, nil
 	}).AnyTimes()
-	mockCommentUseCase.EXPECT().List(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, opt *repository.CommentQueryOption) ([]*model.Comment, error) {
+	mockCommentUseCase.EXPECT().List(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, opt *_repository.CommentQueryOption) ([]*model.Comment, error) {
 		return test.Comments, nil
 	}).AnyTimes()
 	mockCommentUseCase.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, id int) (*model.Comment, error) {

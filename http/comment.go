@@ -54,7 +54,7 @@ func (r *CommentRouter) Create(c echo.Context) error {
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
 	var commentInput *data.CommentInput = &data.CommentInput{}
 	err := c.Bind(commentInput)
-
+//wd, _ := os.Getwd()os
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
@@ -94,7 +94,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 		logrus.WithField("article", articleIDString).Error(err)
 		return c.JSON(400, CommentResponse{Message: "article should be int"})
 	}
-	opt.ArticleID = articleID
+	opt.ArticleId = articleID
 
 	commentIDString := c.QueryParam("comment")
 
@@ -107,7 +107,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 		logrus.Println(err, commentIDString, commentID)
 		return err
 	}
-	opt.CommentID = commentID
+	opt.CommentId = commentID
 
 	comments, err := r.commentUC.List(username, opt)
 	if err != nil {

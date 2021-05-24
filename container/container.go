@@ -13,39 +13,14 @@ func Build() *dig.Container {
 	c := dig.New()
 
 	// Provide DB Connection
-	err := c.Provide(repository.NewGorm)
-	if err != nil {
-		log.Panic(err)
-	}
 
-	err = c.Provide(repository.NewEnt)
+	err := c.Provide(repository.NewEnt)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	// sns
 	err = c.Provide(external.NewSnsClient)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Provide repositories
-	err = c.Provide(repository.NewCommentRepositoryGorm)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	err = c.Provide(repository.NewLikeCommentRepositoryGorm)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	err = c.Provide(repository.NewUserRepositoryGorm)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	err = c.Provide(repository.NewRedisEventMessageRepository)
 	if err != nil {
 		log.Panic(err)
 	}

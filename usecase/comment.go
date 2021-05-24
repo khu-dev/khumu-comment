@@ -84,8 +84,8 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 	if opt.AuthorUsername != "" {
 		query.Where(comment.HasAuthorWith(khumuuser.ID(opt.AuthorUsername)))
 	}
-	if opt.ArticleID != 0 {
-		query.Where(comment.HasArticleWith(article.ID(opt.ArticleID)))
+	if opt.ArticleId != 0 {
+		query.Where(comment.HasArticleWith(article.ID(opt.ArticleId)))
 	}
 
 	parents, err := query.

@@ -2,7 +2,7 @@ package http
 
 import (
 	_ "github.com/khu-dev/khumu-comment/docs"
-	"github.com/khu-dev/khumu-comment/repository"
+	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -12,9 +12,9 @@ import (
 // 의존성 주입시에 root router를 판별하기 위해 임베딩
 type RootRouter struct{ *echo.Group }
 
-func NewEcho(userRepository repository.UserRepositoryInterface,
-	commentUC usecase.CommentUseCaseInterface,
-	likeUC usecase.LikeCommentUseCaseInterface) *echo.Echo {
+func NewEcho(commentUC usecase.CommentUseCaseInterface,
+	likeUC usecase.LikeCommentUseCaseInterface,
+	repo *ent.Client) *echo.Echo {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash()) // 이거 안하면 꼭 끝에 /를 붙여야할 수도 있음.
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
@@ -31,14 +31,14 @@ func NewEcho(userRepository repository.UserRepositoryInterface,
 	e.GET("", func(c echo.Context) error { return c.Redirect(301, "/api") })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
 	e.GET("/docs/comment/*", echoSwagger.WrapHandler)
-	root := NewRootRouter(e, userRepository)
+	root := NewRootRouter(e, repo)
 	_ = NewCommentRouter(root, commentUC, likeUC)
 	return e
 }
 
-func NewRootRouter(echoServer *echo.Echo, userRepository repository.UserRepositoryInterface) *RootRouter {
+func NewRootRouter(echoServer *echo.Echo, repo *ent.Client) *RootRouter {
 	g := RootRouter{Group: echoServer.Group("/api")}
-	authenticator := &Authenticator{UserRepository: userRepository}
+	authenticator := &Authenticator{Repo: repo}
 	g.Use(authenticator.Authenticate)
 	g.GET("/", serveHome)
 	return &g
