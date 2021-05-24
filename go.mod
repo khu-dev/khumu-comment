@@ -7,8 +7,9 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/aws/aws-sdk-go v1.38.18
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-openapi/spec v0.19.12 // indirect
-	github.com/go-redis/redis/v8 v8.5.0
+	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae
 	github.com/golang/mock v1.3.1
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/magiconair/properties v1.8.5 // indirect
@@ -23,14 +24,13 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/swaggo/echo-swagger v1.0.0
 	github.com/swaggo/swag v1.6.9
-	github.com/umi0410/ezconfig v0.0.0-20210507141526-7b88a9928c2c
+	github.com/umi0410/ezconfig v0.0.0-20210524051235-5fb1e5782b52
 	go.uber.org/dig v1.10.0
+	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
 	golang.org/x/sys v0.0.0-20210507014357-30e306a8bba5 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	gopkg.in/guregu/null.v4 v4.0.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/mysql v1.0.3
-	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.20.5
 )

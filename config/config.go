@@ -20,6 +20,7 @@ func init() {
 	}
 	Location = l
 
+	os.Setenv("KHUMU_DB.MYSQL.HOST", "123123")
 	Config = &KhumuConfig{}
 	wd, _ := os.Getwd()
 	ezconfig.LoadConfig("KHUMU", Config, []string{wd, strings.ToLower(os.Getenv("KHUMU_CONFIG_PATH"))})
