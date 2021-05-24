@@ -48,9 +48,17 @@ func (kuc *KhumuUserCreate) SetNillableStudentNumber(s *string) *KhumuUserCreate
 	return kuc
 }
 
-// SetIsActive sets the "is_active" field.
-func (kuc *KhumuUserCreate) SetIsActive(b bool) *KhumuUserCreate {
-	kuc.mutation.SetIsActive(b)
+// SetState sets the "state" field.
+func (kuc *KhumuUserCreate) SetState(s string) *KhumuUserCreate {
+	kuc.mutation.SetState(s)
+	return kuc
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (kuc *KhumuUserCreate) SetNillableState(s *string) *KhumuUserCreate {
+	if s != nil {
+		kuc.SetState(*s)
+	}
 	return kuc
 }
 
@@ -116,6 +124,7 @@ func (kuc *KhumuUserCreate) Save(ctx context.Context) (*KhumuUser, error) {
 		err  error
 		node *KhumuUser
 	)
+	kuc.defaults()
 	if len(kuc.hooks) == 0 {
 		if err = kuc.check(); err != nil {
 			return nil, err
@@ -154,6 +163,14 @@ func (kuc *KhumuUserCreate) SaveX(ctx context.Context) *KhumuUser {
 	return v
 }
 
+// defaults sets the default values of the builder before save.
+func (kuc *KhumuUserCreate) defaults() {
+	if _, ok := kuc.mutation.State(); !ok {
+		v := khumuuser.DefaultState
+		kuc.mutation.SetState(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (kuc *KhumuUserCreate) check() error {
 	if _, ok := kuc.mutation.Nickname(); !ok {
@@ -162,8 +179,8 @@ func (kuc *KhumuUserCreate) check() error {
 	if _, ok := kuc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New("ent: missing required field \"password\"")}
 	}
-	if _, ok := kuc.mutation.IsActive(); !ok {
-		return &ValidationError{Name: "is_active", err: errors.New("ent: missing required field \"is_active\"")}
+	if _, ok := kuc.mutation.State(); !ok {
+		return &ValidationError{Name: "state", err: errors.New("ent: missing required field \"state\"")}
 	}
 	return nil
 }
@@ -218,13 +235,13 @@ func (kuc *KhumuUserCreate) createSpec() (*KhumuUser, *sqlgraph.CreateSpec) {
 		})
 		_node.StudentNumber = value
 	}
-	if value, ok := kuc.mutation.IsActive(); ok {
+	if value, ok := kuc.mutation.State(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
+			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldIsActive,
+			Column: khumuuser.FieldState,
 		})
-		_node.IsActive = value
+		_node.State = value
 	}
 	if nodes := kuc.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -300,6 +317,7 @@ func (kucb *KhumuUserCreateBulk) Save(ctx context.Context) ([]*KhumuUser, error)
 	for i := range kucb.builders {
 		func(i int, root context.Context) {
 			builder := kucb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*KhumuUserMutation)
 				if !ok {

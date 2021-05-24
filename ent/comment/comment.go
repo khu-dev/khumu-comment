@@ -97,6 +97,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultState holds the default value on creation for the "state" field.
+	DefaultState string
 	// DefaultKind holds the default value on creation for the "kind" field.
 	DefaultKind string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.

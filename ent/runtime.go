@@ -7,6 +7,7 @@ import (
 
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
+	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/schema"
 )
 
@@ -22,6 +23,10 @@ func init() {
 	article.DefaultCreatedAt = articleDescCreatedAt.Default.(func() time.Time)
 	commentFields := schema.Comment{}.Fields()
 	_ = commentFields
+	// commentDescState is the schema descriptor for state field.
+	commentDescState := commentFields[1].Descriptor()
+	// comment.DefaultState holds the default value on creation for the state field.
+	comment.DefaultState = commentDescState.Default.(string)
 	// commentDescKind is the schema descriptor for kind field.
 	commentDescKind := commentFields[3].Descriptor()
 	// comment.DefaultKind holds the default value on creation for the kind field.
@@ -30,4 +35,10 @@ func init() {
 	commentDescCreatedAt := commentFields[4].Descriptor()
 	// comment.DefaultCreatedAt holds the default value on creation for the created_at field.
 	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
+	khumuuserFields := schema.KhumuUser{}.Fields()
+	_ = khumuuserFields
+	// khumuuserDescState is the schema descriptor for state field.
+	khumuuserDescState := khumuuserFields[4].Descriptor()
+	// khumuuser.DefaultState holds the default value on creation for the state field.
+	khumuuser.DefaultState = khumuuserDescState.Default.(string)
 }

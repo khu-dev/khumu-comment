@@ -21,8 +21,8 @@ var (
 	AnonymousCommentNickname string = "익명"
 	DeletedCommentUsername   string = "삭제된 댓글의 작성자"
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
-	ErrUnAuthorized = errors.New("권한이 존재하지 않습니다")
-	ErrSelfLikeComment = errors.New("본인의 댓글은 좋아요할 수 없습니다")
+	ErrUnAuthorized                 = errors.New("권한이 존재하지 않습니다")
+	ErrSelfLikeComment              = errors.New("본인의 댓글은 좋아요할 수 없습니다")
 )
 
 type CommentUseCaseInterface interface {
@@ -39,8 +39,8 @@ type LikeCommentUseCaseInterface interface {
 }
 
 type CommentUseCase struct {
-	Repo *ent.Client
-	SnsClient     external.SnsClient
+	Repo      *ent.Client
+	SnsClient external.SnsClient
 }
 
 type LikeCommentUseCase struct {
@@ -127,7 +127,7 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	logrus.WithField("username", username).WithField("id", id).Infof("Start Get CommentQueryOption(%#v)", opt)
 	ctx := context.Background()
 	comment, err := uc.Repo.Comment.Get(ctx, id)
-	if err != nil{
+	if err != nil {
 		logrus.Errorf("Comment(%d)를 찾는 도중 에러가 발생했습니다.", id)
 		return nil, err
 	}
@@ -135,11 +135,15 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	// JPA랑 다름.
 	updater := uc.Repo.Comment.UpdateOne(comment)
 
-	contentValue, contentKeyExists := opt["content"]
-	if contentKeyExists{
+	contentValue, contentExists := opt["content"]
+	if contentExists {
 		updater.SetContent(contentValue.(string))
 	}
-	commentUpdated, err:= updater.Save(ctx)
+	kindValue, kindExists := opt["kind"]
+	if kindExists {
+		updater.SetKind(kindValue.(string))
+	}
+	commentUpdated, err := updater.Save(ctx)
 
 	if err != nil {
 		return nil, err
@@ -161,10 +165,10 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		Where(comment.ID(id)).First(ctx)
 	// 해당 아이디의 엔티티 존재 X
 	if err != nil {
-		return  err
+		return err
 	}
 
-	if commentExisting.Edges.Author.ID != username{
+	if commentExisting.Edges.Author.ID != username {
 		return ErrUnAuthorized
 	}
 
@@ -211,11 +215,15 @@ func (uc *CommentUseCase) ModelToOutput(username string, comment *ent.Comment, o
 	comment.Edges.Author = comment.QueryAuthor().Select("username").OnlyX(ctx)
 
 	mapper.CommentModelToOutput(comment, output)
+	if username == comment.Edges.Author.ID {
+		output.IsAuthor = true
+	}
 
 	// hide author
 	if comment.State == "deleted" {
 		output.Author.Username = DeletedCommentUsername
 		output.Author.Nickname = DeletedCommentNickname
+		output.Content = DeletedCommentContent
 	} else if comment.Kind == "anonymous" {
 		output.Author.Username = AnonymousCommentUsername
 		output.Author.Nickname = AnonymousCommentNickname
@@ -223,7 +231,7 @@ func (uc *CommentUseCase) ModelToOutput(username string, comment *ent.Comment, o
 
 	output.CreatedAt = mapper.NewCreatedAtExpression(comment.CreatedAt)
 	output.LikeCommentCount = uc.getLikeCommentCount(comment.ID)
-	if comment.Edges.Children != nil 	{
+	if comment.Edges.Children != nil {
 		for _, c := range comment.Edges.Children {
 			output.Children = append(output.Children, uc.ModelToOutput(username, c, nil))
 		}
@@ -235,7 +243,7 @@ func (uc *CommentUseCase) ModelToOutput(username string, comment *ent.Comment, o
 
 func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 	ctx := context.Background()
-	likes, err  := uc.Repo.LikeComment.Query().
+	likes, err := uc.Repo.LikeComment.Query().
 		Where(likecomment.HasAboutWith(comment.ID(commentID))).
 		All(ctx)
 	if err != nil {
@@ -247,7 +255,7 @@ func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 
 func (uc *CommentUseCase) getLiked(commentID int) bool {
 	ctx := context.Background()
-	likes, err  := uc.Repo.LikeComment.Query().
+	likes, err := uc.Repo.LikeComment.Query().
 		Where(likecomment.HasAboutWith(comment.ID(commentID))).
 		All(ctx)
 	if err != nil {
@@ -265,7 +273,19 @@ func NewLikeCommentUseCase(
 func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error) {
 	var err error
 	ctx := context.Background()
-	likeIds, err := uc.Repo.LikeComment.Query().
+	commentExisting, err := uc.Repo.Comment.Query().
+		WithAuthor().
+		Where(comment.ID(input.Comment)).
+		Only(ctx)
+	if err != nil {
+		logrus.Error(err)
+		return false, err
+	}
+	if commentExisting.Edges.Author.ID == input.User {
+		return false, ErrSelfLikeComment
+	}
+
+	likeIDs, err := uc.Repo.LikeComment.Query().
 		Where(likecomment.HasAboutWith(comment.ID(input.Comment))).
 		IDs(ctx)
 	if err != nil {
@@ -275,9 +295,9 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 
 	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
 	// 1보다 큰 경우는 비정상적으로 여러개 존재할 때
-	if len(likeIds) >= 1 {
+	if len(likeIDs) >= 1 {
 		logrus.Infof("Comment(%d)에 대한 좋아요를 삭제합니다.", input.Comment)
-		_, err := uc.Repo.LikeComment.Delete().Where(likecomment.IDIn(likeIds...)).Exec(ctx)
+		_, err := uc.Repo.LikeComment.Delete().Where(likecomment.IDIn(likeIDs...)).Exec(ctx)
 		if err != nil {
 			logrus.Error(err)
 			return false, err

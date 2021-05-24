@@ -61,9 +61,17 @@ func (kuu *KhumuUserUpdate) ClearStudentNumber() *KhumuUserUpdate {
 	return kuu
 }
 
-// SetIsActive sets the "is_active" field.
-func (kuu *KhumuUserUpdate) SetIsActive(b bool) *KhumuUserUpdate {
-	kuu.mutation.SetIsActive(b)
+// SetState sets the "state" field.
+func (kuu *KhumuUserUpdate) SetState(s string) *KhumuUserUpdate {
+	kuu.mutation.SetState(s)
+	return kuu
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (kuu *KhumuUserUpdate) SetNillableState(s *string) *KhumuUserUpdate {
+	if s != nil {
+		kuu.SetState(*s)
+	}
 	return kuu
 }
 
@@ -276,11 +284,11 @@ func (kuu *KhumuUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: khumuuser.FieldStudentNumber,
 		})
 	}
-	if value, ok := kuu.mutation.IsActive(); ok {
+	if value, ok := kuu.mutation.State(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
+			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldIsActive,
+			Column: khumuuser.FieldState,
 		})
 	}
 	if kuu.mutation.CommentsCleared() {
@@ -496,9 +504,17 @@ func (kuuo *KhumuUserUpdateOne) ClearStudentNumber() *KhumuUserUpdateOne {
 	return kuuo
 }
 
-// SetIsActive sets the "is_active" field.
-func (kuuo *KhumuUserUpdateOne) SetIsActive(b bool) *KhumuUserUpdateOne {
-	kuuo.mutation.SetIsActive(b)
+// SetState sets the "state" field.
+func (kuuo *KhumuUserUpdateOne) SetState(s string) *KhumuUserUpdateOne {
+	kuuo.mutation.SetState(s)
+	return kuuo
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (kuuo *KhumuUserUpdateOne) SetNillableState(s *string) *KhumuUserUpdateOne {
+	if s != nil {
+		kuuo.SetState(*s)
+	}
 	return kuuo
 }
 
@@ -735,11 +751,11 @@ func (kuuo *KhumuUserUpdateOne) sqlSave(ctx context.Context) (_node *KhumuUser, 
 			Column: khumuuser.FieldStudentNumber,
 		})
 	}
-	if value, ok := kuuo.mutation.IsActive(); ok {
+	if value, ok := kuuo.mutation.State(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
+			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldIsActive,
+			Column: khumuuser.FieldState,
 		})
 	}
 	if kuuo.mutation.CommentsCleared() {

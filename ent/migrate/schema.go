@@ -45,7 +45,7 @@ var (
 	// CommentCommentColumns holds the columns for the "comment_comment" table.
 	CommentCommentColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "state", Type: field.TypeString},
+		{Name: "state", Type: field.TypeString, Default: "exists"},
 		{Name: "content", Type: field.TypeString},
 		{Name: "kind", Type: field.TypeString, Default: "anonymous"},
 		{Name: "created_at", Type: field.TypeTime},
@@ -85,7 +85,7 @@ var (
 		{Name: "nickname", Type: field.TypeString},
 		{Name: "password", Type: field.TypeString},
 		{Name: "student_number", Type: field.TypeString, Nullable: true},
-		{Name: "is_active", Type: field.TypeBool},
+		{Name: "state", Type: field.TypeString, Default: "active"},
 	}
 	// UserKhumuuserTable holds the schema information for the "user_khumuuser" table.
 	UserKhumuuserTable = &schema.Table{

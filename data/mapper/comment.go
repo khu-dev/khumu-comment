@@ -16,11 +16,12 @@ func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.Comm
         dest = &data.CommentOutput{}
     }
 
-    dest.Id = src.ID
+    dest.ID = src.ID
     dest.Author = KhumuUserModelToSimpleOutput(src.Edges.Author, nil)
     dest.Article = &src.Edges.Article.ID
     dest.StudyArticle = nil
     dest.Content = src.Content
+    dest.Kind = src.Kind
     // children 처리 안함.
     dest.Children = []*data.CommentOutput{}
 

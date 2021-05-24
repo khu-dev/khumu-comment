@@ -112,10 +112,10 @@ func StudentNumber(v string) predicate.KhumuUser {
 	})
 }
 
-// IsActive applies equality check predicate on the "is_active" field. It's identical to IsActiveEQ.
-func IsActive(v bool) predicate.KhumuUser {
+// State applies equality check predicate on the "state" field. It's identical to StateEQ.
+func State(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIsActive), v))
+		s.Where(sql.EQ(s.C(FieldState), v))
 	})
 }
 
@@ -466,17 +466,114 @@ func StudentNumberContainsFold(v string) predicate.KhumuUser {
 	})
 }
 
-// IsActiveEQ applies the EQ predicate on the "is_active" field.
-func IsActiveEQ(v bool) predicate.KhumuUser {
+// StateEQ applies the EQ predicate on the "state" field.
+func StateEQ(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIsActive), v))
+		s.Where(sql.EQ(s.C(FieldState), v))
 	})
 }
 
-// IsActiveNEQ applies the NEQ predicate on the "is_active" field.
-func IsActiveNEQ(v bool) predicate.KhumuUser {
+// StateNEQ applies the NEQ predicate on the "state" field.
+func StateNEQ(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldIsActive), v))
+		s.Where(sql.NEQ(s.C(FieldState), v))
+	})
+}
+
+// StateIn applies the In predicate on the "state" field.
+func StateIn(vs ...string) predicate.KhumuUser {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldState), v...))
+	})
+}
+
+// StateNotIn applies the NotIn predicate on the "state" field.
+func StateNotIn(vs ...string) predicate.KhumuUser {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldState), v...))
+	})
+}
+
+// StateGT applies the GT predicate on the "state" field.
+func StateGT(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldState), v))
+	})
+}
+
+// StateGTE applies the GTE predicate on the "state" field.
+func StateGTE(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldState), v))
+	})
+}
+
+// StateLT applies the LT predicate on the "state" field.
+func StateLT(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldState), v))
+	})
+}
+
+// StateLTE applies the LTE predicate on the "state" field.
+func StateLTE(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldState), v))
+	})
+}
+
+// StateContains applies the Contains predicate on the "state" field.
+func StateContains(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldState), v))
+	})
+}
+
+// StateHasPrefix applies the HasPrefix predicate on the "state" field.
+func StateHasPrefix(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldState), v))
+	})
+}
+
+// StateHasSuffix applies the HasSuffix predicate on the "state" field.
+func StateHasSuffix(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldState), v))
+	})
+}
+
+// StateEqualFold applies the EqualFold predicate on the "state" field.
+func StateEqualFold(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldState), v))
+	})
+}
+
+// StateContainsFold applies the ContainsFold predicate on the "state" field.
+func StateContainsFold(v string) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldState), v))
 	})
 }
 
