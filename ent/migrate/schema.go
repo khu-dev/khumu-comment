@@ -85,7 +85,7 @@ var (
 		{Name: "nickname", Type: field.TypeString},
 		{Name: "password", Type: field.TypeString},
 		{Name: "student_number", Type: field.TypeString, Nullable: true},
-		{Name: "is_active", Type: field.TypeBool},
+		{Name: "state", Type: field.TypeString, Default: "active"},
 	}
 	// UserKhumuuserTable holds the schema information for the "user_khumuuser" table.
 	UserKhumuuserTable = &schema.Table{

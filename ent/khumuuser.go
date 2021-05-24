@@ -21,8 +21,8 @@ type KhumuUser struct {
 	Password string `json:"password,omitempty"`
 	// StudentNumber holds the value of the "student_number" field.
 	StudentNumber string `json:"student_number,omitempty"`
-	// IsActive holds the value of the "is_active" field.
-	IsActive bool `json:"is_active,omitempty"`
+	// State holds the value of the "state" field.
+	State string `json:"state,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the KhumuUserQuery when eager-loading is set.
 	Edges KhumuUserEdges `json:"edges"`
@@ -73,9 +73,7 @@ func (*KhumuUser) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case khumuuser.FieldIsActive:
-			values[i] = new(sql.NullBool)
-		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldPassword, khumuuser.FieldStudentNumber:
+		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldPassword, khumuuser.FieldStudentNumber, khumuuser.FieldState:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type KhumuUser", columns[i])
@@ -116,11 +114,11 @@ func (ku *KhumuUser) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				ku.StudentNumber = value.String
 			}
-		case khumuuser.FieldIsActive:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_active", values[i])
+		case khumuuser.FieldState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field state", values[i])
 			} else if value.Valid {
-				ku.IsActive = value.Bool
+				ku.State = value.String
 			}
 		}
 	}
@@ -171,8 +169,8 @@ func (ku *KhumuUser) String() string {
 	builder.WriteString(ku.Password)
 	builder.WriteString(", student_number=")
 	builder.WriteString(ku.StudentNumber)
-	builder.WriteString(", is_active=")
-	builder.WriteString(fmt.Sprintf("%v", ku.IsActive))
+	builder.WriteString(", state=")
+	builder.WriteString(ku.State)
 	builder.WriteByte(')')
 	return builder.String()
 }

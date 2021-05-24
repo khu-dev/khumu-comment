@@ -17,9 +17,9 @@ type User struct {
 }
 type TestData struct {
 	//Users []*User `yaml:"Users"`
-	Users []*model.KhumuUserSimple `yaml:"Users"`
+	Users []*_model.KhumuUserSimple `yaml:"Users"`
 
-	Comments []*model.Comment `yaml:"Comments"`
+	Comments []*_model.Comment `yaml:"Comments"`
 }
 
 func Test_testdata를_잘_인식하는지(t *testing.T) {

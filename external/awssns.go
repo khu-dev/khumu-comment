@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/khu-dev/khumu-comment/config"
-	"github.com/khu-dev/khumu-comment/model"
+	"github.com/khu-dev/khumu-comment/data"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +18,7 @@ var (
 )
 
 type SnsClient interface {
-	PublishMessage(comment *model.Comment)
+	PublishMessage(comment *data.CommentOutput)
 }
 
 type SnsClientImpl struct {
@@ -41,7 +41,7 @@ func NewSnsClient() SnsClient {
 	}
 }
 
-func (client *SnsClientImpl) PublishMessage(comment *model.Comment) {
+func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) {
 	jsonData, err := json.Marshal(comment)
 	if err != nil {
 		logrus.Error(err)

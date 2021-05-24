@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	model "github.com/khu-dev/khumu-comment/model"
+	data "github.com/khu-dev/khumu-comment/data"
 )
 
 // MockSnsClient is a mock of SnsClient interface.
@@ -35,7 +35,7 @@ func (m *MockSnsClient) EXPECT() *MockSnsClientMockRecorder {
 }
 
 // PublishMessage mocks base method.
-func (m *MockSnsClient) PublishMessage(comment *model.Comment) {
+func (m *MockSnsClient) PublishMessage(comment *data.CommentOutput) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PublishMessage", comment)
 }

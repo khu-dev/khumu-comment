@@ -27,7 +27,7 @@ func (KhumuUser) Fields() []ent.Field {
 		field.String("nickname"),
 		field.String("password"),
 		field.String("student_number").Optional(),
-		field.Bool("is_active"),
+		field.String("state").Default("active"),
 	}
 }
 

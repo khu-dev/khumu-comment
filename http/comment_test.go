@@ -35,20 +35,20 @@ func BeforeCommentRouterTest(t testing.TB) {
 	ctrl = gomock.NewController(t)
 	mockCommentUseCase = usecase.NewMockCommentUseCaseInterface(ctrl)
 	mockLikeCommentUseCase = usecase.NewMockLikeCommentUseCaseInterface(ctrl)
-	mockCommentUseCase.EXPECT().Create(gomock.Any()).DoAndReturn(func(c *model.Comment) (*model.Comment, error) {
+	mockCommentUseCase.EXPECT().Create(gomock.Any()).DoAndReturn(func(c *_model.Comment) (*_model.Comment, error) {
 		c = test.Comment1JinsuAnnonymous
 		return c, nil
 	}).AnyTimes()
-	mockCommentUseCase.EXPECT().List(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, opt *_repository.CommentQueryOption) ([]*model.Comment, error) {
+	mockCommentUseCase.EXPECT().List(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, opt *_repository.CommentQueryOption) ([]*_model.Comment, error) {
 		return test.Comments, nil
 	}).AnyTimes()
-	mockCommentUseCase.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, id int) (*model.Comment, error) {
+	mockCommentUseCase.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(username string, id int) (*_model.Comment, error) {
 		return test.Comment1JinsuAnnonymous, nil
 	}).AnyTimes()
-	mockCommentUseCase.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(username string, id int, opt map[string]interface{}) (*model.Comment, error) {
+	mockCommentUseCase.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(username string, id int, opt map[string]interface{}) (*_model.Comment, error) {
 		return test.Comment1JinsuAnnonymous, nil
 	}).AnyTimes()
-	mockCommentUseCase.EXPECT().Delete(gomock.Any()).DoAndReturn(func(id int) (*model.Comment, error) {
+	mockCommentUseCase.EXPECT().Delete(gomock.Any()).DoAndReturn(func(id int) (*_model.Comment, error) {
 		return test.Comment1JinsuAnnonymous, nil
 	}).AnyTimes()
 

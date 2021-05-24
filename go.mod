@@ -15,6 +15,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/meehow/go-django-hashers v0.0.0-20171231135116-5e5d6afe52db
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.7.0
