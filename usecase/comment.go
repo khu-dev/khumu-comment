@@ -135,9 +135,13 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	// JPA랑 다름.
 	updater := uc.Repo.Comment.UpdateOne(comment)
 
-	contentValue, contentKeyExists := opt["content"]
-	if contentKeyExists{
+	contentValue, contentExists := opt["content"]
+	if contentExists{
 		updater.SetContent(contentValue.(string))
+	}
+	kindValue, kindExists := opt["kind"]
+	if kindExists {
+		updater.SetKind(kindValue.(string))
 	}
 	commentUpdated, err:= updater.Save(ctx)
 
@@ -211,11 +215,15 @@ func (uc *CommentUseCase) ModelToOutput(username string, comment *ent.Comment, o
 	comment.Edges.Author = comment.QueryAuthor().Select("username").OnlyX(ctx)
 
 	mapper.CommentModelToOutput(comment, output)
+	if username == comment.Edges.Author.ID{
+		output.IsAuthor = true
+	}
 
 	// hide author
 	if comment.State == "deleted" {
 		output.Author.Username = DeletedCommentUsername
 		output.Author.Nickname = DeletedCommentNickname
+		output.Content = DeletedCommentContent
 	} else if comment.Kind == "anonymous" {
 		output.Author.Username = AnonymousCommentUsername
 		output.Author.Nickname = AnonymousCommentNickname

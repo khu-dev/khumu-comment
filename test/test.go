@@ -18,7 +18,7 @@ var (
 
 	Articles ent.Articles
 
-	Comment1JinsuAnnonymous               *ent.Comment
+	Comment1JinsuAnonymous               *ent.Comment
 	Comment2JinsuNamed                    *ent.Comment
 	Comment3SomebodyAnonymous             *ent.Comment
 	Comment4PuppyAnonymous                *ent.Comment
@@ -35,7 +35,7 @@ func init() {
 }
 
 // test 진행 시에 각 step에서 사용할 초기 데이터를 만든다.
-func SetUp(client *ent.Client) {
+func SetUpUsers(client *ent.Client) {
 	ctx := context.Background()
 	var err error
 	UserJinsu, err = client.KhumuUser.Create().
@@ -72,8 +72,11 @@ func SetUp(client *ent.Client) {
 	if err != nil {
 		logrus.Panic(err)
 	}
+}
 
-	_, err = client.Article.Create().
+func SetUpArticles(client *ent.Client) {
+	ctx := context.TODO()
+	_, err := client.Article.Create().
 		SetID(1).
 		SetTitle("1번 게시물입니다.").
 		SetImages(&[]string{}).
@@ -105,110 +108,98 @@ func SetUp(client *ent.Client) {
 	if err != nil {
 		logrus.Panic(err)
 	}
+}
 
-	//Comments = make([]*ent.Comment, 0)
-	//
-	//Comment1JinsuAnnonymous = &ent.Comment{
-	//	ID:   1,
-	//	Kind: "anonymous",
-	//	Content: "테스트로 작성한 jinsu의 익명 코멘트",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserJinsu,
-	//		Article: Articles[0],
-	//		Parent: nil,
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment1JinsuAnnonymous)
-	//
-	//Comment2JinsuNamed = &ent.Comment{
-	//	ID:             2,
-	//	Kind:           "named",
-	//	Content: "테스트로 작성한 jinsu의 기명 코멘트",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserJinsu,
-	//		Article: Articles[0],
-	//		Parent: nil,
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment2JinsuNamed)
-	//
-	//Comment3SomebodyAnonymous = &ent.Comment{
-	//	ID:             3,
-	//	Kind:           "anonymous",
-	//	Content: "테스트로 작성한 somebody의 익명 코멘트",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserSomebody,
-	//		Article: Articles[0],
-	//		Parent: nil,
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment3SomebodyAnonymous)
-	//
-	//Comment4PuppyAnonymous = &ent.Comment{
-	//	ID:             4,
-	//	Kind:           "anonymous",
-	//	Content:   "테스트로 작성한 puppy의 익명 코멘트",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserPuppy,
-	//		Article: Articles[0],
-	//		Parent: nil,
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment4PuppyAnonymous)
-	//
-	//Comment5JinsuAnonymousFromComment1 = &ent.Comment{
-	//	ID:             5,
-	//	Kind:           "anonymous",
-	//	Content:   "테스트로 작성한 jinsu의 익명 대댓글",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserJinsu,
-	//		Article: Articles[0],
-	//		Parent: Comments[0],
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment5JinsuAnonymousFromComment1)
-	//
-	//Comment6JinsuNamedFromComment1 = &ent.Comment{
-	//	ID:             6,
-	//	Kind:           "named",
-	//	Content:   "테스트로 작성한 jinsu의 기명 대댓글",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserJinsu,
-	//		Article: Articles[0],
-	//		Parent: Comments[0],
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment6JinsuNamedFromComment1)
-	//
-	//Comment7SomebodyAnonymousFromComment1 = &ent.Comment{
-	//	ID:             7,
-	//	Kind:           "anonymous",
-	//	Content:   "테스트로 작성한 somebody의 익명 코멘트",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserSomebody,
-	//		Article: Articles[0],
-	//		Parent: Comments[0],
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment7SomebodyAnonymousFromComment1)
-	//
-	//Comment8PuppyAnonymousFromComment1 = &ent.Comment{
-	//	ID:             8,
-	//	Kind:           "anonymous",
-	//	Content:   "테스트로 작성한 puppy의 익명 코멘트",
-	//	Edges: ent.CommentEdges{
-	//		Author: UserPuppy,
-	//		Article: Articles[0],
-	//		Parent: Comments[0],
-	//		Children: []*ent.Comment{},
-	//	},
-	//}
-	//Comments = append(Comments, Comment8PuppyAnonymousFromComment1)
+// 좋아요 기능 및 댓글에 대한 수정, 삭제 작업에 사용할 Fixture comment들
+func SetUpComments(client *ent.Client) {
+	var err error
+	ctx := context.TODO()
+	Comment1JinsuAnonymous, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("jinsu").
+		SetKind("anonymous").
+		SetContent("테스트로 작성한 jinsu의 익명 코멘트").
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment2JinsuNamed, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("jinsu").
+		SetKind("named").
+		SetContent("테스트로 작성한 jinsu의 기명 코멘트").
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment3SomebodyAnonymous, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("somebody").
+		SetKind("anonymous").
+		SetContent("테스트로 작성한 somebody의 익명 코멘트").
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment4PuppyAnonymous, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("puppy").
+		SetKind("anonymous").
+		SetContent("테스트로 작성한 puppy의 익명 코멘트").
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment5JinsuAnonymousFromComment1, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("jinsu").
+		SetKind("anonymous").
+		SetContent("테스트로 작성한 jinsu의 익명 대댓글").
+		SetParent(Comment1JinsuAnonymous).
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment6JinsuNamedFromComment1, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("jinsu").
+		SetKind("named").
+		SetContent("테스트로 작성한 jinsu의 기명 대댓글").
+		SetParent(Comment1JinsuAnonymous).
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment7SomebodyAnonymousFromComment1, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("jinsu").
+		SetKind("anonymous").
+		SetContent("테스트로 작성한 somebody의 익명 코멘트").
+		SetParent(Comment1JinsuAnonymous).
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comment8PuppyAnonymousFromComment1, err = client.Comment.Create().
+		SetArticleID(1).
+		SetAuthorID("puppy").
+		SetKind("anonymous").
+		SetContent("테스트로 작성한 puppy의 익명 코멘트").
+		SetParent(Comment1JinsuAnonymous).
+		Save(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	Comments, err = client.Comment.Query().All(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
 }

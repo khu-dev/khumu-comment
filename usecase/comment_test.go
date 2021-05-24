@@ -9,6 +9,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/enttest"
 	"github.com/khu-dev/khumu-comment/external"
+	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
@@ -24,9 +25,9 @@ var (
 )
 
 // B는 Before each의 acronym
-func BeforeCommentUseCaseTest(t *testing.T) {
-	ctrl = gomock.NewController(t)
-	repo = enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+func BeforeCommentUseCaseTest(tb testing.TB) {
+	ctrl = gomock.NewController(tb)
+	repo = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 
 	mockSnsClient = external.NewMockSnsClient(ctrl)
 	commentUseCase = &CommentUseCase{
@@ -39,23 +40,18 @@ func BeforeCommentUseCaseTest(t *testing.T) {
 
 	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
 		func(message interface{}) {
-			t.Log("그냥 테스트라서 푸시 알림 패스")
+			tb.Log("그냥 테스트라서 푸시 알림 패스")
 		}).AnyTimes()
 
-	test.SetUp(repo)
+	test.SetUpUsers(repo)
+	test.SetUpArticles(repo)
+	test.SetUpComments(repo)
 }
 
 // A는 After each의 acronym
 func A(tb testing.TB) {
 	repo.Close()
 }
-
-//func (m *MyMockedObject) DoSomething(number int) (bool, error) {
-//
-//  args := m.Called(number)
-//  return args.Bool(0), args.Error(1)
-//
-//}
 
 func TestCommentUseCase_Create(t *testing.T) {
 	t.Run("My anonymous article comment", func(t *testing.T) {
@@ -68,7 +64,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 		Content: "테스트 댓글",
 	})
 
-	comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.Id)
+	comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
 	assert.NoError(t, err)
 	// 기본적으로는 익명 댓글임.
 	assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
@@ -105,88 +101,93 @@ func TestCommentUseCase_Create(t *testing.T) {
 }
 
 func TestCommentUseCase_Get(t *testing.T) {
-	BeforeCommentUseCaseTest(t)
-	defer A(t)
-
-	articles, err := repo.Article.Query().All(context.Background())
-	assert.NoError(t, err)
-	t.Log(articles)
-
-	tmp, _ := commentUseCase.Create(&data.CommentInput{
-		Author: test.UserJinsu.ID,
-		Article: &test.Articles[0].ID,
-		Content: "테스트 댓글",
+	t.Run("기명 댓글", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		comment, err := commentUseCase.Get(test.UserJinsu.ID, test.Comment1JinsuAnonymous.ID)
+		assert.NoError(t, err)
+		// 기본적으로는 익명 댓글임.
+		assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
+		assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
+		assert.Equal(t, DeletedCommentContent, comment.Content)
 	})
 
-	comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.Id)
-	assert.NoError(t, err)
-	// 기본적으로는 익명 댓글임.
-	assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
-	assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
+	t.Run("익명 댓글", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		comment, err := commentUseCase.Get(test.UserJinsu.ID, test.Comment1JinsuAnonymous.ID)
+		assert.NoError(t, err)
+		// 기본적으로는 익명 댓글임.
+		assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
+		assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
+		assert.Equal(t, DeletedCommentContent, comment.Content)
+	})
 
+	t.Run("삭제된 댓글", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		tmp, err := repo.Comment.Create().
+			SetArticleID(1).
+			SetAuthor(test.UserJinsu).
+			SetContent("삭제되어 보여져라!").
+			SetState("deleted").
+			Save(context.TODO())
+		assert.NoError(t, err)
+		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
+		assert.NoError(t, err)
+
+		// 기본적으로는 익명 댓글임.
+		assert.Equal(t, DeletedCommentUsername, comment.Author.Username)
+		assert.Equal(t, DeletedCommentNickname, comment.Author.Nickname)
+		assert.Equal(t, DeletedCommentContent, comment.Content)
+	})
 }
 
-//func TestLikeCommentUseCase_List(t *testing.T) {
-//	BeforeCommentUseCaseTest(t)
-//	defer A(t)
-//	mockCommentRepository.EXPECT().List(gomock.Any()).Return(test.Comments).AnyTimes()
-//	mockLikeCommentRepository.EXPECT().List(gomock.Any()).Return([]*_model.LikeComment{}).AnyTimes()
-//	comments, err := commentUseCase.List("jinsu", &_repository.CommentQueryOption{})
-//	assert.NoError(t, err)
-//	for _, comment := range comments {
-//
-//		assert.Equal(t, comment.AuthorUsername, comment.Author.Username)
-//		if comment.Kind == "named" {
-//			assert.NotEqual(t, AnonymousCommentUsername, comment.Author.Username)
-//			assert.NotEqual(t, AnonymousCommentNickname, comment.Author.Nickname)
-//			assert.NotEqual(t, DeletedCommentNickname, comment.Author.Username)
-//			assert.NotEqual(t, DeletedCommentUsername, comment.Author.Nickname)
-//		} else if comment.Kind == "anonymous" {
-//			assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
-//		} else if comment.Content == "deleted" {
-//			assert.Equal(t, DeletedCommentNickname, comment.Author.Username)
-//			assert.Equal(t, DeletedCommentContent, comment.Content)
-//		}
-//		if comment.ID == test.Comment1JinsuAnnonymous.ID {
-//			assert.True(t, comment.IsAuthor)
-//		}
-//	}
-//}
-//
+func TestLikeCommentUseCase_List(t *testing.T) {
+	BeforeCommentUseCaseTest(t)
+	defer A(t)
+	comments, err := commentUseCase.List(test.UserJinsu.ID, &repository.CommentQueryOption{})
+	assert.NoError(t, err)
+	for _, comment := range comments {
+		if comment.Kind == "named" {
+			assert.NotEqual(t, AnonymousCommentUsername, comment.Author.Username)
+			assert.NotEqual(t, AnonymousCommentNickname, comment.Author.Nickname)
+			assert.NotEqual(t, DeletedCommentNickname, comment.Author.Username)
+			assert.NotEqual(t, DeletedCommentUsername, comment.Author.Nickname)
+		} else if comment.Kind == "anonymous" {
+			assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
+		} else if comment.Content == "deleted" {
+			assert.Equal(t, DeletedCommentNickname, comment.Author.Username)
+			assert.Equal(t, DeletedCommentContent, comment.Content)
+		}
+		// jinsu의 댓글들
+		if comment.ID == test.Comment1JinsuAnonymous.ID ||
+					comment.ID == test.Comment2JinsuNamed.ID ||
+					comment.ID == test.Comment6JinsuNamedFromComment1.ID ||
+					comment.ID == test.Comment5JinsuAnonymousFromComment1.ID {
+			assert.True(t, comment.IsAuthor)
+		}
+	}
+}
 
-//
-//func TestCommentUseCase_Update(t *testing.T) {
-//	BeforeCommentUseCaseTest(t)
-//	defer A(t)
-//	// Update는 대부분 repository 계층에서만 확인해도 될 듯.
-//
-//	//before := *test.Comment1JinsuAnnonymous
-//	//updateData := map[string]interface{}{
-//	//	"content": "수정된 1번 코멘트입니다.",
-//	//	"kind": "named",
-//	//}
-//	//
-//	//after, err := commentUseCase.Update("jinsu", before.ID, updateData)
-//	//assert.NoError(t, err)
-//	//assert.Equal(t, "수정된 1번 코멘트입니다.", after.Content)
-//	//assert.Equal(t, "named", after.Kind)
-//}
-//
-//// Delete 작업 자체는 Repository 계층에서 이루어져야할 듯하고
-//// service 계층에서는 간단한 테스트만 수행한다.
-//func TestCommentUseCase_삭제된_댓글에_대한_조회(t *testing.T) {
-//	BeforeCommentUseCaseTest(t)
-//	defer A(t)
-//	test.Comment1JinsuAnnonymous.State = "deleted"
-//	mockCommentRepository.EXPECT().Get(gomock.Any()).Return(test.Comment1JinsuAnnonymous, nil)
-//	mockLikeCommentRepository.EXPECT().List(gomock.Any()).Return([]*_model.LikeComment{}).AnyTimes()
-//	comment, err := commentUseCase.Get("Anything will be fine", 1)
-//	assert.NoError(t, err)
-//	assert.Equal(t, DeletedCommentUsername, comment.AuthorUsername)
-//	assert.Equal(t, DeletedCommentUsername, comment.Author.Username)
-//	assert.Equal(t, DeletedCommentNickname, comment.Author.Nickname)
-//	assert.Equal(t, DeletedCommentContent, comment.Content)
-//}
+func TestCommentUseCase_Update(t *testing.T) {
+	BeforeCommentUseCaseTest(t)
+	defer A(t)
+	// Update는 대부분 repository 계층에서만 확인해도 될 듯.
+
+	before := *test.Comment2JinsuNamed
+	// named => anonymous로 변경
+	// content 내용 변경
+	updateData := map[string]interface{}{
+		"content": "수정된 1번 코멘트입니다.",
+		"kind": "anonymous",
+	}
+
+	after, err := commentUseCase.Update("jinsu", before.ID, updateData)
+	assert.NoError(t, err)
+	assert.Equal(t, "수정된 1번 코멘트입니다.", after.Content)
+	assert.Equal(t, "anonymous", after.Kind)
+}
 //
 //func TestLikeCommentUseCase_Toggle(t *testing.T) {
 //	BeforeCommentUseCaseTest(t)

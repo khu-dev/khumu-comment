@@ -45,7 +45,7 @@ var (
 	// CommentCommentColumns holds the columns for the "comment_comment" table.
 	CommentCommentColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "state", Type: field.TypeString},
+		{Name: "state", Type: field.TypeString, Default: "exists"},
 		{Name: "content", Type: field.TypeString},
 		{Name: "kind", Type: field.TypeString, Default: "anonymous"},
 		{Name: "created_at", Type: field.TypeTime},

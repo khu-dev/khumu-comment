@@ -36,6 +36,14 @@ func (cu *CommentUpdate) SetState(s string) *CommentUpdate {
 	return cu
 }
 
+// SetNillableState sets the "state" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillableState(s *string) *CommentUpdate {
+	if s != nil {
+		cu.SetState(*s)
+	}
+	return cu
+}
+
 // SetContent sets the "content" field.
 func (cu *CommentUpdate) SetContent(s string) *CommentUpdate {
 	cu.mutation.SetContent(s)
@@ -554,6 +562,14 @@ type CommentUpdateOne struct {
 // SetState sets the "state" field.
 func (cuo *CommentUpdateOne) SetState(s string) *CommentUpdateOne {
 	cuo.mutation.SetState(s)
+	return cuo
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableState(s *string) *CommentUpdateOne {
+	if s != nil {
+		cuo.SetState(*s)
+	}
 	return cuo
 }
 

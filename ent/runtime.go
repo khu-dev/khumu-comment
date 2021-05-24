@@ -23,6 +23,10 @@ func init() {
 	article.DefaultCreatedAt = articleDescCreatedAt.Default.(func() time.Time)
 	commentFields := schema.Comment{}.Fields()
 	_ = commentFields
+	// commentDescState is the schema descriptor for state field.
+	commentDescState := commentFields[1].Descriptor()
+	// comment.DefaultState holds the default value on creation for the state field.
+	comment.DefaultState = commentDescState.Default.(string)
 	// commentDescKind is the schema descriptor for kind field.
 	commentDescKind := commentFields[3].Descriptor()
 	// comment.DefaultKind holds the default value on creation for the kind field.

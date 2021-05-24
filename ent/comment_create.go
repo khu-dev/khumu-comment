@@ -29,6 +29,14 @@ func (cc *CommentCreate) SetState(s string) *CommentCreate {
 	return cc
 }
 
+// SetNillableState sets the "state" field if the given value is not nil.
+func (cc *CommentCreate) SetNillableState(s *string) *CommentCreate {
+	if s != nil {
+		cc.SetState(*s)
+	}
+	return cc
+}
+
 // SetContent sets the "content" field.
 func (cc *CommentCreate) SetContent(s string) *CommentCreate {
 	cc.mutation.SetContent(s)
@@ -208,6 +216,10 @@ func (cc *CommentCreate) SaveX(ctx context.Context) *Comment {
 
 // defaults sets the default values of the builder before save.
 func (cc *CommentCreate) defaults() {
+	if _, ok := cc.mutation.State(); !ok {
+		v := comment.DefaultState
+		cc.mutation.SetState(v)
+	}
 	if _, ok := cc.mutation.Kind(); !ok {
 		v := comment.DefaultKind
 		cc.mutation.SetKind(v)

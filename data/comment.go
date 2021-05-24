@@ -9,7 +9,8 @@ type CommentInput struct {
 }
 
 type CommentOutput struct {
-	Id               int             `json:"id"`
+	ID               int             `json:"id"`
+	Kind string `json:"kind"`
 	Author           *SimpleKhumuUserOutput           `json:"author"`
 	Article          *int             `json:"article"`
 	StudyArticle     *int             `json:"study_article"`

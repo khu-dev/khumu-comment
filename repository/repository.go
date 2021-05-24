@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -34,6 +35,13 @@ func NewEnt() *ent.Client {
 	db := drv.DB()
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(100)
+
+	conn, err := db.Conn(context.TODO())
+	if err != nil {
+		logrus.Panic(err)
+	}
+	conn.Close()
+
 	db.SetConnMaxLifetime(time.Hour)
 	ent.Debug()
 	ent.Log(func(i ...interface{}) {
