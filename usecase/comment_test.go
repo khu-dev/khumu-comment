@@ -5,6 +5,7 @@ package usecase
 import (
 	"database/sql"
 	"github.com/golang/mock/gomock"
+	"github.com/khu-dev/khumu-comment/_repository"
 	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
@@ -15,10 +16,10 @@ import (
 )
 
 var (
-	mockCommentRepository       *repository.MockCommentRepositoryInterface
-	mockLikeCommentRepository   *repository.MockLikeCommentRepositoryInterface
-	mockSnsClient  *external.MockSnsClient
-	redisEventMessageRepository *repository.RedisEventMessageRepository
+	mockCommentRepository       *_repository.MockCommentRepositoryInterface
+	mockLikeCommentRepository   *_repository.MockLikeCommentRepositoryInterface
+	mockSnsClient               *external.MockSnsClient
+	redisEventMessageRepository *_repository.RedisEventMessageRepository
 	commentUseCase              *CommentUseCase
 	likeCommentUseCase          *LikeCommentUseCase
 	ctrl                        *gomock.Controller
@@ -38,17 +39,17 @@ func BeforeCommentUseCaseTest(t *testing.T) {
 	test.SetUp()
 	ctrl = gomock.NewController(t)
 
-	mockCommentRepository = repository.NewMockCommentRepositoryInterface(ctrl)
-	mockLikeCommentRepository = repository.NewMockLikeCommentRepositoryInterface(ctrl)
+	mockCommentRepository = _repository.NewMockCommentRepositoryInterface(ctrl)
+	mockLikeCommentRepository = _repository.NewMockLikeCommentRepositoryInterface(ctrl)
 	mockSnsClient = external.NewMockSnsClient(ctrl)
 	commentUseCase = &CommentUseCase{
-		Repository:             mockCommentRepository,
-		LikeCommentRepository:  mockLikeCommentRepository,
-		SnsClient: mockSnsClient,
+		Repository:            mockCommentRepository,
+		LikeCommentRepository: mockLikeCommentRepository,
+		SnsClient:             mockSnsClient,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{
-		Repository:             mockLikeCommentRepository,
-		CommentRepository:      mockCommentRepository,
+		Repository:        mockLikeCommentRepository,
+		CommentRepository: mockCommentRepository,
 	}
 
 	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
@@ -81,7 +82,7 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 	defer A(t)
 	mockCommentRepository.EXPECT().List(gomock.Any()).Return(test.Comments).AnyTimes()
 	mockLikeCommentRepository.EXPECT().List(gomock.Any()).Return([]*model.LikeComment{}).AnyTimes()
-	comments, err := commentUseCase.List("jinsu", &repository.CommentQueryOption{})
+	comments, err := commentUseCase.List("jinsu", &_repository.CommentQueryOption{})
 	assert.NoError(t, err)
 	for _, comment := range comments {
 
@@ -111,7 +112,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Kind:           "anonymous",
 			State:          "exists",
 			AuthorUsername: "jinsu",
-			ArticleID: null.Int{sql.NullInt64{1, true}},
+			ArticleID:      null.Int{sql.NullInt64{1, true}},
 			Content:        "새로운 테스트 댓글",
 		}
 
@@ -209,7 +210,7 @@ func TestLikeCommentUseCase_Toggle(t *testing.T) {
 		return deleted, nil
 	}).AnyTimes()
 	// 거의 로직을 구현해버렸네.....
-	mockLikeCommentRepository.EXPECT().List(gomock.Any()).DoAndReturn(func(option *repository.LikeCommentQueryOption) []*model.LikeComment {
+	mockLikeCommentRepository.EXPECT().List(gomock.Any()).DoAndReturn(func(option *_repository.LikeCommentQueryOption) []*model.LikeComment {
 		answers := make([]*model.LikeComment, 0)
 		// 쿼리 조건 판별
 		if option.Username != "" && option.CommentID != 0 {

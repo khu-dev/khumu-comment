@@ -212,3 +212,17 @@ func NewCommentRouter(root *RootRouter, uc CommentUseCaseInterface) *CommentRout
 ## How to contribute
 
 microservice로 진행되는 프로젝트이며 아직 local에서 완전히 comment 서버만을 돌리기 위한 초기 환경 구축은 지원되지 않고 있기 때문에 기여는 쉽지 않을 것으로 예상됩니다.
+
+
+---
+
+## Gorm => Entgo 적용 중
+
+```shell
+# Comment에 대한 Schema를 정의하기 위한 초안
+$ go run entgo.io/ent/cmd/ent init Comment
+
+# Schema 수정 후에는 항상 잊지 말고 아래 명령어를 통해 변경 사항이 반영된 코드를 Generate할 것.
+# 매 Compile 마다 수행시킬 수도 있지만, 지연시간이 수 초 걸려서 매번 하면 번거로울 듯.
+$ go generate ./ent
+```

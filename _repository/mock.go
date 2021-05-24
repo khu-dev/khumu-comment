@@ -2,7 +2,7 @@
 // Source: repository/comment.go
 
 // Package repository is a generated GoMock package.
-package repository
+package _repository
 
 import (
 	reflect "reflect"

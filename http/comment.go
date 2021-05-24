@@ -2,13 +2,12 @@ package http
 
 import (
 	"errors"
-	"github.com/khu-dev/khumu-comment/model"
+	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -27,19 +26,21 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	group.POST("", commentRouter.Create)
 	group.GET("", commentRouter.List)
 	group.GET("/:id", commentRouter.Get)
+	group.PATCH("/:id", commentRouter.Update)
 	group.DELETE("/:id", commentRouter.Delete)
 	group.PATCH("/:id/likes", commentRouter.LikeToggle)
 
 	return commentRouter
 }
 
+
 type CommentResponse struct {
-	Data    *model.Comment `json:"data"` //this contains any format of comments
-	Message string         `json:"message"`
+	Data    *data.CommentOutput `json:"data"` //this contains any format of comments
+	Message string       `json:"message"`
 }
 
 type CommentsResponse struct {
-	Data    []*model.Comment `json:"data"` //this contains any format of comments
+	Data    []*data.CommentOutput `json:"data"` //this contains any format of comments
 	Message string           `json:"message"`
 }
 
@@ -48,47 +49,26 @@ type LikeCommentResponse struct {
 	Message string `json:"message"`
 }
 
-// @Tags Comment
-// @Summary Comment를 생성합니다.
-// @Description 사용 가능한 필드는 주로 Get API의 응답에 있는 필드와 유사합니다.
-// @Description author field는 요청자의 Authorization header의 값을 이용합니다.
-// @name create-comment
-// @Accept  application/json
-// @Produce  application/json
-// @Param article body int true "어떤 게시물의 댓글인지"
-// @Param kind body string false "익명인지, 기명인지"
-// @Param content body string true "댓글 내용"
-// @Router /api/comments [post]
-// @Success 200 {object} CommentResponse
 func (r *CommentRouter) Create(c echo.Context) error {
 	logrus.Debug("CommentRouter_Create")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
-	var comment *model.Comment = &model.Comment{}
-	err := c.Bind(comment)
-
+	var commentInput *data.CommentInput = &data.CommentInput{}
+	err := c.Bind(commentInput)
+//wd, _ := os.Getwd()os
 	if err != nil {
-		log.Print(err)
-		return err
+		logrus.Error(err)
+		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
-
-	comment.AuthorUsername = c.Get("user_id").(string)
-	comment, err = r.commentUC.Create(comment)
+	commentInput.Author = c.Get("user_id").(string)
+	comment, err := r.commentUC.Create(commentInput)
 	if err != nil {
-		log.Print(err)
-		return err
+		logrus.Error(err)
+		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 
 	return c.JSON(200, CommentResponse{Data: comment})
 }
 
-// @Tags comment
-// @Summary Comment List를 조회합니다.
-// @Description
-// @name list-comment
-// @Produce  application/json
-// @Param article query int true "admin group이 아닌 이상은 게시물 id를 꼭 정의해야합니다."
-// @Router /api/comments [get]
-// @Success 200 {object} CommentsResponse
 func (r *CommentRouter) List(c echo.Context) error {
 	logrus.Debug("CommentRouter_List")
 	username := c.Get("user_id").(string)
@@ -114,7 +94,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 		logrus.WithField("article", articleIDString).Error(err)
 		return c.JSON(400, CommentResponse{Message: "article should be int"})
 	}
-	opt.ArticleID = articleID
+	opt.ArticleId = articleID
 
 	commentIDString := c.QueryParam("comment")
 
@@ -127,7 +107,7 @@ func (r *CommentRouter) List(c echo.Context) error {
 		logrus.Println(err, commentIDString, commentID)
 		return err
 	}
-	opt.CommentID = commentID
+	opt.CommentId = commentID
 
 	comments, err := r.commentUC.List(username, opt)
 	if err != nil {
@@ -135,11 +115,6 @@ func (r *CommentRouter) List(c echo.Context) error {
 		return err
 	}
 
-	// 개수가 0인 경우 그냥 리턴하면 data: null이 되어버림.
-	// 따라서 empty slice를 새로 만들어준다.
-	if len(comments) == 0 {
-		comments = make([]*model.Comment, 0)
-	}
 	return c.JSON(200, CommentsResponse{Data: comments})
 }
 
@@ -164,15 +139,38 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	return c.JSON(200, comment)
 }
 
-func (r *CommentRouter) Delete(c echo.Context) error {
-	logrus.Debug("CommentRouter Delete")
+func (r *CommentRouter) Update(c echo.Context) error {
+	logrus.Debug("CommentRouter_Update")
+	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
+	body := make(map[string]interface{})
+	err := c.Bind(&body)
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		logrus.Error(err)
 		return err
 	}
 
-	_, err = r.commentUC.Delete(id)
+	username := c.Get("user_id").(string)
+	updated, err := r.commentUC.Update(username, id, body)
+	if err != nil {
+		logrus.Error(err)
+		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
+	}
+
+	return c.JSON(200, CommentResponse{Data: updated})
+}
+
+func (r *CommentRouter) Delete(c echo.Context) error {
+	logrus.Debug("CommentRouter Delete")
+	username := c.Get("user_id").(string)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+
+	err = r.commentUC.Delete(username, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
@@ -195,19 +193,20 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	logrus.Debug("LikeCommentRouter_Toggle")
-	var likeComment *model.LikeComment = &model.LikeComment{Comment: &model.Comment{}, User: &model.KhumuUserSimple{}}
+
 	username := c.Get("user_id").(string)
-	likeComment.Username = username
-
-	commentID, err := strconv.Atoi(c.Param("id"))
-	logrus.Warn(commentID)
+	commentId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Error("Wrong comment ID format")
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "comment 필드가 올바른 int 값이 아닙니다."})
+		logrus.Error(err)
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "올바른 형태의 댓글 Id를 입력해주세요."})
 	}
-	likeComment.CommentID = commentID
 
-	isCreated, err := r.likeUC.Toggle(likeComment)
+	body := &data.LikeCommentInput{
+		User: username,
+		Comment: commentId,
+	}
+
+	isCreated, err := r.likeUC.Toggle(body)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
