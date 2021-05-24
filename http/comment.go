@@ -3,7 +3,6 @@ package http
 import (
 	"errors"
 	"github.com/khu-dev/khumu-comment/data"
-	"github.com/khu-dev/khumu-comment/model"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
@@ -194,19 +193,20 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	logrus.Debug("LikeCommentRouter_Toggle")
-	var likeComment *model.LikeComment = &model.LikeComment{Comment: &model.Comment{}, User: &model.KhumuUserSimple{}}
+
 	username := c.Get("user_id").(string)
-	likeComment.Username = username
-
-	commentID, err := strconv.Atoi(c.Param("id"))
-	logrus.Warn(commentID)
+	commentId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Error("Wrong comment ID format")
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "comment 필드가 올바른 int 값이 아닙니다."})
+		logrus.Error(err)
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "올바른 형태의 댓글 Id를 입력해주세요."})
 	}
-	likeComment.CommentID = commentID
 
-	isCreated, err := r.likeUC.Toggle(likeComment)
+	body := &data.LikeCommentInput{
+		User: username,
+		Comment: commentId,
+	}
+
+	isCreated, err := r.likeUC.Toggle(body)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})

@@ -13,6 +13,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 )
 
 // CommentCreate is the builder for creating a Comment entity.
@@ -138,6 +139,21 @@ func (cc *CommentCreate) AddChildren(c ...*Comment) *CommentCreate {
 		ids[i] = c[i].ID
 	}
 	return cc.AddChildIDs(ids...)
+}
+
+// AddLikeIDs adds the "like" edge to the LikeComment entity by IDs.
+func (cc *CommentCreate) AddLikeIDs(ids ...int) *CommentCreate {
+	cc.mutation.AddLikeIDs(ids...)
+	return cc
+}
+
+// AddLike adds the "like" edges to the LikeComment entity.
+func (cc *CommentCreate) AddLike(l ...*LikeComment) *CommentCreate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return cc.AddLikeIDs(ids...)
 }
 
 // Mutation returns the CommentMutation object of the builder.
@@ -352,6 +368,25 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.LikeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.LikeTable,
+			Columns: []string{comment.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
 				},
 			},
 		}

@@ -12,6 +12,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
 )
 
@@ -96,6 +97,21 @@ func (kuu *KhumuUserUpdate) AddArticles(a ...*Article) *KhumuUserUpdate {
 	return kuu.AddArticleIDs(ids...)
 }
 
+// AddLikeIDs adds the "like" edge to the LikeComment entity by IDs.
+func (kuu *KhumuUserUpdate) AddLikeIDs(ids ...int) *KhumuUserUpdate {
+	kuu.mutation.AddLikeIDs(ids...)
+	return kuu
+}
+
+// AddLike adds the "like" edges to the LikeComment entity.
+func (kuu *KhumuUserUpdate) AddLike(l ...*LikeComment) *KhumuUserUpdate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return kuu.AddLikeIDs(ids...)
+}
+
 // Mutation returns the KhumuUserMutation object of the builder.
 func (kuu *KhumuUserUpdate) Mutation() *KhumuUserMutation {
 	return kuu.mutation
@@ -141,6 +157,27 @@ func (kuu *KhumuUserUpdate) RemoveArticles(a ...*Article) *KhumuUserUpdate {
 		ids[i] = a[i].ID
 	}
 	return kuu.RemoveArticleIDs(ids...)
+}
+
+// ClearLike clears all "like" edges to the LikeComment entity.
+func (kuu *KhumuUserUpdate) ClearLike() *KhumuUserUpdate {
+	kuu.mutation.ClearLike()
+	return kuu
+}
+
+// RemoveLikeIDs removes the "like" edge to LikeComment entities by IDs.
+func (kuu *KhumuUserUpdate) RemoveLikeIDs(ids ...int) *KhumuUserUpdate {
+	kuu.mutation.RemoveLikeIDs(ids...)
+	return kuu
+}
+
+// RemoveLike removes "like" edges to LikeComment entities.
+func (kuu *KhumuUserUpdate) RemoveLike(l ...*LikeComment) *KhumuUserUpdate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return kuu.RemoveLikeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -354,6 +391,60 @@ func (kuu *KhumuUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if kuu.mutation.LikeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.LikeTable,
+			Columns: []string{khumuuser.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuu.mutation.RemovedLikeIDs(); len(nodes) > 0 && !kuu.mutation.LikeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.LikeTable,
+			Columns: []string{khumuuser.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuu.mutation.LikeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.LikeTable,
+			Columns: []string{khumuuser.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, kuu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{khumuuser.Label}
@@ -441,6 +532,21 @@ func (kuuo *KhumuUserUpdateOne) AddArticles(a ...*Article) *KhumuUserUpdateOne {
 	return kuuo.AddArticleIDs(ids...)
 }
 
+// AddLikeIDs adds the "like" edge to the LikeComment entity by IDs.
+func (kuuo *KhumuUserUpdateOne) AddLikeIDs(ids ...int) *KhumuUserUpdateOne {
+	kuuo.mutation.AddLikeIDs(ids...)
+	return kuuo
+}
+
+// AddLike adds the "like" edges to the LikeComment entity.
+func (kuuo *KhumuUserUpdateOne) AddLike(l ...*LikeComment) *KhumuUserUpdateOne {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return kuuo.AddLikeIDs(ids...)
+}
+
 // Mutation returns the KhumuUserMutation object of the builder.
 func (kuuo *KhumuUserUpdateOne) Mutation() *KhumuUserMutation {
 	return kuuo.mutation
@@ -486,6 +592,27 @@ func (kuuo *KhumuUserUpdateOne) RemoveArticles(a ...*Article) *KhumuUserUpdateOn
 		ids[i] = a[i].ID
 	}
 	return kuuo.RemoveArticleIDs(ids...)
+}
+
+// ClearLike clears all "like" edges to the LikeComment entity.
+func (kuuo *KhumuUserUpdateOne) ClearLike() *KhumuUserUpdateOne {
+	kuuo.mutation.ClearLike()
+	return kuuo
+}
+
+// RemoveLikeIDs removes the "like" edge to LikeComment entities by IDs.
+func (kuuo *KhumuUserUpdateOne) RemoveLikeIDs(ids ...int) *KhumuUserUpdateOne {
+	kuuo.mutation.RemoveLikeIDs(ids...)
+	return kuuo
+}
+
+// RemoveLike removes "like" edges to LikeComment entities.
+func (kuuo *KhumuUserUpdateOne) RemoveLike(l ...*LikeComment) *KhumuUserUpdateOne {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return kuuo.RemoveLikeIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -715,6 +842,60 @@ func (kuuo *KhumuUserUpdateOne) sqlSave(ctx context.Context) (_node *KhumuUser, 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: article.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kuuo.mutation.LikeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.LikeTable,
+			Columns: []string{khumuuser.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuuo.mutation.RemovedLikeIDs(); len(nodes) > 0 && !kuuo.mutation.LikeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.LikeTable,
+			Columns: []string{khumuuser.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuuo.mutation.LikeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.LikeTable,
+			Columns: []string{khumuuser.LikeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: likecomment.FieldID,
 				},
 			},
 		}

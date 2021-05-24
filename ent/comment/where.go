@@ -642,6 +642,34 @@ func HasChildrenWith(preds ...predicate.Comment) predicate.Comment {
 	})
 }
 
+// HasLike applies the HasEdge predicate on the "like" edge.
+func HasLike() predicate.Comment {
+	return predicate.Comment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LikeTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LikeTable, LikeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLikeWith applies the HasEdge predicate on the "like" edge with a given conditions (other predicates).
+func HasLikeWith(preds ...predicate.LikeComment) predicate.Comment {
+	return predicate.Comment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LikeInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LikeTable, LikeColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Comment) predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {

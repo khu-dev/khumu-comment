@@ -11,6 +11,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
 
 	"entgo.io/ent"
@@ -25,10 +26,11 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeArticle   = "Article"
-	TypeBoard     = "Board"
-	TypeComment   = "Comment"
-	TypeKhumuUser = "KhumuUser"
+	TypeArticle     = "Article"
+	TypeBoard       = "Board"
+	TypeComment     = "Comment"
+	TypeKhumuUser   = "KhumuUser"
+	TypeLikeComment = "LikeComment"
 )
 
 // ArticleMutation represents an operation that mutates the Article nodes in the graph.
@@ -828,6 +830,9 @@ type CommentMutation struct {
 	children        map[int]struct{}
 	removedchildren map[int]struct{}
 	clearedchildren bool
+	like            map[int]struct{}
+	removedlike     map[int]struct{}
+	clearedlike     bool
 	done            bool
 	oldValue        func(context.Context) (*Comment, error)
 	predicates      []predicate.Comment
@@ -1232,6 +1237,59 @@ func (m *CommentMutation) ResetChildren() {
 	m.removedchildren = nil
 }
 
+// AddLikeIDs adds the "like" edge to the LikeComment entity by ids.
+func (m *CommentMutation) AddLikeIDs(ids ...int) {
+	if m.like == nil {
+		m.like = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.like[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLike clears the "like" edge to the LikeComment entity.
+func (m *CommentMutation) ClearLike() {
+	m.clearedlike = true
+}
+
+// LikeCleared reports if the "like" edge to the LikeComment entity was cleared.
+func (m *CommentMutation) LikeCleared() bool {
+	return m.clearedlike
+}
+
+// RemoveLikeIDs removes the "like" edge to the LikeComment entity by IDs.
+func (m *CommentMutation) RemoveLikeIDs(ids ...int) {
+	if m.removedlike == nil {
+		m.removedlike = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.removedlike[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLike returns the removed IDs of the "like" edge to the LikeComment entity.
+func (m *CommentMutation) RemovedLikeIDs() (ids []int) {
+	for id := range m.removedlike {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LikeIDs returns the "like" edge IDs in the mutation.
+func (m *CommentMutation) LikeIDs() (ids []int) {
+	for id := range m.like {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLike resets all changes to the "like" edge.
+func (m *CommentMutation) ResetLike() {
+	m.like = nil
+	m.clearedlike = false
+	m.removedlike = nil
+}
+
 // Op returns the operation name.
 func (m *CommentMutation) Op() Op {
 	return m.op
@@ -1396,7 +1454,7 @@ func (m *CommentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CommentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.author != nil {
 		edges = append(edges, comment.EdgeAuthor)
 	}
@@ -1408,6 +1466,9 @@ func (m *CommentMutation) AddedEdges() []string {
 	}
 	if m.children != nil {
 		edges = append(edges, comment.EdgeChildren)
+	}
+	if m.like != nil {
+		edges = append(edges, comment.EdgeLike)
 	}
 	return edges
 }
@@ -1434,15 +1495,24 @@ func (m *CommentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case comment.EdgeLike:
+		ids := make([]ent.Value, 0, len(m.like))
+		for id := range m.like {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CommentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedchildren != nil {
 		edges = append(edges, comment.EdgeChildren)
+	}
+	if m.removedlike != nil {
+		edges = append(edges, comment.EdgeLike)
 	}
 	return edges
 }
@@ -1457,13 +1527,19 @@ func (m *CommentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case comment.EdgeLike:
+		ids := make([]ent.Value, 0, len(m.removedlike))
+		for id := range m.removedlike {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CommentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedauthor {
 		edges = append(edges, comment.EdgeAuthor)
 	}
@@ -1475,6 +1551,9 @@ func (m *CommentMutation) ClearedEdges() []string {
 	}
 	if m.clearedchildren {
 		edges = append(edges, comment.EdgeChildren)
+	}
+	if m.clearedlike {
+		edges = append(edges, comment.EdgeLike)
 	}
 	return edges
 }
@@ -1491,6 +1570,8 @@ func (m *CommentMutation) EdgeCleared(name string) bool {
 		return m.clearedparent
 	case comment.EdgeChildren:
 		return m.clearedchildren
+	case comment.EdgeLike:
+		return m.clearedlike
 	}
 	return false
 }
@@ -1528,6 +1609,9 @@ func (m *CommentMutation) ResetEdge(name string) error {
 	case comment.EdgeChildren:
 		m.ResetChildren()
 		return nil
+	case comment.EdgeLike:
+		m.ResetLike()
+		return nil
 	}
 	return fmt.Errorf("unknown Comment edge %s", name)
 }
@@ -1549,6 +1633,9 @@ type KhumuUserMutation struct {
 	articles        map[int]struct{}
 	removedarticles map[int]struct{}
 	clearedarticles bool
+	like            map[int]struct{}
+	removedlike     map[int]struct{}
+	clearedlike     bool
 	done            bool
 	oldValue        func(context.Context) (*KhumuUser, error)
 	predicates      []predicate.KhumuUser
@@ -1902,6 +1989,59 @@ func (m *KhumuUserMutation) ResetArticles() {
 	m.removedarticles = nil
 }
 
+// AddLikeIDs adds the "like" edge to the LikeComment entity by ids.
+func (m *KhumuUserMutation) AddLikeIDs(ids ...int) {
+	if m.like == nil {
+		m.like = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.like[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLike clears the "like" edge to the LikeComment entity.
+func (m *KhumuUserMutation) ClearLike() {
+	m.clearedlike = true
+}
+
+// LikeCleared reports if the "like" edge to the LikeComment entity was cleared.
+func (m *KhumuUserMutation) LikeCleared() bool {
+	return m.clearedlike
+}
+
+// RemoveLikeIDs removes the "like" edge to the LikeComment entity by IDs.
+func (m *KhumuUserMutation) RemoveLikeIDs(ids ...int) {
+	if m.removedlike == nil {
+		m.removedlike = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.removedlike[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLike returns the removed IDs of the "like" edge to the LikeComment entity.
+func (m *KhumuUserMutation) RemovedLikeIDs() (ids []int) {
+	for id := range m.removedlike {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LikeIDs returns the "like" edge IDs in the mutation.
+func (m *KhumuUserMutation) LikeIDs() (ids []int) {
+	for id := range m.like {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLike resets all changes to the "like" edge.
+func (m *KhumuUserMutation) ResetLike() {
+	m.like = nil
+	m.clearedlike = false
+	m.removedlike = nil
+}
+
 // Op returns the operation name.
 func (m *KhumuUserMutation) Op() Op {
 	return m.op
@@ -2075,12 +2215,15 @@ func (m *KhumuUserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *KhumuUserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.comments != nil {
 		edges = append(edges, khumuuser.EdgeComments)
 	}
 	if m.articles != nil {
 		edges = append(edges, khumuuser.EdgeArticles)
+	}
+	if m.like != nil {
+		edges = append(edges, khumuuser.EdgeLike)
 	}
 	return edges
 }
@@ -2101,18 +2244,27 @@ func (m *KhumuUserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case khumuuser.EdgeLike:
+		ids := make([]ent.Value, 0, len(m.like))
+		for id := range m.like {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *KhumuUserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedcomments != nil {
 		edges = append(edges, khumuuser.EdgeComments)
 	}
 	if m.removedarticles != nil {
 		edges = append(edges, khumuuser.EdgeArticles)
+	}
+	if m.removedlike != nil {
+		edges = append(edges, khumuuser.EdgeLike)
 	}
 	return edges
 }
@@ -2133,18 +2285,27 @@ func (m *KhumuUserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case khumuuser.EdgeLike:
+		ids := make([]ent.Value, 0, len(m.removedlike))
+		for id := range m.removedlike {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *KhumuUserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedcomments {
 		edges = append(edges, khumuuser.EdgeComments)
 	}
 	if m.clearedarticles {
 		edges = append(edges, khumuuser.EdgeArticles)
+	}
+	if m.clearedlike {
+		edges = append(edges, khumuuser.EdgeLike)
 	}
 	return edges
 }
@@ -2157,6 +2318,8 @@ func (m *KhumuUserMutation) EdgeCleared(name string) bool {
 		return m.clearedcomments
 	case khumuuser.EdgeArticles:
 		return m.clearedarticles
+	case khumuuser.EdgeLike:
+		return m.clearedlike
 	}
 	return false
 }
@@ -2179,6 +2342,368 @@ func (m *KhumuUserMutation) ResetEdge(name string) error {
 	case khumuuser.EdgeArticles:
 		m.ResetArticles()
 		return nil
+	case khumuuser.EdgeLike:
+		m.ResetLike()
+		return nil
 	}
 	return fmt.Errorf("unknown KhumuUser edge %s", name)
+}
+
+// LikeCommentMutation represents an operation that mutates the LikeComment nodes in the graph.
+type LikeCommentMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *int
+	clearedFields  map[string]struct{}
+	likedBy        *string
+	clearedlikedBy bool
+	about          *int
+	clearedabout   bool
+	done           bool
+	oldValue       func(context.Context) (*LikeComment, error)
+	predicates     []predicate.LikeComment
+}
+
+var _ ent.Mutation = (*LikeCommentMutation)(nil)
+
+// likecommentOption allows management of the mutation configuration using functional options.
+type likecommentOption func(*LikeCommentMutation)
+
+// newLikeCommentMutation creates new mutation for the LikeComment entity.
+func newLikeCommentMutation(c config, op Op, opts ...likecommentOption) *LikeCommentMutation {
+	m := &LikeCommentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLikeComment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLikeCommentID sets the ID field of the mutation.
+func withLikeCommentID(id int) likecommentOption {
+	return func(m *LikeCommentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LikeComment
+		)
+		m.oldValue = func(ctx context.Context) (*LikeComment, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LikeComment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLikeComment sets the old LikeComment of the mutation.
+func withLikeComment(node *LikeComment) likecommentOption {
+	return func(m *LikeCommentMutation) {
+		m.oldValue = func(context.Context) (*LikeComment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LikeCommentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LikeCommentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of LikeComment entities.
+func (m *LikeCommentMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID
+// is only available if it was provided to the builder.
+func (m *LikeCommentMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetLikedByID sets the "likedBy" edge to the KhumuUser entity by id.
+func (m *LikeCommentMutation) SetLikedByID(id string) {
+	m.likedBy = &id
+}
+
+// ClearLikedBy clears the "likedBy" edge to the KhumuUser entity.
+func (m *LikeCommentMutation) ClearLikedBy() {
+	m.clearedlikedBy = true
+}
+
+// LikedByCleared reports if the "likedBy" edge to the KhumuUser entity was cleared.
+func (m *LikeCommentMutation) LikedByCleared() bool {
+	return m.clearedlikedBy
+}
+
+// LikedByID returns the "likedBy" edge ID in the mutation.
+func (m *LikeCommentMutation) LikedByID() (id string, exists bool) {
+	if m.likedBy != nil {
+		return *m.likedBy, true
+	}
+	return
+}
+
+// LikedByIDs returns the "likedBy" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LikedByID instead. It exists only for internal usage by the builders.
+func (m *LikeCommentMutation) LikedByIDs() (ids []string) {
+	if id := m.likedBy; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLikedBy resets all changes to the "likedBy" edge.
+func (m *LikeCommentMutation) ResetLikedBy() {
+	m.likedBy = nil
+	m.clearedlikedBy = false
+}
+
+// SetAboutID sets the "about" edge to the Comment entity by id.
+func (m *LikeCommentMutation) SetAboutID(id int) {
+	m.about = &id
+}
+
+// ClearAbout clears the "about" edge to the Comment entity.
+func (m *LikeCommentMutation) ClearAbout() {
+	m.clearedabout = true
+}
+
+// AboutCleared reports if the "about" edge to the Comment entity was cleared.
+func (m *LikeCommentMutation) AboutCleared() bool {
+	return m.clearedabout
+}
+
+// AboutID returns the "about" edge ID in the mutation.
+func (m *LikeCommentMutation) AboutID() (id int, exists bool) {
+	if m.about != nil {
+		return *m.about, true
+	}
+	return
+}
+
+// AboutIDs returns the "about" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AboutID instead. It exists only for internal usage by the builders.
+func (m *LikeCommentMutation) AboutIDs() (ids []int) {
+	if id := m.about; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAbout resets all changes to the "about" edge.
+func (m *LikeCommentMutation) ResetAbout() {
+	m.about = nil
+	m.clearedabout = false
+}
+
+// Op returns the operation name.
+func (m *LikeCommentMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (LikeComment).
+func (m *LikeCommentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LikeCommentMutation) Fields() []string {
+	fields := make([]string, 0, 0)
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LikeCommentMutation) Field(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LikeCommentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, fmt.Errorf("unknown LikeComment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LikeCommentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown LikeComment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LikeCommentMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LikeCommentMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LikeCommentMutation) AddField(name string, value ent.Value) error {
+	return fmt.Errorf("unknown LikeComment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LikeCommentMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LikeCommentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LikeCommentMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown LikeComment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LikeCommentMutation) ResetField(name string) error {
+	return fmt.Errorf("unknown LikeComment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LikeCommentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.likedBy != nil {
+		edges = append(edges, likecomment.EdgeLikedBy)
+	}
+	if m.about != nil {
+		edges = append(edges, likecomment.EdgeAbout)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LikeCommentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case likecomment.EdgeLikedBy:
+		if id := m.likedBy; id != nil {
+			return []ent.Value{*id}
+		}
+	case likecomment.EdgeAbout:
+		if id := m.about; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LikeCommentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LikeCommentMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LikeCommentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedlikedBy {
+		edges = append(edges, likecomment.EdgeLikedBy)
+	}
+	if m.clearedabout {
+		edges = append(edges, likecomment.EdgeAbout)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LikeCommentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case likecomment.EdgeLikedBy:
+		return m.clearedlikedBy
+	case likecomment.EdgeAbout:
+		return m.clearedabout
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LikeCommentMutation) ClearEdge(name string) error {
+	switch name {
+	case likecomment.EdgeLikedBy:
+		m.ClearLikedBy()
+		return nil
+	case likecomment.EdgeAbout:
+		m.ClearAbout()
+		return nil
+	}
+	return fmt.Errorf("unknown LikeComment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LikeCommentMutation) ResetEdge(name string) error {
+	switch name {
+	case likecomment.EdgeLikedBy:
+		m.ResetLikedBy()
+		return nil
+	case likecomment.EdgeAbout:
+		m.ResetAbout()
+		return nil
+	}
+	return fmt.Errorf("unknown LikeComment edge %s", name)
 }

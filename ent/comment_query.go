@@ -15,6 +15,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
 )
 
@@ -32,6 +33,7 @@ type CommentQuery struct {
 	withArticle  *ArticleQuery
 	withParent   *CommentQuery
 	withChildren *CommentQuery
+	withLike     *LikeCommentQuery
 	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -150,6 +152,28 @@ func (cq *CommentQuery) QueryChildren() *CommentQuery {
 			sqlgraph.From(comment.Table, comment.FieldID, selector),
 			sqlgraph.To(comment.Table, comment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, comment.ChildrenTable, comment.ChildrenColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLike chains the current query on the "like" edge.
+func (cq *CommentQuery) QueryLike() *LikeCommentQuery {
+	query := &LikeCommentQuery{config: cq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, selector),
+			sqlgraph.To(likecomment.Table, likecomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, comment.LikeTable, comment.LikeColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -342,6 +366,7 @@ func (cq *CommentQuery) Clone() *CommentQuery {
 		withArticle:  cq.withArticle.Clone(),
 		withParent:   cq.withParent.Clone(),
 		withChildren: cq.withChildren.Clone(),
+		withLike:     cq.withLike.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -389,6 +414,17 @@ func (cq *CommentQuery) WithChildren(opts ...func(*CommentQuery)) *CommentQuery 
 		opt(query)
 	}
 	cq.withChildren = query
+	return cq
+}
+
+// WithLike tells the query-builder to eager-load the nodes that are connected to
+// the "like" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommentQuery) WithLike(opts ...func(*LikeCommentQuery)) *CommentQuery {
+	query := &LikeCommentQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withLike = query
 	return cq
 }
 
@@ -458,11 +494,12 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 		nodes       = []*Comment{}
 		withFKs     = cq.withFKs
 		_spec       = cq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			cq.withAuthor != nil,
 			cq.withArticle != nil,
 			cq.withParent != nil,
 			cq.withChildren != nil,
+			cq.withLike != nil,
 		}
 	)
 	if cq.withAuthor != nil || cq.withArticle != nil || cq.withParent != nil {
@@ -604,6 +641,35 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Children = append(node.Edges.Children, n)
+		}
+	}
+
+	if query := cq.withLike; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Comment)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Like = []*LikeComment{}
+		}
+		query.withFKs = true
+		query.Where(predicate.LikeComment(func(s *sql.Selector) {
+			s.Where(sql.InValues(comment.LikeColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.comment_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "comment_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "comment_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Like = append(node.Edges.Like, n)
 		}
 	}
 

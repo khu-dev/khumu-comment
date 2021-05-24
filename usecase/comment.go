@@ -9,11 +9,11 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/external"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
 )
-import "github.com/khu-dev/khumu-comment/model"
 
 var (
 	DeletedCommentContent    string = "삭제된 댓글입니다."
@@ -22,6 +22,7 @@ var (
 	DeletedCommentUsername   string = "삭제된 댓글의 작성자"
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
 	ErrUnAuthorized = errors.New("권한이 존재하지 않습니다")
+	ErrSelfLikeComment = errors.New("본인의 댓글은 좋아요할 수 없습니다")
 )
 
 type CommentUseCaseInterface interface {
@@ -34,30 +35,22 @@ type CommentUseCaseInterface interface {
 
 type LikeCommentUseCaseInterface interface {
 	// return value 중 bool이 true면 생성, false면 삭제
-	Toggle(like *model.LikeComment) (bool, error)
+	Toggle(like *data.LikeCommentInput) (bool, error)
 }
 
 type CommentUseCase struct {
-	Repository            repository.CommentRepositoryInterface
-	LikeCommentRepository repository.LikeCommentRepositoryInterface
-	//EventMessageRepository repository.EventMessageRepository
-	SnsClient     external.SnsClient
 	Repo *ent.Client
+	SnsClient     external.SnsClient
 }
 
 type LikeCommentUseCase struct {
-	Repository             repository.LikeCommentRepositoryInterface
-	CommentRepository      repository.CommentRepositoryInterface
-	EventMessageRepository repository.EventMessageRepository
+	Repo *ent.Client
 }
 
-type SomeoneLikesHisCommentError string
-
-func NewCommentUseCase(repository repository.CommentRepositoryInterface,
-	likeRepository repository.LikeCommentRepositoryInterface,
-	snsClient external.SnsClient,
-	repo *ent.Client) CommentUseCaseInterface {
-	return &CommentUseCase{Repository: repository, LikeCommentRepository: likeRepository, SnsClient: snsClient, Repo: repo}
+func NewCommentUseCase(
+	repo *ent.Client,
+	snsClient external.SnsClient) CommentUseCaseInterface {
+	return &CommentUseCase{Repo: repo, SnsClient: snsClient}
 }
 
 func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.CommentOutput, error) {
@@ -229,63 +222,77 @@ func (uc *CommentUseCase) ModelToOutput(username string, comment *ent.Comment, o
 	}
 
 	output.CreatedAt = mapper.NewCreatedAtExpression(comment.CreatedAt)
+	output.LikeCommentCount = uc.getLikeCommentCount(comment.ID)
 	if comment.Edges.Children != nil 	{
 		for _, c := range comment.Edges.Children {
 			output.Children = append(output.Children, uc.ModelToOutput(username, c, nil))
 		}
 	}
+	output.Liked = uc.getLiked(comment.ID)
 
 	return output
 }
 
-
-
 func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
-	likes := uc.LikeCommentRepository.List(&repository.LikeCommentQueryOption{CommentID: commentID})
+	ctx := context.Background()
+	likes, err  := uc.Repo.LikeComment.Query().
+		Where(likecomment.HasAboutWith(comment.ID(commentID))).
+		All(ctx)
+	if err != nil {
+		logrus.Error(err, "그냥 like comment count를 0으로 처리")
+		return 0
+	}
 	return len(likes)
 }
 
+func (uc *CommentUseCase) getLiked(commentID int) bool {
+	ctx := context.Background()
+	likes, err  := uc.Repo.LikeComment.Query().
+		Where(likecomment.HasAboutWith(comment.ID(commentID))).
+		All(ctx)
+	if err != nil {
+		logrus.Error(err, "그냥 liked를 false로 처리")
+		return false
+	}
+	return len(likes) != 0
+}
+
 func NewLikeCommentUseCase(
-	likeRepo repository.LikeCommentRepositoryInterface,
-	commentRepo repository.CommentRepositoryInterface) LikeCommentUseCaseInterface {
-	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
+	repo *ent.Client) LikeCommentUseCaseInterface {
+	return &LikeCommentUseCase{Repo: repo}
 }
 
-func NewLikeCommentUseCaseImpl(
-	likeRepo repository.LikeCommentRepositoryInterface,
-	commentRepo repository.CommentRepositoryInterface) *LikeCommentUseCase {
-	return &LikeCommentUseCase{Repository: likeRepo, CommentRepository: commentRepo}
-}
-
-func (uc *LikeCommentUseCase) Toggle(like *model.LikeComment) (bool, error) {
+func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error) {
 	var err error
-	logger := logrus.WithField("CommentID", like.CommentID)
-	logger.Debug("Toggle LikeComment")
-	likes := uc.Repository.List(&repository.LikeCommentQueryOption{CommentID: like.CommentID, Username: like.Username})
+	ctx := context.Background()
+	likeIds, err := uc.Repo.LikeComment.Query().
+		Where(likecomment.HasAboutWith(comment.ID(input.Comment))).
+		IDs(ctx)
+	if err != nil {
+		logrus.Error(err)
+		return false, err
+	}
+
 	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
 	// 1보다 큰 경우는 비정상적으로 여러개 존재할 때
-	if len(likes) >= 1 {
-		for _, like := range likes {
-			err = uc.Repository.Delete(like.ID)
-			if err != nil {
-				logger.Panic(false, err)
-			}
-		}
-		return false, err
-	} else {
-		// 생성
-		comment, err := uc.CommentRepository.Get(like.CommentID)
+	if len(likeIds) >= 1 {
+		logrus.Infof("Comment(%d)에 대한 좋아요를 삭제합니다.", input.Comment)
+		_, err := uc.Repo.LikeComment.Delete().Where(likecomment.IDIn(likeIds...)).Exec(ctx)
 		if err != nil {
-			return false, err
-		}
-		if comment.AuthorUsername == like.Username {
-			return false, errors.New("Error: " + like.Username + " requested to like his comment.")
-		}
-		_, err = uc.Repository.Create(like)
-		if err != nil {
+			logrus.Error(err)
 			return false, err
 		}
 
-		return true, err
+		return false, nil
+	} else {
+		// 생성
+		logrus.Infof("Comment(%d)에 대한 좋아요를 생성.", input.Comment)
+		_, err := uc.Repo.LikeComment.Create().SetAboutID(input.Comment).SetLikedByID(input.User).Save(ctx)
+		if err != nil {
+			logrus.Error(err)
+			return false, err
+		}
+
+		return true, nil
 	}
 }

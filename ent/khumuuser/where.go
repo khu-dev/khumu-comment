@@ -536,6 +536,34 @@ func HasArticlesWith(preds ...predicate.Article) predicate.KhumuUser {
 	})
 }
 
+// HasLike applies the HasEdge predicate on the "like" edge.
+func HasLike() predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LikeTable, LikeCommentFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LikeTable, LikeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLikeWith applies the HasEdge predicate on the "like" edge with a given conditions (other predicates).
+func HasLikeWith(preds ...predicate.LikeComment) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LikeInverseTable, LikeCommentFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LikeTable, LikeColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.KhumuUser) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {

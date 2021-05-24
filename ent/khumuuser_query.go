@@ -15,6 +15,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
 )
 
@@ -30,6 +31,7 @@ type KhumuUserQuery struct {
 	// eager-loading edges.
 	withComments *CommentQuery
 	withArticles *ArticleQuery
+	withLike     *LikeCommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -103,6 +105,28 @@ func (kuq *KhumuUserQuery) QueryArticles() *ArticleQuery {
 			sqlgraph.From(khumuuser.Table, khumuuser.FieldID, selector),
 			sqlgraph.To(article.Table, article.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, khumuuser.ArticlesTable, khumuuser.ArticlesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(kuq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLike chains the current query on the "like" edge.
+func (kuq *KhumuUserQuery) QueryLike() *LikeCommentQuery {
+	query := &LikeCommentQuery{config: kuq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := kuq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := kuq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(khumuuser.Table, khumuuser.FieldID, selector),
+			sqlgraph.To(likecomment.Table, likecomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, khumuuser.LikeTable, khumuuser.LikeColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(kuq.driver.Dialect(), step)
 		return fromU, nil
@@ -293,6 +317,7 @@ func (kuq *KhumuUserQuery) Clone() *KhumuUserQuery {
 		predicates:   append([]predicate.KhumuUser{}, kuq.predicates...),
 		withComments: kuq.withComments.Clone(),
 		withArticles: kuq.withArticles.Clone(),
+		withLike:     kuq.withLike.Clone(),
 		// clone intermediate query.
 		sql:  kuq.sql.Clone(),
 		path: kuq.path,
@@ -318,6 +343,17 @@ func (kuq *KhumuUserQuery) WithArticles(opts ...func(*ArticleQuery)) *KhumuUserQ
 		opt(query)
 	}
 	kuq.withArticles = query
+	return kuq
+}
+
+// WithLike tells the query-builder to eager-load the nodes that are connected to
+// the "like" edge. The optional arguments are used to configure the query builder of the edge.
+func (kuq *KhumuUserQuery) WithLike(opts ...func(*LikeCommentQuery)) *KhumuUserQuery {
+	query := &LikeCommentQuery{config: kuq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	kuq.withLike = query
 	return kuq
 }
 
@@ -386,9 +422,10 @@ func (kuq *KhumuUserQuery) sqlAll(ctx context.Context) ([]*KhumuUser, error) {
 	var (
 		nodes       = []*KhumuUser{}
 		_spec       = kuq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			kuq.withComments != nil,
 			kuq.withArticles != nil,
+			kuq.withLike != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -466,6 +503,35 @@ func (kuq *KhumuUserQuery) sqlAll(ctx context.Context) ([]*KhumuUser, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "author_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Articles = append(node.Edges.Articles, n)
+		}
+	}
+
+	if query := kuq.withLike; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[string]*KhumuUser)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Like = []*LikeComment{}
+		}
+		query.withFKs = true
+		query.Where(predicate.LikeComment(func(s *sql.Selector) {
+			s.Where(sql.InValues(khumuuser.LikeColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.user_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "user_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "user_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Like = append(node.Edges.Like, n)
 		}
 	}
 

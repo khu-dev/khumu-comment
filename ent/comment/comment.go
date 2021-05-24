@@ -27,6 +27,8 @@ const (
 	EdgeParent = "parent"
 	// EdgeChildren holds the string denoting the children edge name in mutations.
 	EdgeChildren = "children"
+	// EdgeLike holds the string denoting the like edge name in mutations.
+	EdgeLike = "like"
 	// KhumuUserFieldID holds the string denoting the ID field of the KhumuUser.
 	KhumuUserFieldID = "username"
 	// Table holds the table name of the comment in the database.
@@ -53,6 +55,13 @@ const (
 	ChildrenTable = "comment_comment"
 	// ChildrenColumn is the table column denoting the children relation/edge.
 	ChildrenColumn = "parent_id"
+	// LikeTable is the table the holds the like relation/edge.
+	LikeTable = "comment_likecomment"
+	// LikeInverseTable is the table name for the LikeComment entity.
+	// It exists in this package in order to avoid circular dependency with the "likecomment" package.
+	LikeInverseTable = "comment_likecomment"
+	// LikeColumn is the table column denoting the like relation/edge.
+	LikeColumn = "comment_id"
 )
 
 // Columns holds all SQL columns for comment fields.

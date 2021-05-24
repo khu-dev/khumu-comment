@@ -13,6 +13,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/board"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -32,6 +33,8 @@ type Client struct {
 	Comment *CommentClient
 	// KhumuUser is the client for interacting with the KhumuUser builders.
 	KhumuUser *KhumuUserClient
+	// LikeComment is the client for interacting with the LikeComment builders.
+	LikeComment *LikeCommentClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -49,6 +52,7 @@ func (c *Client) init() {
 	c.Board = NewBoardClient(c.config)
 	c.Comment = NewCommentClient(c.config)
 	c.KhumuUser = NewKhumuUserClient(c.config)
+	c.LikeComment = NewLikeCommentClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -80,12 +84,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		Article:   NewArticleClient(cfg),
-		Board:     NewBoardClient(cfg),
-		Comment:   NewCommentClient(cfg),
-		KhumuUser: NewKhumuUserClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Article:     NewArticleClient(cfg),
+		Board:       NewBoardClient(cfg),
+		Comment:     NewCommentClient(cfg),
+		KhumuUser:   NewKhumuUserClient(cfg),
+		LikeComment: NewLikeCommentClient(cfg),
 	}, nil
 }
 
@@ -103,11 +108,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config:    cfg,
-		Article:   NewArticleClient(cfg),
-		Board:     NewBoardClient(cfg),
-		Comment:   NewCommentClient(cfg),
-		KhumuUser: NewKhumuUserClient(cfg),
+		config:      cfg,
+		Article:     NewArticleClient(cfg),
+		Board:       NewBoardClient(cfg),
+		Comment:     NewCommentClient(cfg),
+		KhumuUser:   NewKhumuUserClient(cfg),
+		LikeComment: NewLikeCommentClient(cfg),
 	}, nil
 }
 
@@ -141,6 +147,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Board.Use(hooks...)
 	c.Comment.Use(hooks...)
 	c.KhumuUser.Use(hooks...)
+	c.LikeComment.Use(hooks...)
 }
 
 // ArticleClient is a client for the Article schema.
@@ -504,6 +511,22 @@ func (c *CommentClient) QueryChildren(co *Comment) *CommentQuery {
 	return query
 }
 
+// QueryLike queries the like edge of a Comment.
+func (c *CommentClient) QueryLike(co *Comment) *LikeCommentQuery {
+	query := &LikeCommentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, id),
+			sqlgraph.To(likecomment.Table, likecomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, comment.LikeTable, comment.LikeColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CommentClient) Hooks() []Hook {
 	return c.hooks.Comment
@@ -626,7 +649,145 @@ func (c *KhumuUserClient) QueryArticles(ku *KhumuUser) *ArticleQuery {
 	return query
 }
 
+// QueryLike queries the like edge of a KhumuUser.
+func (c *KhumuUserClient) QueryLike(ku *KhumuUser) *LikeCommentQuery {
+	query := &LikeCommentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := ku.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(khumuuser.Table, khumuuser.FieldID, id),
+			sqlgraph.To(likecomment.Table, likecomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, khumuuser.LikeTable, khumuuser.LikeColumn),
+		)
+		fromV = sqlgraph.Neighbors(ku.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *KhumuUserClient) Hooks() []Hook {
 	return c.hooks.KhumuUser
+}
+
+// LikeCommentClient is a client for the LikeComment schema.
+type LikeCommentClient struct {
+	config
+}
+
+// NewLikeCommentClient returns a client for the LikeComment from the given config.
+func NewLikeCommentClient(c config) *LikeCommentClient {
+	return &LikeCommentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `likecomment.Hooks(f(g(h())))`.
+func (c *LikeCommentClient) Use(hooks ...Hook) {
+	c.hooks.LikeComment = append(c.hooks.LikeComment, hooks...)
+}
+
+// Create returns a create builder for LikeComment.
+func (c *LikeCommentClient) Create() *LikeCommentCreate {
+	mutation := newLikeCommentMutation(c.config, OpCreate)
+	return &LikeCommentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LikeComment entities.
+func (c *LikeCommentClient) CreateBulk(builders ...*LikeCommentCreate) *LikeCommentCreateBulk {
+	return &LikeCommentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LikeComment.
+func (c *LikeCommentClient) Update() *LikeCommentUpdate {
+	mutation := newLikeCommentMutation(c.config, OpUpdate)
+	return &LikeCommentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LikeCommentClient) UpdateOne(lc *LikeComment) *LikeCommentUpdateOne {
+	mutation := newLikeCommentMutation(c.config, OpUpdateOne, withLikeComment(lc))
+	return &LikeCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LikeCommentClient) UpdateOneID(id int) *LikeCommentUpdateOne {
+	mutation := newLikeCommentMutation(c.config, OpUpdateOne, withLikeCommentID(id))
+	return &LikeCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LikeComment.
+func (c *LikeCommentClient) Delete() *LikeCommentDelete {
+	mutation := newLikeCommentMutation(c.config, OpDelete)
+	return &LikeCommentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *LikeCommentClient) DeleteOne(lc *LikeComment) *LikeCommentDeleteOne {
+	return c.DeleteOneID(lc.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *LikeCommentClient) DeleteOneID(id int) *LikeCommentDeleteOne {
+	builder := c.Delete().Where(likecomment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LikeCommentDeleteOne{builder}
+}
+
+// Query returns a query builder for LikeComment.
+func (c *LikeCommentClient) Query() *LikeCommentQuery {
+	return &LikeCommentQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a LikeComment entity by its id.
+func (c *LikeCommentClient) Get(ctx context.Context, id int) (*LikeComment, error) {
+	return c.Query().Where(likecomment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LikeCommentClient) GetX(ctx context.Context, id int) *LikeComment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLikedBy queries the likedBy edge of a LikeComment.
+func (c *LikeCommentClient) QueryLikedBy(lc *LikeComment) *KhumuUserQuery {
+	query := &KhumuUserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(likecomment.Table, likecomment.FieldID, id),
+			sqlgraph.To(khumuuser.Table, khumuuser.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, likecomment.LikedByTable, likecomment.LikedByColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAbout queries the about edge of a LikeComment.
+func (c *LikeCommentClient) QueryAbout(lc *LikeComment) *CommentQuery {
+	query := &CommentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(likecomment.Table, likecomment.FieldID, id),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, likecomment.AboutTable, likecomment.AboutColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LikeCommentClient) Hooks() []Hook {
+	return c.hooks.LikeComment
 }

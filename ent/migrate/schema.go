@@ -94,12 +94,39 @@ var (
 		PrimaryKey:  []*schema.Column{UserKhumuuserColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{},
 	}
+	// CommentLikecommentColumns holds the columns for the "comment_likecomment" table.
+	CommentLikecommentColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "comment_id", Type: field.TypeInt, Nullable: true},
+		{Name: "user_id", Type: field.TypeString, Nullable: true},
+	}
+	// CommentLikecommentTable holds the schema information for the "comment_likecomment" table.
+	CommentLikecommentTable = &schema.Table{
+		Name:       "comment_likecomment",
+		Columns:    CommentLikecommentColumns,
+		PrimaryKey: []*schema.Column{CommentLikecommentColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "comment_likecomment_comment_comment_like",
+				Columns:    []*schema.Column{CommentLikecommentColumns[1]},
+				RefColumns: []*schema.Column{CommentCommentColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "comment_likecomment_user_khumuuser_like",
+				Columns:    []*schema.Column{CommentLikecommentColumns[2]},
+				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ArticleArticleTable,
 		BoardsTable,
 		CommentCommentTable,
 		UserKhumuuserTable,
+		CommentLikecommentTable,
 	}
 )
 
@@ -116,5 +143,10 @@ func init() {
 	}
 	UserKhumuuserTable.Annotation = &entsql.Annotation{
 		Table: "user_khumuuser",
+	}
+	CommentLikecommentTable.ForeignKeys[0].RefTable = CommentCommentTable
+	CommentLikecommentTable.ForeignKeys[1].RefTable = UserKhumuuserTable
+	CommentLikecommentTable.Annotation = &entsql.Annotation{
+		Table: "comment_likecomment",
 	}
 }

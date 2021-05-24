@@ -21,3 +21,8 @@ type CommentOutput struct {
 	Liked            bool             `json:"liked"`
 	CreatedAt        string           `json:"created_at"`
 }
+
+type LikeCommentInput struct {
+	User       string `json:"username"`
+	Comment      int   `json:"comment"`
+}

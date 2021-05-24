@@ -44,9 +44,11 @@ type CommentEdges struct {
 	Parent *Comment `json:"parent,omitempty"`
 	// Children holds the value of the children edge.
 	Children []*Comment `json:"children,omitempty"`
+	// Like holds the value of the like edge.
+	Like []*LikeComment `json:"like,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // AuthorOrErr returns the Author value or an error if the edge
@@ -98,6 +100,15 @@ func (e CommentEdges) ChildrenOrErr() ([]*Comment, error) {
 		return e.Children, nil
 	}
 	return nil, &NotLoadedError{edge: "children"}
+}
+
+// LikeOrErr returns the Like value or an error if the edge
+// was not loaded in eager-loading.
+func (e CommentEdges) LikeOrErr() ([]*LikeComment, error) {
+	if e.loadedTypes[4] {
+		return e.Like, nil
+	}
+	return nil, &NotLoadedError{edge: "like"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -206,6 +217,11 @@ func (c *Comment) QueryParent() *CommentQuery {
 // QueryChildren queries the "children" edge of the Comment entity.
 func (c *Comment) QueryChildren() *CommentQuery {
 	return (&CommentClient{config: c.config}).QueryChildren(c)
+}
+
+// QueryLike queries the "like" edge of the Comment entity.
+func (c *Comment) QueryLike() *LikeCommentQuery {
+	return (&CommentClient{config: c.config}).QueryLike(c)
 }
 
 // Update returns a builder for updating this Comment.

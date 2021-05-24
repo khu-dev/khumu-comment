@@ -14,6 +14,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/board"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/likecomment"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -34,10 +35,11 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		article.Table:   article.ValidColumn,
-		board.Table:     board.ValidColumn,
-		comment.Table:   comment.ValidColumn,
-		khumuuser.Table: khumuuser.ValidColumn,
+		article.Table:     article.ValidColumn,
+		board.Table:       board.ValidColumn,
+		comment.Table:     comment.ValidColumn,
+		khumuuser.Table:   khumuuser.ValidColumn,
+		likecomment.Table: likecomment.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

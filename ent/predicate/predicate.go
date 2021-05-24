@@ -17,3 +17,6 @@ type Comment func(*sql.Selector)
 
 // KhumuUser is the predicate function for khumuuser builders.
 type KhumuUser func(*sql.Selector)
+
+// LikeComment is the predicate function for likecomment builders.
+type LikeComment func(*sql.Selector)

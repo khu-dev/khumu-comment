@@ -40,5 +40,9 @@ func (KhumuUser) Edges() []ent.Edge {
 		edge.To("articles", Article.Type).StorageKey(func(key *edge.StorageKey) {
 			key.Columns = []string{"author_id"}
 		}),
+		edge.To("like", LikeComment.Type).
+			StorageKey(func(key *edge.StorageKey) {
+				key.Columns = []string{"user_id"}
+		}),
 	}
 }

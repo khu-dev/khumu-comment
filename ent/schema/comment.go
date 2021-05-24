@@ -50,5 +50,9 @@ func (Comment) Edges() []ent.Edge {
 			StorageKey(func(key *edge.StorageKey) {
 				key.Columns = []string{"parent_id"}
 		}),
+		edge.To("like", LikeComment.Type).
+			StorageKey(func(key *edge.StorageKey) {
+				key.Columns = []string{"comment_id"}
+		}),
 	}
 }
