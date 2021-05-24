@@ -13,6 +13,7 @@ type CommentOutput struct {
 	Author           *SimpleKhumuUserOutput           `json:"author"`
 	Article          *int             `json:"article"`
 	StudyArticle     *int             `json:"study_article"`
+	Parent *int `json:"parent"`
 	Content          string           `json:"content"`
 	Children         []*CommentOutput `json:"children"`
 	IsAuthor         bool             `json:"is_author"`

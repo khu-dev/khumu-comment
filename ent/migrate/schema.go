@@ -50,6 +50,7 @@ var (
 		{Name: "kind", Type: field.TypeString, Default: "anonymous"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "article_id", Type: field.TypeInt, Nullable: true},
+		{Name: "parent_id", Type: field.TypeInt, Nullable: true},
 		{Name: "author_id", Type: field.TypeString, Nullable: true},
 	}
 	// CommentCommentTable holds the schema information for the "comment_comment" table.
@@ -65,8 +66,14 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "comment_comment_user_khumuuser_comments",
+				Symbol:     "comment_comment_comment_comment_children",
 				Columns:    []*schema.Column{CommentCommentColumns[6]},
+				RefColumns: []*schema.Column{CommentCommentColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "comment_comment_user_khumuuser_comments",
+				Columns:    []*schema.Column{CommentCommentColumns[7]},
 				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -102,7 +109,8 @@ func init() {
 		Table: "article_article",
 	}
 	CommentCommentTable.ForeignKeys[0].RefTable = ArticleArticleTable
-	CommentCommentTable.ForeignKeys[1].RefTable = UserKhumuuserTable
+	CommentCommentTable.ForeignKeys[1].RefTable = CommentCommentTable
+	CommentCommentTable.ForeignKeys[2].RefTable = UserKhumuuserTable
 	CommentCommentTable.Annotation = &entsql.Annotation{
 		Table: "comment_comment",
 	}

@@ -43,5 +43,12 @@ func (Comment) Edges() []ent.Edge {
 		edge.From("article", Article.Type).
 			Ref("comments").
 			Unique(),
+		edge.From("parent", Comment.Type).
+			Ref("children").
+			Unique(),
+		edge.To("children", Comment.Type).
+			StorageKey(func(key *edge.StorageKey) {
+				key.Columns = []string{"parent_id"}
+		}),
 	}
 }

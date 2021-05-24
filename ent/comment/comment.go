@@ -23,6 +23,10 @@ const (
 	EdgeAuthor = "author"
 	// EdgeArticle holds the string denoting the article edge name in mutations.
 	EdgeArticle = "article"
+	// EdgeParent holds the string denoting the parent edge name in mutations.
+	EdgeParent = "parent"
+	// EdgeChildren holds the string denoting the children edge name in mutations.
+	EdgeChildren = "children"
 	// KhumuUserFieldID holds the string denoting the ID field of the KhumuUser.
 	KhumuUserFieldID = "username"
 	// Table holds the table name of the comment in the database.
@@ -41,6 +45,14 @@ const (
 	ArticleInverseTable = "article_article"
 	// ArticleColumn is the table column denoting the article relation/edge.
 	ArticleColumn = "article_id"
+	// ParentTable is the table the holds the parent relation/edge.
+	ParentTable = "comment_comment"
+	// ParentColumn is the table column denoting the parent relation/edge.
+	ParentColumn = "parent_id"
+	// ChildrenTable is the table the holds the children relation/edge.
+	ChildrenTable = "comment_comment"
+	// ChildrenColumn is the table column denoting the children relation/edge.
+	ChildrenColumn = "parent_id"
 )
 
 // Columns holds all SQL columns for comment fields.
@@ -56,6 +68,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"article_id",
+	"parent_id",
 	"author_id",
 }
 

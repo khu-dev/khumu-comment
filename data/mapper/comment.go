@@ -21,8 +21,8 @@ func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.Comm
     dest.Article = &src.Edges.Article.ID
     dest.StudyArticle = nil
     dest.Content = src.Content
+    // children 처리 안함.
     dest.Children = []*data.CommentOutput{}
-
 
     return dest
 }

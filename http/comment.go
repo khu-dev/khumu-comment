@@ -27,6 +27,7 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	group.POST("", commentRouter.Create)
 	group.GET("", commentRouter.List)
 	group.GET("/:id", commentRouter.Get)
+	group.PATCH("/:id", commentRouter.Update)
 	group.DELETE("/:id", commentRouter.Delete)
 	group.PATCH("/:id/likes", commentRouter.LikeToggle)
 
@@ -137,6 +138,28 @@ func (r *CommentRouter) Get(c echo.Context) error {
 	}
 
 	return c.JSON(200, comment)
+}
+
+func (r *CommentRouter) Update(c echo.Context) error {
+	logrus.Debug("CommentRouter_Update")
+	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
+	body := make(map[string]interface{})
+	err := c.Bind(&body)
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+
+	username := c.Get("user_id").(string)
+	updated, err := r.commentUC.Update(username, id, body)
+	if err != nil {
+		logrus.Error(err)
+		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
+	}
+
+	return c.JSON(200, CommentResponse{Data: updated})
 }
 
 func (r *CommentRouter) Delete(c echo.Context) error {

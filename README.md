@@ -219,8 +219,10 @@ microservice로 진행되는 프로젝트이며 아직 local에서 완전히 com
 ## Gorm => Entgo 적용 중
 
 ```shell
-# Comment라는 Table을 정의하기 위한 초안
+# Comment에 대한 Schema를 정의하기 위한 초안
 $ go run entgo.io/ent/cmd/ent init Comment
-# Comment 테이블 수정 후 그에 맞는 기능의 코드 생성
+
+# Schema 수정 후에는 항상 잊지 말고 아래 명령어를 통해 변경 사항이 반영된 코드를 Generate할 것.
+# 매 Compile 마다 수행시킬 수도 있지만, 지연시간이 수 초 걸려서 매번 하면 번거로울 듯.
 $ go generate ./ent
 ```

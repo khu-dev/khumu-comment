@@ -43,9 +43,11 @@ func NewGorm() *gorm.DB {
 }
 
 func NewEnt() *ent.Client {
-
+	// parseTime=true가 없을 시
+	// Error: unsupported Scan, storing driver.Value type []uint8 into type *time.Time
+	// ref: https://stackoverflow.com/questions/45040319/unsupported-scan-storing-driver-value-type-uint8-into-type-time-time
 	drv, err := sql.Open("mysql",
-		fmt.Sprintf("%s:%s@tcp(%s)/%s",
+		fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true",
 			config.Config.DB.MySQL.User,
 			config.Config.DB.MySQL.Password,
 			config.Config.DB.MySQL.Host,

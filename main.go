@@ -27,10 +27,11 @@ func init(){
 			filename := strings.Replace(f.File, workingDir + "/", "", -1)
 			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
 		},
+		FullTimestamp: false,
+		TimestampFormat: "2006/01/03 15:04:05",
 	})
 }
 func main() {
-
 	logrus.Println("Args: ", len(os.Args), os.Args)
 	logrus.Printf("Default config. %#v\n", config.Config)
 	cont := container.Build()

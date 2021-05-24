@@ -30,6 +30,7 @@ type Comment struct {
 	// The values are being populated by the CommentQuery when eager-loading is set.
 	Edges      CommentEdges `json:"edges"`
 	article_id *int
+	parent_id  *int
 	author_id  *string
 }
 
@@ -39,9 +40,13 @@ type CommentEdges struct {
 	Author *KhumuUser `json:"author,omitempty"`
 	// Article holds the value of the article edge.
 	Article *Article `json:"article,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *Comment `json:"parent,omitempty"`
+	// Children holds the value of the children edge.
+	Children []*Comment `json:"children,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 }
 
 // AuthorOrErr returns the Author value or an error if the edge
@@ -72,6 +77,29 @@ func (e CommentEdges) ArticleOrErr() (*Article, error) {
 	return nil, &NotLoadedError{edge: "article"}
 }
 
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CommentEdges) ParentOrErr() (*Comment, error) {
+	if e.loadedTypes[2] {
+		if e.Parent == nil {
+			// The edge parent was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: comment.Label}
+		}
+		return e.Parent, nil
+	}
+	return nil, &NotLoadedError{edge: "parent"}
+}
+
+// ChildrenOrErr returns the Children value or an error if the edge
+// was not loaded in eager-loading.
+func (e CommentEdges) ChildrenOrErr() ([]*Comment, error) {
+	if e.loadedTypes[3] {
+		return e.Children, nil
+	}
+	return nil, &NotLoadedError{edge: "children"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
@@ -85,7 +113,9 @@ func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullTime)
 		case comment.ForeignKeys[0]: // article_id
 			values[i] = new(sql.NullInt64)
-		case comment.ForeignKeys[1]: // author_id
+		case comment.ForeignKeys[1]: // parent_id
+			values[i] = new(sql.NullInt64)
+		case comment.ForeignKeys[2]: // author_id
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Comment", columns[i])
@@ -140,6 +170,13 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 				*c.article_id = int(value.Int64)
 			}
 		case comment.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field parent_id", value)
+			} else if value.Valid {
+				c.parent_id = new(int)
+				*c.parent_id = int(value.Int64)
+			}
+		case comment.ForeignKeys[2]:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field author_id", values[i])
 			} else if value.Valid {
@@ -159,6 +196,16 @@ func (c *Comment) QueryAuthor() *KhumuUserQuery {
 // QueryArticle queries the "article" edge of the Comment entity.
 func (c *Comment) QueryArticle() *ArticleQuery {
 	return (&CommentClient{config: c.config}).QueryArticle(c)
+}
+
+// QueryParent queries the "parent" edge of the Comment entity.
+func (c *Comment) QueryParent() *CommentQuery {
+	return (&CommentClient{config: c.config}).QueryParent(c)
+}
+
+// QueryChildren queries the "children" edge of the Comment entity.
+func (c *Comment) QueryChildren() *CommentQuery {
+	return (&CommentClient{config: c.config}).QueryChildren(c)
 }
 
 // Update returns a builder for updating this Comment.
