@@ -1,7 +1,7 @@
 package data
 
 type SimpleKhumuUserOutput struct {
-	Username string
-	Nickname string
-	State string
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	State string `json:"state"`
 }
