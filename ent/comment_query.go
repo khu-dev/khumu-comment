@@ -17,6 +17,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // CommentQuery is the builder for querying Comment entities.
@@ -29,12 +30,13 @@ type CommentQuery struct {
 	fields     []string
 	predicates []predicate.Comment
 	// eager-loading edges.
-	withAuthor   *KhumuUserQuery
-	withArticle  *ArticleQuery
-	withParent   *CommentQuery
-	withChildren *CommentQuery
-	withLike     *LikeCommentQuery
-	withFKs      bool
+	withAuthor       *KhumuUserQuery
+	withArticle      *ArticleQuery
+	withStudyArticle *StudyArticleQuery
+	withParent       *CommentQuery
+	withChildren     *CommentQuery
+	withLike         *LikeCommentQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -108,6 +110,28 @@ func (cq *CommentQuery) QueryArticle() *ArticleQuery {
 			sqlgraph.From(comment.Table, comment.FieldID, selector),
 			sqlgraph.To(article.Table, article.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, comment.ArticleTable, comment.ArticleColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStudyArticle chains the current query on the "studyArticle" edge.
+func (cq *CommentQuery) QueryStudyArticle() *StudyArticleQuery {
+	query := &StudyArticleQuery{config: cq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, selector),
+			sqlgraph.To(studyarticle.Table, studyarticle.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, comment.StudyArticleTable, comment.StudyArticleColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -357,16 +381,17 @@ func (cq *CommentQuery) Clone() *CommentQuery {
 		return nil
 	}
 	return &CommentQuery{
-		config:       cq.config,
-		limit:        cq.limit,
-		offset:       cq.offset,
-		order:        append([]OrderFunc{}, cq.order...),
-		predicates:   append([]predicate.Comment{}, cq.predicates...),
-		withAuthor:   cq.withAuthor.Clone(),
-		withArticle:  cq.withArticle.Clone(),
-		withParent:   cq.withParent.Clone(),
-		withChildren: cq.withChildren.Clone(),
-		withLike:     cq.withLike.Clone(),
+		config:           cq.config,
+		limit:            cq.limit,
+		offset:           cq.offset,
+		order:            append([]OrderFunc{}, cq.order...),
+		predicates:       append([]predicate.Comment{}, cq.predicates...),
+		withAuthor:       cq.withAuthor.Clone(),
+		withArticle:      cq.withArticle.Clone(),
+		withStudyArticle: cq.withStudyArticle.Clone(),
+		withParent:       cq.withParent.Clone(),
+		withChildren:     cq.withChildren.Clone(),
+		withLike:         cq.withLike.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -392,6 +417,17 @@ func (cq *CommentQuery) WithArticle(opts ...func(*ArticleQuery)) *CommentQuery {
 		opt(query)
 	}
 	cq.withArticle = query
+	return cq
+}
+
+// WithStudyArticle tells the query-builder to eager-load the nodes that are connected to
+// the "studyArticle" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommentQuery) WithStudyArticle(opts ...func(*StudyArticleQuery)) *CommentQuery {
+	query := &StudyArticleQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withStudyArticle = query
 	return cq
 }
 
@@ -494,15 +530,16 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 		nodes       = []*Comment{}
 		withFKs     = cq.withFKs
 		_spec       = cq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			cq.withAuthor != nil,
 			cq.withArticle != nil,
+			cq.withStudyArticle != nil,
 			cq.withParent != nil,
 			cq.withChildren != nil,
 			cq.withLike != nil,
 		}
 	)
-	if cq.withAuthor != nil || cq.withArticle != nil || cq.withParent != nil {
+	if cq.withAuthor != nil || cq.withArticle != nil || cq.withStudyArticle != nil || cq.withParent != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -582,6 +619,35 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 			}
 			for i := range nodes {
 				nodes[i].Edges.Article = n
+			}
+		}
+	}
+
+	if query := cq.withStudyArticle; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Comment)
+		for i := range nodes {
+			if nodes[i].study_article_id == nil {
+				continue
+			}
+			fk := *nodes[i].study_article_id
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(studyarticle.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "study_article_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.StudyArticle = n
 			}
 		}
 	}

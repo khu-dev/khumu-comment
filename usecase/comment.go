@@ -23,6 +23,7 @@ var (
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
 	ErrUnAuthorized                 = errors.New("권한이 존재하지 않습니다")
 	ErrSelfLikeComment              = errors.New("본인의 댓글은 좋아요할 수 없습니다")
+	ErrNoArticleIdInput = errors.New("게시물 ID를 입력하십시오")
 )
 
 type CommentUseCaseInterface interface {
@@ -60,13 +61,16 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		logrus.Error("댓글 생성에 대한 author가 존재하지 않습니다.")
 		return nil, ErrUnAuthorized
 	}
+
+	if commentInput.Article == nil && commentInput.StudyArticle == nil {
+		return nil, ErrNoArticleIdInput
+	}
+
 	newComment, err := uc.Repo.Comment.Create().
 		SetNillableArticleID(commentInput.Article).
-		//SetArticleID(&articleId).
+		SetNillableStudyArticleID(commentInput.StudyArticle).
 		SetAuthorID(commentInput.Author).
-		//SetAuthorID("bo314").
 		SetContent(commentInput.Content).
-		//SetContent("hello").
 		SetState("exists").
 		Save(context.Background())
 	if err != nil {
@@ -74,7 +78,7 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		return nil, err
 	}
 
-	return uc.ModelToOutput(commentInput.Author, newComment, nil), nil
+	return uc.modelToOutput(commentInput.Author, newComment, nil), nil
 }
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error) {
@@ -99,7 +103,9 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 
 	outputs := make([]*data.CommentOutput, 0)
 	for _, parent := range parents {
-		outputs = append(outputs, uc.ModelToOutput(username, parent, nil))
+		output := uc.modelToOutput(username, parent, nil)
+		uc.hideFieldOfCommentOutput(username, output)
+		outputs = append(outputs, output)
 	}
 
 	return outputs, nil
@@ -118,8 +124,8 @@ func (uc *CommentUseCase) Get(username string, id int) (*data.CommentOutput, err
 		return nil, err
 	}
 
-	output := uc.ModelToOutput(username, comment, nil)
-
+	output := uc.modelToOutput(username, comment, nil)
+	uc.hideFieldOfCommentOutput(username, output)
 	return output, nil
 }
 
@@ -149,7 +155,8 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 		return nil, err
 	}
 
-	output := uc.ModelToOutput(username, commentUpdated, nil)
+	output := uc.modelToOutput(username, commentUpdated, nil)
+	uc.hideFieldOfCommentOutput(username, output)
 	return output, err
 }
 
@@ -201,44 +208,72 @@ func (uc *CommentUseCase) listParentWithChildren(allComments []*data.CommentOutp
 	return parents
 }
 
+// CommentOutput.Children까지 재귀적으로 CommentOutput으로 만든다.
 // mapper의 단순 mapping 작업 뿐만 아니라 서비스 로직이 깃든다.
 // username: 요청자
 // comment: 원본 모델 댓글
 // output: 결과물 output 댓글. create if nil
-func (uc *CommentUseCase) ModelToOutput(username string, comment *ent.Comment, output *data.CommentOutput) *data.CommentOutput {
+func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, outputRef *data.CommentOutput) *data.CommentOutput {
 	ctx := context.Background()
+	output := outputRef
 	if output == nil {
 		output = &data.CommentOutput{}
 	}
 
-	comment.Edges.Article = comment.QueryArticle().Select("id").OnlyX(ctx)
-	comment.Edges.Author = comment.QueryAuthor().Select("username").OnlyX(ctx)
+	comment.Edges.StudyArticle = comment.QueryStudyArticle().WithAuthor(func(query *ent.KhumuUserQuery) {
+		query.Select("username")
+	}).Select("id").FirstX(ctx)
+
+	comment.Edges.Article = comment.QueryArticle().WithAuthor(func(query *ent.KhumuUserQuery) {
+		query.Select("username")
+	}).Select("id").FirstX(ctx)
+
+	comment.Edges.Author = comment.QueryAuthor().Select("username").FirstX(ctx)
 
 	mapper.CommentModelToOutput(comment, output)
-	if username == comment.Edges.Author.ID {
-		output.IsAuthor = true
+	if comment.Edges.Article != nil {
+		if username == comment.Edges.Article.Edges.Author.ID {
+			output.IsAuthorOfArticle = true
+		}
+	} else if comment.Edges.StudyArticle != nil {
+		if username == comment.Edges.StudyArticle.Edges.Author.ID {
+			output.IsAuthorOfArticle = true
+		}
 	}
 
-	// hide author
-	if comment.State == "deleted" {
-		output.Author.Username = DeletedCommentUsername
-		output.Author.Nickname = DeletedCommentNickname
-		output.Content = DeletedCommentContent
-	} else if comment.Kind == "anonymous" {
-		output.Author.Username = AnonymousCommentUsername
-		output.Author.Nickname = AnonymousCommentNickname
+	if username == comment.Edges.Author.ID {
+		output.IsAuthor = true
 	}
 
 	output.CreatedAt = mapper.NewCreatedAtExpression(comment.CreatedAt)
 	output.LikeCommentCount = uc.getLikeCommentCount(comment.ID)
 	if comment.Edges.Children != nil {
 		for _, c := range comment.Edges.Children {
-			output.Children = append(output.Children, uc.ModelToOutput(username, c, nil))
+			output.Children = append(output.Children, uc.modelToOutput(username, c, nil))
 		}
 	}
 	output.Liked = uc.getLiked(comment.ID)
 
 	return output
+}
+
+// 재귀적으로 output.Children의 field도 숨긴다.
+func (uc *CommentUseCase) hideFieldOfCommentOutput(username string, output *data.CommentOutput) {
+	// hide author
+	if output.State == "deleted" {
+		output.Author.Username = DeletedCommentUsername
+		output.Author.Nickname = DeletedCommentNickname
+		output.Content = DeletedCommentContent
+	} else if output.Kind == "anonymous" {
+		output.Author.Username = AnonymousCommentUsername
+		output.Author.Nickname = AnonymousCommentNickname
+	}
+
+	if output.Children != nil {
+		for _, child := range output.Children {
+			uc.hideFieldOfCommentOutput(username, child)
+		}
+	}
 }
 
 func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {

@@ -13,6 +13,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 
 	"entgo.io/ent"
 )
@@ -26,11 +27,12 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeArticle     = "Article"
-	TypeBoard       = "Board"
-	TypeComment     = "Comment"
-	TypeKhumuUser   = "KhumuUser"
-	TypeLikeComment = "LikeComment"
+	TypeArticle      = "Article"
+	TypeBoard        = "Board"
+	TypeComment      = "Comment"
+	TypeKhumuUser    = "KhumuUser"
+	TypeLikeComment  = "LikeComment"
+	TypeStudyArticle = "StudyArticle"
 )
 
 // ArticleMutation represents an operation that mutates the Article nodes in the graph.
@@ -813,29 +815,31 @@ func (m *BoardMutation) ResetEdge(name string) error {
 // CommentMutation represents an operation that mutates the Comment nodes in the graph.
 type CommentMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int
-	state           *string
-	content         *string
-	kind            *string
-	created_at      *time.Time
-	clearedFields   map[string]struct{}
-	author          *string
-	clearedauthor   bool
-	article         *int
-	clearedarticle  bool
-	parent          *int
-	clearedparent   bool
-	children        map[int]struct{}
-	removedchildren map[int]struct{}
-	clearedchildren bool
-	like            map[int]struct{}
-	removedlike     map[int]struct{}
-	clearedlike     bool
-	done            bool
-	oldValue        func(context.Context) (*Comment, error)
-	predicates      []predicate.Comment
+	op                  Op
+	typ                 string
+	id                  *int
+	state               *string
+	content             *string
+	kind                *string
+	created_at          *time.Time
+	clearedFields       map[string]struct{}
+	author              *string
+	clearedauthor       bool
+	article             *int
+	clearedarticle      bool
+	studyArticle        *int
+	clearedstudyArticle bool
+	parent              *int
+	clearedparent       bool
+	children            map[int]struct{}
+	removedchildren     map[int]struct{}
+	clearedchildren     bool
+	like                map[int]struct{}
+	removedlike         map[int]struct{}
+	clearedlike         bool
+	done                bool
+	oldValue            func(context.Context) (*Comment, error)
+	predicates          []predicate.Comment
 }
 
 var _ ent.Mutation = (*CommentMutation)(nil)
@@ -1143,6 +1147,45 @@ func (m *CommentMutation) ArticleIDs() (ids []int) {
 func (m *CommentMutation) ResetArticle() {
 	m.article = nil
 	m.clearedarticle = false
+}
+
+// SetStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by id.
+func (m *CommentMutation) SetStudyArticleID(id int) {
+	m.studyArticle = &id
+}
+
+// ClearStudyArticle clears the "studyArticle" edge to the StudyArticle entity.
+func (m *CommentMutation) ClearStudyArticle() {
+	m.clearedstudyArticle = true
+}
+
+// StudyArticleCleared reports if the "studyArticle" edge to the StudyArticle entity was cleared.
+func (m *CommentMutation) StudyArticleCleared() bool {
+	return m.clearedstudyArticle
+}
+
+// StudyArticleID returns the "studyArticle" edge ID in the mutation.
+func (m *CommentMutation) StudyArticleID() (id int, exists bool) {
+	if m.studyArticle != nil {
+		return *m.studyArticle, true
+	}
+	return
+}
+
+// StudyArticleIDs returns the "studyArticle" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StudyArticleID instead. It exists only for internal usage by the builders.
+func (m *CommentMutation) StudyArticleIDs() (ids []int) {
+	if id := m.studyArticle; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetStudyArticle resets all changes to the "studyArticle" edge.
+func (m *CommentMutation) ResetStudyArticle() {
+	m.studyArticle = nil
+	m.clearedstudyArticle = false
 }
 
 // SetParentID sets the "parent" edge to the Comment entity by id.
@@ -1454,12 +1497,15 @@ func (m *CommentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CommentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.author != nil {
 		edges = append(edges, comment.EdgeAuthor)
 	}
 	if m.article != nil {
 		edges = append(edges, comment.EdgeArticle)
+	}
+	if m.studyArticle != nil {
+		edges = append(edges, comment.EdgeStudyArticle)
 	}
 	if m.parent != nil {
 		edges = append(edges, comment.EdgeParent)
@@ -1485,6 +1531,10 @@ func (m *CommentMutation) AddedIDs(name string) []ent.Value {
 		if id := m.article; id != nil {
 			return []ent.Value{*id}
 		}
+	case comment.EdgeStudyArticle:
+		if id := m.studyArticle; id != nil {
+			return []ent.Value{*id}
+		}
 	case comment.EdgeParent:
 		if id := m.parent; id != nil {
 			return []ent.Value{*id}
@@ -1507,7 +1557,7 @@ func (m *CommentMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CommentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.removedchildren != nil {
 		edges = append(edges, comment.EdgeChildren)
 	}
@@ -1539,12 +1589,15 @@ func (m *CommentMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CommentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearedauthor {
 		edges = append(edges, comment.EdgeAuthor)
 	}
 	if m.clearedarticle {
 		edges = append(edges, comment.EdgeArticle)
+	}
+	if m.clearedstudyArticle {
+		edges = append(edges, comment.EdgeStudyArticle)
 	}
 	if m.clearedparent {
 		edges = append(edges, comment.EdgeParent)
@@ -1566,6 +1619,8 @@ func (m *CommentMutation) EdgeCleared(name string) bool {
 		return m.clearedauthor
 	case comment.EdgeArticle:
 		return m.clearedarticle
+	case comment.EdgeStudyArticle:
+		return m.clearedstudyArticle
 	case comment.EdgeParent:
 		return m.clearedparent
 	case comment.EdgeChildren:
@@ -1586,6 +1641,9 @@ func (m *CommentMutation) ClearEdge(name string) error {
 	case comment.EdgeArticle:
 		m.ClearArticle()
 		return nil
+	case comment.EdgeStudyArticle:
+		m.ClearStudyArticle()
+		return nil
 	case comment.EdgeParent:
 		m.ClearParent()
 		return nil
@@ -1603,6 +1661,9 @@ func (m *CommentMutation) ResetEdge(name string) error {
 	case comment.EdgeArticle:
 		m.ResetArticle()
 		return nil
+	case comment.EdgeStudyArticle:
+		m.ResetStudyArticle()
+		return nil
 	case comment.EdgeParent:
 		m.ResetParent()
 		return nil
@@ -1619,26 +1680,29 @@ func (m *CommentMutation) ResetEdge(name string) error {
 // KhumuUserMutation represents an operation that mutates the KhumuUser nodes in the graph.
 type KhumuUserMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *string
-	nickname        *string
-	password        *string
-	student_number  *string
-	state           *string
-	clearedFields   map[string]struct{}
-	comments        map[int]struct{}
-	removedcomments map[int]struct{}
-	clearedcomments bool
-	articles        map[int]struct{}
-	removedarticles map[int]struct{}
-	clearedarticles bool
-	like            map[int]struct{}
-	removedlike     map[int]struct{}
-	clearedlike     bool
-	done            bool
-	oldValue        func(context.Context) (*KhumuUser, error)
-	predicates      []predicate.KhumuUser
+	op                   Op
+	typ                  string
+	id                   *string
+	nickname             *string
+	password             *string
+	student_number       *string
+	state                *string
+	clearedFields        map[string]struct{}
+	comments             map[int]struct{}
+	removedcomments      map[int]struct{}
+	clearedcomments      bool
+	articles             map[int]struct{}
+	removedarticles      map[int]struct{}
+	clearedarticles      bool
+	studyArticles        map[int]struct{}
+	removedstudyArticles map[int]struct{}
+	clearedstudyArticles bool
+	like                 map[int]struct{}
+	removedlike          map[int]struct{}
+	clearedlike          bool
+	done                 bool
+	oldValue             func(context.Context) (*KhumuUser, error)
+	predicates           []predicate.KhumuUser
 }
 
 var _ ent.Mutation = (*KhumuUserMutation)(nil)
@@ -1989,6 +2053,59 @@ func (m *KhumuUserMutation) ResetArticles() {
 	m.removedarticles = nil
 }
 
+// AddStudyArticleIDs adds the "studyArticles" edge to the StudyArticle entity by ids.
+func (m *KhumuUserMutation) AddStudyArticleIDs(ids ...int) {
+	if m.studyArticles == nil {
+		m.studyArticles = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.studyArticles[ids[i]] = struct{}{}
+	}
+}
+
+// ClearStudyArticles clears the "studyArticles" edge to the StudyArticle entity.
+func (m *KhumuUserMutation) ClearStudyArticles() {
+	m.clearedstudyArticles = true
+}
+
+// StudyArticlesCleared reports if the "studyArticles" edge to the StudyArticle entity was cleared.
+func (m *KhumuUserMutation) StudyArticlesCleared() bool {
+	return m.clearedstudyArticles
+}
+
+// RemoveStudyArticleIDs removes the "studyArticles" edge to the StudyArticle entity by IDs.
+func (m *KhumuUserMutation) RemoveStudyArticleIDs(ids ...int) {
+	if m.removedstudyArticles == nil {
+		m.removedstudyArticles = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.removedstudyArticles[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedStudyArticles returns the removed IDs of the "studyArticles" edge to the StudyArticle entity.
+func (m *KhumuUserMutation) RemovedStudyArticlesIDs() (ids []int) {
+	for id := range m.removedstudyArticles {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// StudyArticlesIDs returns the "studyArticles" edge IDs in the mutation.
+func (m *KhumuUserMutation) StudyArticlesIDs() (ids []int) {
+	for id := range m.studyArticles {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetStudyArticles resets all changes to the "studyArticles" edge.
+func (m *KhumuUserMutation) ResetStudyArticles() {
+	m.studyArticles = nil
+	m.clearedstudyArticles = false
+	m.removedstudyArticles = nil
+}
+
 // AddLikeIDs adds the "like" edge to the LikeComment entity by ids.
 func (m *KhumuUserMutation) AddLikeIDs(ids ...int) {
 	if m.like == nil {
@@ -2215,12 +2332,15 @@ func (m *KhumuUserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *KhumuUserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.comments != nil {
 		edges = append(edges, khumuuser.EdgeComments)
 	}
 	if m.articles != nil {
 		edges = append(edges, khumuuser.EdgeArticles)
+	}
+	if m.studyArticles != nil {
+		edges = append(edges, khumuuser.EdgeStudyArticles)
 	}
 	if m.like != nil {
 		edges = append(edges, khumuuser.EdgeLike)
@@ -2244,6 +2364,12 @@ func (m *KhumuUserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case khumuuser.EdgeStudyArticles:
+		ids := make([]ent.Value, 0, len(m.studyArticles))
+		for id := range m.studyArticles {
+			ids = append(ids, id)
+		}
+		return ids
 	case khumuuser.EdgeLike:
 		ids := make([]ent.Value, 0, len(m.like))
 		for id := range m.like {
@@ -2256,12 +2382,15 @@ func (m *KhumuUserMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *KhumuUserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedcomments != nil {
 		edges = append(edges, khumuuser.EdgeComments)
 	}
 	if m.removedarticles != nil {
 		edges = append(edges, khumuuser.EdgeArticles)
+	}
+	if m.removedstudyArticles != nil {
+		edges = append(edges, khumuuser.EdgeStudyArticles)
 	}
 	if m.removedlike != nil {
 		edges = append(edges, khumuuser.EdgeLike)
@@ -2285,6 +2414,12 @@ func (m *KhumuUserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case khumuuser.EdgeStudyArticles:
+		ids := make([]ent.Value, 0, len(m.removedstudyArticles))
+		for id := range m.removedstudyArticles {
+			ids = append(ids, id)
+		}
+		return ids
 	case khumuuser.EdgeLike:
 		ids := make([]ent.Value, 0, len(m.removedlike))
 		for id := range m.removedlike {
@@ -2297,12 +2432,15 @@ func (m *KhumuUserMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *KhumuUserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedcomments {
 		edges = append(edges, khumuuser.EdgeComments)
 	}
 	if m.clearedarticles {
 		edges = append(edges, khumuuser.EdgeArticles)
+	}
+	if m.clearedstudyArticles {
+		edges = append(edges, khumuuser.EdgeStudyArticles)
 	}
 	if m.clearedlike {
 		edges = append(edges, khumuuser.EdgeLike)
@@ -2318,6 +2456,8 @@ func (m *KhumuUserMutation) EdgeCleared(name string) bool {
 		return m.clearedcomments
 	case khumuuser.EdgeArticles:
 		return m.clearedarticles
+	case khumuuser.EdgeStudyArticles:
+		return m.clearedstudyArticles
 	case khumuuser.EdgeLike:
 		return m.clearedlike
 	}
@@ -2341,6 +2481,9 @@ func (m *KhumuUserMutation) ResetEdge(name string) error {
 		return nil
 	case khumuuser.EdgeArticles:
 		m.ResetArticles()
+		return nil
+	case khumuuser.EdgeStudyArticles:
+		m.ResetStudyArticles()
 		return nil
 	case khumuuser.EdgeLike:
 		m.ResetLike()
@@ -2706,4 +2849,386 @@ func (m *LikeCommentMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown LikeComment edge %s", name)
+}
+
+// StudyArticleMutation represents an operation that mutates the StudyArticle nodes in the graph.
+type StudyArticleMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	clearedFields   map[string]struct{}
+	comments        map[int]struct{}
+	removedcomments map[int]struct{}
+	clearedcomments bool
+	author          *string
+	clearedauthor   bool
+	done            bool
+	oldValue        func(context.Context) (*StudyArticle, error)
+	predicates      []predicate.StudyArticle
+}
+
+var _ ent.Mutation = (*StudyArticleMutation)(nil)
+
+// studyarticleOption allows management of the mutation configuration using functional options.
+type studyarticleOption func(*StudyArticleMutation)
+
+// newStudyArticleMutation creates new mutation for the StudyArticle entity.
+func newStudyArticleMutation(c config, op Op, opts ...studyarticleOption) *StudyArticleMutation {
+	m := &StudyArticleMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeStudyArticle,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withStudyArticleID sets the ID field of the mutation.
+func withStudyArticleID(id int) studyarticleOption {
+	return func(m *StudyArticleMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *StudyArticle
+		)
+		m.oldValue = func(ctx context.Context) (*StudyArticle, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().StudyArticle.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withStudyArticle sets the old StudyArticle of the mutation.
+func withStudyArticle(node *StudyArticle) studyarticleOption {
+	return func(m *StudyArticleMutation) {
+		m.oldValue = func(context.Context) (*StudyArticle, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m StudyArticleMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m StudyArticleMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of StudyArticle entities.
+func (m *StudyArticleMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID
+// is only available if it was provided to the builder.
+func (m *StudyArticleMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by ids.
+func (m *StudyArticleMutation) AddCommentIDs(ids ...int) {
+	if m.comments == nil {
+		m.comments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.comments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearComments clears the "comments" edge to the Comment entity.
+func (m *StudyArticleMutation) ClearComments() {
+	m.clearedcomments = true
+}
+
+// CommentsCleared reports if the "comments" edge to the Comment entity was cleared.
+func (m *StudyArticleMutation) CommentsCleared() bool {
+	return m.clearedcomments
+}
+
+// RemoveCommentIDs removes the "comments" edge to the Comment entity by IDs.
+func (m *StudyArticleMutation) RemoveCommentIDs(ids ...int) {
+	if m.removedcomments == nil {
+		m.removedcomments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.removedcomments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedComments returns the removed IDs of the "comments" edge to the Comment entity.
+func (m *StudyArticleMutation) RemovedCommentsIDs() (ids []int) {
+	for id := range m.removedcomments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CommentsIDs returns the "comments" edge IDs in the mutation.
+func (m *StudyArticleMutation) CommentsIDs() (ids []int) {
+	for id := range m.comments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetComments resets all changes to the "comments" edge.
+func (m *StudyArticleMutation) ResetComments() {
+	m.comments = nil
+	m.clearedcomments = false
+	m.removedcomments = nil
+}
+
+// SetAuthorID sets the "author" edge to the KhumuUser entity by id.
+func (m *StudyArticleMutation) SetAuthorID(id string) {
+	m.author = &id
+}
+
+// ClearAuthor clears the "author" edge to the KhumuUser entity.
+func (m *StudyArticleMutation) ClearAuthor() {
+	m.clearedauthor = true
+}
+
+// AuthorCleared reports if the "author" edge to the KhumuUser entity was cleared.
+func (m *StudyArticleMutation) AuthorCleared() bool {
+	return m.clearedauthor
+}
+
+// AuthorID returns the "author" edge ID in the mutation.
+func (m *StudyArticleMutation) AuthorID() (id string, exists bool) {
+	if m.author != nil {
+		return *m.author, true
+	}
+	return
+}
+
+// AuthorIDs returns the "author" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AuthorID instead. It exists only for internal usage by the builders.
+func (m *StudyArticleMutation) AuthorIDs() (ids []string) {
+	if id := m.author; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAuthor resets all changes to the "author" edge.
+func (m *StudyArticleMutation) ResetAuthor() {
+	m.author = nil
+	m.clearedauthor = false
+}
+
+// Op returns the operation name.
+func (m *StudyArticleMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (StudyArticle).
+func (m *StudyArticleMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *StudyArticleMutation) Fields() []string {
+	fields := make([]string, 0, 0)
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *StudyArticleMutation) Field(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *StudyArticleMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, fmt.Errorf("unknown StudyArticle field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StudyArticleMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown StudyArticle field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *StudyArticleMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *StudyArticleMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StudyArticleMutation) AddField(name string, value ent.Value) error {
+	return fmt.Errorf("unknown StudyArticle numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *StudyArticleMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *StudyArticleMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *StudyArticleMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown StudyArticle nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *StudyArticleMutation) ResetField(name string) error {
+	return fmt.Errorf("unknown StudyArticle field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *StudyArticleMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.comments != nil {
+		edges = append(edges, studyarticle.EdgeComments)
+	}
+	if m.author != nil {
+		edges = append(edges, studyarticle.EdgeAuthor)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *StudyArticleMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case studyarticle.EdgeComments:
+		ids := make([]ent.Value, 0, len(m.comments))
+		for id := range m.comments {
+			ids = append(ids, id)
+		}
+		return ids
+	case studyarticle.EdgeAuthor:
+		if id := m.author; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *StudyArticleMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedcomments != nil {
+		edges = append(edges, studyarticle.EdgeComments)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *StudyArticleMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case studyarticle.EdgeComments:
+		ids := make([]ent.Value, 0, len(m.removedcomments))
+		for id := range m.removedcomments {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *StudyArticleMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedcomments {
+		edges = append(edges, studyarticle.EdgeComments)
+	}
+	if m.clearedauthor {
+		edges = append(edges, studyarticle.EdgeAuthor)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *StudyArticleMutation) EdgeCleared(name string) bool {
+	switch name {
+	case studyarticle.EdgeComments:
+		return m.clearedcomments
+	case studyarticle.EdgeAuthor:
+		return m.clearedauthor
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *StudyArticleMutation) ClearEdge(name string) error {
+	switch name {
+	case studyarticle.EdgeAuthor:
+		m.ClearAuthor()
+		return nil
+	}
+	return fmt.Errorf("unknown StudyArticle unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *StudyArticleMutation) ResetEdge(name string) error {
+	switch name {
+	case studyarticle.EdgeComments:
+		m.ResetComments()
+		return nil
+	case studyarticle.EdgeAuthor:
+		m.ResetAuthor()
+		return nil
+	}
+	return fmt.Errorf("unknown StudyArticle edge %s", name)
 }

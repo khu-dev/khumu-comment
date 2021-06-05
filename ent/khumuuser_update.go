@@ -14,6 +14,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // KhumuUserUpdate is the builder for updating KhumuUser entities.
@@ -105,6 +106,21 @@ func (kuu *KhumuUserUpdate) AddArticles(a ...*Article) *KhumuUserUpdate {
 	return kuu.AddArticleIDs(ids...)
 }
 
+// AddStudyArticleIDs adds the "studyArticles" edge to the StudyArticle entity by IDs.
+func (kuu *KhumuUserUpdate) AddStudyArticleIDs(ids ...int) *KhumuUserUpdate {
+	kuu.mutation.AddStudyArticleIDs(ids...)
+	return kuu
+}
+
+// AddStudyArticles adds the "studyArticles" edges to the StudyArticle entity.
+func (kuu *KhumuUserUpdate) AddStudyArticles(s ...*StudyArticle) *KhumuUserUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return kuu.AddStudyArticleIDs(ids...)
+}
+
 // AddLikeIDs adds the "like" edge to the LikeComment entity by IDs.
 func (kuu *KhumuUserUpdate) AddLikeIDs(ids ...int) *KhumuUserUpdate {
 	kuu.mutation.AddLikeIDs(ids...)
@@ -165,6 +181,27 @@ func (kuu *KhumuUserUpdate) RemoveArticles(a ...*Article) *KhumuUserUpdate {
 		ids[i] = a[i].ID
 	}
 	return kuu.RemoveArticleIDs(ids...)
+}
+
+// ClearStudyArticles clears all "studyArticles" edges to the StudyArticle entity.
+func (kuu *KhumuUserUpdate) ClearStudyArticles() *KhumuUserUpdate {
+	kuu.mutation.ClearStudyArticles()
+	return kuu
+}
+
+// RemoveStudyArticleIDs removes the "studyArticles" edge to StudyArticle entities by IDs.
+func (kuu *KhumuUserUpdate) RemoveStudyArticleIDs(ids ...int) *KhumuUserUpdate {
+	kuu.mutation.RemoveStudyArticleIDs(ids...)
+	return kuu
+}
+
+// RemoveStudyArticles removes "studyArticles" edges to StudyArticle entities.
+func (kuu *KhumuUserUpdate) RemoveStudyArticles(s ...*StudyArticle) *KhumuUserUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return kuu.RemoveStudyArticleIDs(ids...)
 }
 
 // ClearLike clears all "like" edges to the LikeComment entity.
@@ -399,6 +436,60 @@ func (kuu *KhumuUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if kuu.mutation.StudyArticlesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuu.mutation.RemovedStudyArticlesIDs(); len(nodes) > 0 && !kuu.mutation.StudyArticlesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuu.mutation.StudyArticlesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if kuu.mutation.LikeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -548,6 +639,21 @@ func (kuuo *KhumuUserUpdateOne) AddArticles(a ...*Article) *KhumuUserUpdateOne {
 	return kuuo.AddArticleIDs(ids...)
 }
 
+// AddStudyArticleIDs adds the "studyArticles" edge to the StudyArticle entity by IDs.
+func (kuuo *KhumuUserUpdateOne) AddStudyArticleIDs(ids ...int) *KhumuUserUpdateOne {
+	kuuo.mutation.AddStudyArticleIDs(ids...)
+	return kuuo
+}
+
+// AddStudyArticles adds the "studyArticles" edges to the StudyArticle entity.
+func (kuuo *KhumuUserUpdateOne) AddStudyArticles(s ...*StudyArticle) *KhumuUserUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return kuuo.AddStudyArticleIDs(ids...)
+}
+
 // AddLikeIDs adds the "like" edge to the LikeComment entity by IDs.
 func (kuuo *KhumuUserUpdateOne) AddLikeIDs(ids ...int) *KhumuUserUpdateOne {
 	kuuo.mutation.AddLikeIDs(ids...)
@@ -608,6 +714,27 @@ func (kuuo *KhumuUserUpdateOne) RemoveArticles(a ...*Article) *KhumuUserUpdateOn
 		ids[i] = a[i].ID
 	}
 	return kuuo.RemoveArticleIDs(ids...)
+}
+
+// ClearStudyArticles clears all "studyArticles" edges to the StudyArticle entity.
+func (kuuo *KhumuUserUpdateOne) ClearStudyArticles() *KhumuUserUpdateOne {
+	kuuo.mutation.ClearStudyArticles()
+	return kuuo
+}
+
+// RemoveStudyArticleIDs removes the "studyArticles" edge to StudyArticle entities by IDs.
+func (kuuo *KhumuUserUpdateOne) RemoveStudyArticleIDs(ids ...int) *KhumuUserUpdateOne {
+	kuuo.mutation.RemoveStudyArticleIDs(ids...)
+	return kuuo
+}
+
+// RemoveStudyArticles removes "studyArticles" edges to StudyArticle entities.
+func (kuuo *KhumuUserUpdateOne) RemoveStudyArticles(s ...*StudyArticle) *KhumuUserUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return kuuo.RemoveStudyArticleIDs(ids...)
 }
 
 // ClearLike clears all "like" edges to the LikeComment entity.
@@ -858,6 +985,60 @@ func (kuuo *KhumuUserUpdateOne) sqlSave(ctx context.Context) (_node *KhumuUser, 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: article.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kuuo.mutation.StudyArticlesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuuo.mutation.RemovedStudyArticlesIDs(); len(nodes) > 0 && !kuuo.mutation.StudyArticlesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kuuo.mutation.StudyArticlesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
 				},
 			},
 		}

@@ -34,11 +34,13 @@ type KhumuUserEdges struct {
 	Comments []*Comment `json:"comments,omitempty"`
 	// Articles holds the value of the articles edge.
 	Articles []*Article `json:"articles,omitempty"`
+	// StudyArticles holds the value of the studyArticles edge.
+	StudyArticles []*StudyArticle `json:"studyArticles,omitempty"`
 	// Like holds the value of the like edge.
 	Like []*LikeComment `json:"like,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // CommentsOrErr returns the Comments value or an error if the edge
@@ -59,10 +61,19 @@ func (e KhumuUserEdges) ArticlesOrErr() ([]*Article, error) {
 	return nil, &NotLoadedError{edge: "articles"}
 }
 
+// StudyArticlesOrErr returns the StudyArticles value or an error if the edge
+// was not loaded in eager-loading.
+func (e KhumuUserEdges) StudyArticlesOrErr() ([]*StudyArticle, error) {
+	if e.loadedTypes[2] {
+		return e.StudyArticles, nil
+	}
+	return nil, &NotLoadedError{edge: "studyArticles"}
+}
+
 // LikeOrErr returns the Like value or an error if the edge
 // was not loaded in eager-loading.
 func (e KhumuUserEdges) LikeOrErr() ([]*LikeComment, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Like, nil
 	}
 	return nil, &NotLoadedError{edge: "like"}
@@ -133,6 +144,11 @@ func (ku *KhumuUser) QueryComments() *CommentQuery {
 // QueryArticles queries the "articles" edge of the KhumuUser entity.
 func (ku *KhumuUser) QueryArticles() *ArticleQuery {
 	return (&KhumuUserClient{config: ku.config}).QueryArticles(ku)
+}
+
+// QueryStudyArticles queries the "studyArticles" edge of the KhumuUser entity.
+func (ku *KhumuUser) QueryStudyArticles() *StudyArticleQuery {
+	return (&KhumuUserClient{config: ku.config}).QueryStudyArticles(ku)
 }
 
 // QueryLike queries the "like" edge of the KhumuUser entity.

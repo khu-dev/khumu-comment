@@ -13,6 +13,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // KhumuUserCreate is the builder for creating a KhumuUser entity.
@@ -96,6 +97,21 @@ func (kuc *KhumuUserCreate) AddArticles(a ...*Article) *KhumuUserCreate {
 		ids[i] = a[i].ID
 	}
 	return kuc.AddArticleIDs(ids...)
+}
+
+// AddStudyArticleIDs adds the "studyArticles" edge to the StudyArticle entity by IDs.
+func (kuc *KhumuUserCreate) AddStudyArticleIDs(ids ...int) *KhumuUserCreate {
+	kuc.mutation.AddStudyArticleIDs(ids...)
+	return kuc
+}
+
+// AddStudyArticles adds the "studyArticles" edges to the StudyArticle entity.
+func (kuc *KhumuUserCreate) AddStudyArticles(s ...*StudyArticle) *KhumuUserCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return kuc.AddStudyArticleIDs(ids...)
 }
 
 // AddLikeIDs adds the "like" edge to the LikeComment entity by IDs.
@@ -273,6 +289,25 @@ func (kuc *KhumuUserCreate) createSpec() (*KhumuUser, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: article.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := kuc.mutation.StudyArticlesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   khumuuser.StudyArticlesTable,
+			Columns: []string{khumuuser.StudyArticlesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
 				},
 			},
 		}

@@ -19,12 +19,16 @@ const (
 	EdgeComments = "comments"
 	// EdgeArticles holds the string denoting the articles edge name in mutations.
 	EdgeArticles = "articles"
+	// EdgeStudyArticles holds the string denoting the studyarticles edge name in mutations.
+	EdgeStudyArticles = "studyArticles"
 	// EdgeLike holds the string denoting the like edge name in mutations.
 	EdgeLike = "like"
 	// CommentFieldID holds the string denoting the ID field of the Comment.
 	CommentFieldID = "id"
 	// ArticleFieldID holds the string denoting the ID field of the Article.
 	ArticleFieldID = "id"
+	// StudyArticleFieldID holds the string denoting the ID field of the StudyArticle.
+	StudyArticleFieldID = "id"
 	// LikeCommentFieldID holds the string denoting the ID field of the LikeComment.
 	LikeCommentFieldID = "id"
 	// Table holds the table name of the khumuuser in the database.
@@ -43,6 +47,13 @@ const (
 	ArticlesInverseTable = "article_article"
 	// ArticlesColumn is the table column denoting the articles relation/edge.
 	ArticlesColumn = "author_id"
+	// StudyArticlesTable is the table the holds the studyArticles relation/edge.
+	StudyArticlesTable = "article_studyarticle"
+	// StudyArticlesInverseTable is the table name for the StudyArticle entity.
+	// It exists in this package in order to avoid circular dependency with the "studyarticle" package.
+	StudyArticlesInverseTable = "article_studyarticle"
+	// StudyArticlesColumn is the table column denoting the studyArticles relation/edge.
+	StudyArticlesColumn = "author_id"
 	// LikeTable is the table the holds the like relation/edge.
 	LikeTable = "comment_likecomment"
 	// LikeInverseTable is the table name for the LikeComment entity.

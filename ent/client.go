@@ -14,6 +14,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -35,6 +36,8 @@ type Client struct {
 	KhumuUser *KhumuUserClient
 	// LikeComment is the client for interacting with the LikeComment builders.
 	LikeComment *LikeCommentClient
+	// StudyArticle is the client for interacting with the StudyArticle builders.
+	StudyArticle *StudyArticleClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -53,6 +56,7 @@ func (c *Client) init() {
 	c.Comment = NewCommentClient(c.config)
 	c.KhumuUser = NewKhumuUserClient(c.config)
 	c.LikeComment = NewLikeCommentClient(c.config)
+	c.StudyArticle = NewStudyArticleClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -84,13 +88,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Article:     NewArticleClient(cfg),
-		Board:       NewBoardClient(cfg),
-		Comment:     NewCommentClient(cfg),
-		KhumuUser:   NewKhumuUserClient(cfg),
-		LikeComment: NewLikeCommentClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		Article:      NewArticleClient(cfg),
+		Board:        NewBoardClient(cfg),
+		Comment:      NewCommentClient(cfg),
+		KhumuUser:    NewKhumuUserClient(cfg),
+		LikeComment:  NewLikeCommentClient(cfg),
+		StudyArticle: NewStudyArticleClient(cfg),
 	}, nil
 }
 
@@ -108,12 +113,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config:      cfg,
-		Article:     NewArticleClient(cfg),
-		Board:       NewBoardClient(cfg),
-		Comment:     NewCommentClient(cfg),
-		KhumuUser:   NewKhumuUserClient(cfg),
-		LikeComment: NewLikeCommentClient(cfg),
+		config:       cfg,
+		Article:      NewArticleClient(cfg),
+		Board:        NewBoardClient(cfg),
+		Comment:      NewCommentClient(cfg),
+		KhumuUser:    NewKhumuUserClient(cfg),
+		LikeComment:  NewLikeCommentClient(cfg),
+		StudyArticle: NewStudyArticleClient(cfg),
 	}, nil
 }
 
@@ -148,6 +154,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Comment.Use(hooks...)
 	c.KhumuUser.Use(hooks...)
 	c.LikeComment.Use(hooks...)
+	c.StudyArticle.Use(hooks...)
 }
 
 // ArticleClient is a client for the Article schema.
@@ -479,6 +486,22 @@ func (c *CommentClient) QueryArticle(co *Comment) *ArticleQuery {
 	return query
 }
 
+// QueryStudyArticle queries the studyArticle edge of a Comment.
+func (c *CommentClient) QueryStudyArticle(co *Comment) *StudyArticleQuery {
+	query := &StudyArticleQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, id),
+			sqlgraph.To(studyarticle.Table, studyarticle.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, comment.StudyArticleTable, comment.StudyArticleColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryParent queries the parent edge of a Comment.
 func (c *CommentClient) QueryParent(co *Comment) *CommentQuery {
 	query := &CommentQuery{config: c.config}
@@ -649,6 +672,22 @@ func (c *KhumuUserClient) QueryArticles(ku *KhumuUser) *ArticleQuery {
 	return query
 }
 
+// QueryStudyArticles queries the studyArticles edge of a KhumuUser.
+func (c *KhumuUserClient) QueryStudyArticles(ku *KhumuUser) *StudyArticleQuery {
+	query := &StudyArticleQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := ku.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(khumuuser.Table, khumuuser.FieldID, id),
+			sqlgraph.To(studyarticle.Table, studyarticle.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, khumuuser.StudyArticlesTable, khumuuser.StudyArticlesColumn),
+		)
+		fromV = sqlgraph.Neighbors(ku.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryLike queries the like edge of a KhumuUser.
 func (c *KhumuUserClient) QueryLike(ku *KhumuUser) *LikeCommentQuery {
 	query := &LikeCommentQuery{config: c.config}
@@ -790,4 +829,126 @@ func (c *LikeCommentClient) QueryAbout(lc *LikeComment) *CommentQuery {
 // Hooks returns the client hooks.
 func (c *LikeCommentClient) Hooks() []Hook {
 	return c.hooks.LikeComment
+}
+
+// StudyArticleClient is a client for the StudyArticle schema.
+type StudyArticleClient struct {
+	config
+}
+
+// NewStudyArticleClient returns a client for the StudyArticle from the given config.
+func NewStudyArticleClient(c config) *StudyArticleClient {
+	return &StudyArticleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `studyarticle.Hooks(f(g(h())))`.
+func (c *StudyArticleClient) Use(hooks ...Hook) {
+	c.hooks.StudyArticle = append(c.hooks.StudyArticle, hooks...)
+}
+
+// Create returns a create builder for StudyArticle.
+func (c *StudyArticleClient) Create() *StudyArticleCreate {
+	mutation := newStudyArticleMutation(c.config, OpCreate)
+	return &StudyArticleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of StudyArticle entities.
+func (c *StudyArticleClient) CreateBulk(builders ...*StudyArticleCreate) *StudyArticleCreateBulk {
+	return &StudyArticleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for StudyArticle.
+func (c *StudyArticleClient) Update() *StudyArticleUpdate {
+	mutation := newStudyArticleMutation(c.config, OpUpdate)
+	return &StudyArticleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StudyArticleClient) UpdateOne(sa *StudyArticle) *StudyArticleUpdateOne {
+	mutation := newStudyArticleMutation(c.config, OpUpdateOne, withStudyArticle(sa))
+	return &StudyArticleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StudyArticleClient) UpdateOneID(id int) *StudyArticleUpdateOne {
+	mutation := newStudyArticleMutation(c.config, OpUpdateOne, withStudyArticleID(id))
+	return &StudyArticleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for StudyArticle.
+func (c *StudyArticleClient) Delete() *StudyArticleDelete {
+	mutation := newStudyArticleMutation(c.config, OpDelete)
+	return &StudyArticleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *StudyArticleClient) DeleteOne(sa *StudyArticle) *StudyArticleDeleteOne {
+	return c.DeleteOneID(sa.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *StudyArticleClient) DeleteOneID(id int) *StudyArticleDeleteOne {
+	builder := c.Delete().Where(studyarticle.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StudyArticleDeleteOne{builder}
+}
+
+// Query returns a query builder for StudyArticle.
+func (c *StudyArticleClient) Query() *StudyArticleQuery {
+	return &StudyArticleQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a StudyArticle entity by its id.
+func (c *StudyArticleClient) Get(ctx context.Context, id int) (*StudyArticle, error) {
+	return c.Query().Where(studyarticle.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StudyArticleClient) GetX(ctx context.Context, id int) *StudyArticle {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryComments queries the comments edge of a StudyArticle.
+func (c *StudyArticleClient) QueryComments(sa *StudyArticle) *CommentQuery {
+	query := &CommentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := sa.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(studyarticle.Table, studyarticle.FieldID, id),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, studyarticle.CommentsTable, studyarticle.CommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(sa.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAuthor queries the author edge of a StudyArticle.
+func (c *StudyArticleClient) QueryAuthor(sa *StudyArticle) *KhumuUserQuery {
+	query := &KhumuUserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := sa.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(studyarticle.Table, studyarticle.FieldID, id),
+			sqlgraph.To(khumuuser.Table, khumuuser.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, studyarticle.AuthorTable, studyarticle.AuthorColumn),
+		)
+		fromV = sqlgraph.Neighbors(sa.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *StudyArticleClient) Hooks() []Hook {
+	return c.hooks.StudyArticle
 }

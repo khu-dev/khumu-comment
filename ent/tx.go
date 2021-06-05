@@ -22,6 +22,8 @@ type Tx struct {
 	KhumuUser *KhumuUserClient
 	// LikeComment is the client for interacting with the LikeComment builders.
 	LikeComment *LikeCommentClient
+	// StudyArticle is the client for interacting with the StudyArticle builders.
+	StudyArticle *StudyArticleClient
 
 	// lazily loaded.
 	client     *Client
@@ -162,6 +164,7 @@ func (tx *Tx) init() {
 	tx.Comment = NewCommentClient(tx.config)
 	tx.KhumuUser = NewKhumuUserClient(tx.config)
 	tx.LikeComment = NewLikeCommentClient(tx.config)
+	tx.StudyArticle = NewStudyArticleClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

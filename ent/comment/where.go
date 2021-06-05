@@ -586,6 +586,34 @@ func HasArticleWith(preds ...predicate.Article) predicate.Comment {
 	})
 }
 
+// HasStudyArticle applies the HasEdge predicate on the "studyArticle" edge.
+func HasStudyArticle() predicate.Comment {
+	return predicate.Comment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(StudyArticleTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, StudyArticleTable, StudyArticleColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStudyArticleWith applies the HasEdge predicate on the "studyArticle" edge with a given conditions (other predicates).
+func HasStudyArticleWith(preds ...predicate.StudyArticle) predicate.Comment {
+	return predicate.Comment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(StudyArticleInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, StudyArticleTable, StudyArticleColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasParent applies the HasEdge predicate on the "parent" edge.
 func HasParent() predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {

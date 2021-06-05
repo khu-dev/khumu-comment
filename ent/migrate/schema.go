@@ -52,6 +52,7 @@ var (
 		{Name: "article_id", Type: field.TypeInt, Nullable: true},
 		{Name: "parent_id", Type: field.TypeInt, Nullable: true},
 		{Name: "author_id", Type: field.TypeString, Nullable: true},
+		{Name: "study_article_id", Type: field.TypeInt, Nullable: true},
 	}
 	// CommentCommentTable holds the schema information for the "comment_comment" table.
 	CommentCommentTable = &schema.Table{
@@ -75,6 +76,12 @@ var (
 				Symbol:     "comment_comment_user_khumuuser_comments",
 				Columns:    []*schema.Column{CommentCommentColumns[7]},
 				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "comment_comment_article_studyarticle_comments",
+				Columns:    []*schema.Column{CommentCommentColumns[8]},
+				RefColumns: []*schema.Column{ArticleStudyarticleColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -120,6 +127,25 @@ var (
 			},
 		},
 	}
+	// ArticleStudyarticleColumns holds the columns for the "article_studyarticle" table.
+	ArticleStudyarticleColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "author_id", Type: field.TypeString, Nullable: true},
+	}
+	// ArticleStudyarticleTable holds the schema information for the "article_studyarticle" table.
+	ArticleStudyarticleTable = &schema.Table{
+		Name:       "article_studyarticle",
+		Columns:    ArticleStudyarticleColumns,
+		PrimaryKey: []*schema.Column{ArticleStudyarticleColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "article_studyarticle_user_khumuuser_studyArticles",
+				Columns:    []*schema.Column{ArticleStudyarticleColumns[1]},
+				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ArticleArticleTable,
@@ -127,6 +153,7 @@ var (
 		CommentCommentTable,
 		UserKhumuuserTable,
 		CommentLikecommentTable,
+		ArticleStudyarticleTable,
 	}
 )
 
@@ -138,6 +165,7 @@ func init() {
 	CommentCommentTable.ForeignKeys[0].RefTable = ArticleArticleTable
 	CommentCommentTable.ForeignKeys[1].RefTable = CommentCommentTable
 	CommentCommentTable.ForeignKeys[2].RefTable = UserKhumuuserTable
+	CommentCommentTable.ForeignKeys[3].RefTable = ArticleStudyarticleTable
 	CommentCommentTable.Annotation = &entsql.Annotation{
 		Table: "comment_comment",
 	}
@@ -148,5 +176,9 @@ func init() {
 	CommentLikecommentTable.ForeignKeys[1].RefTable = UserKhumuuserTable
 	CommentLikecommentTable.Annotation = &entsql.Annotation{
 		Table: "comment_likecomment",
+	}
+	ArticleStudyarticleTable.ForeignKeys[0].RefTable = UserKhumuuserTable
+	ArticleStudyarticleTable.Annotation = &entsql.Annotation{
+		Table: "article_studyarticle",
 	}
 }
