@@ -78,7 +78,10 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		return nil, err
 	}
 
-	return uc.modelToOutput(commentInput.Author, newComment, nil), nil
+	output := uc.modelToOutput(commentInput.Author, newComment, nil)
+	uc.SnsClient.PublishMessage(output)
+
+	return output , nil
 }
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error) {

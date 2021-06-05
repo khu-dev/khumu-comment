@@ -18,7 +18,7 @@ var (
 )
 
 type SnsClient interface {
-	PublishMessage(comment *data.CommentOutput)
+	PublishMessage(comment *data.CommentOutput) error
 }
 
 type SnsClientImpl struct {
@@ -41,7 +41,7 @@ func NewSnsClient() SnsClient {
 	}
 }
 
-func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) {
+func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) error {
 	jsonData, err := json.Marshal(comment)
 	if err != nil {
 		logrus.Error(err)
@@ -55,11 +55,12 @@ func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) {
 
 	result, err := client.Sns.Publish(input)
 	if err != nil {
-		logrus.Error("Publish error:", err)
-		return
+		return err
 	}
 	logrus.Info("Publish SNS Message " + *input.Message)
 	logrus.Info(input.MessageAttributes)
 
 	logrus.Info(result)
+
+	return nil
 }
