@@ -18,14 +18,29 @@ func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.Comm
 
     dest.ID = src.ID
     dest.Author = KhumuUserModelToSimpleOutput(src.Edges.Author, nil)
-    dest.Article = &src.Edges.Article.ID
-    dest.StudyArticle = nil
+    if src.Edges.Article != nil {
+        dest.Article = &src.Edges.Article.ID
+    } else if src.Edges.StudyArticle != nil {
+        dest.StudyArticle = &src.Edges.StudyArticle.ID
+    }
     dest.Content = src.Content
     dest.Kind = src.Kind
+    dest.State = src.State
     // children 처리 안함.
     dest.Children = []*data.CommentOutput{}
 
     return dest
+}
+
+func CopyCommentOutput(src *data.CommentOutput) *data.CommentOutput {
+    dest := *src
+    dest.Children = make([]*data.CommentOutput, len(dest.Children))
+
+    for i, child := range src.Children {
+        dest.Children[i] = CopyCommentOutput(child)
+    }
+
+    return &dest
 }
 
 // Comment.CreatedAt을 바탕으로 Comment.CreatedAtExpression에 올바른 값을 입력시킨다.

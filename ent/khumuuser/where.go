@@ -633,6 +633,34 @@ func HasArticlesWith(preds ...predicate.Article) predicate.KhumuUser {
 	})
 }
 
+// HasStudyArticles applies the HasEdge predicate on the "studyArticles" edge.
+func HasStudyArticles() predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(StudyArticlesTable, StudyArticleFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, StudyArticlesTable, StudyArticlesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStudyArticlesWith applies the HasEdge predicate on the "studyArticles" edge with a given conditions (other predicates).
+func HasStudyArticlesWith(preds ...predicate.StudyArticle) predicate.KhumuUser {
+	return predicate.KhumuUser(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(StudyArticlesInverseTable, StudyArticleFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, StudyArticlesTable, StudyArticlesColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasLike applies the HasEdge predicate on the "like" edge.
 func HasLike() predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {

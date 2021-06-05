@@ -11,6 +11,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/article"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // Comment is the model entity for the Comment schema.
@@ -28,10 +29,11 @@ type Comment struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CommentQuery when eager-loading is set.
-	Edges      CommentEdges `json:"edges"`
-	article_id *int
-	parent_id  *int
-	author_id  *string
+	Edges            CommentEdges `json:"edges"`
+	article_id       *int
+	parent_id        *int
+	author_id        *string
+	study_article_id *int
 }
 
 // CommentEdges holds the relations/edges for other nodes in the graph.
@@ -40,6 +42,8 @@ type CommentEdges struct {
 	Author *KhumuUser `json:"author,omitempty"`
 	// Article holds the value of the article edge.
 	Article *Article `json:"article,omitempty"`
+	// StudyArticle holds the value of the studyArticle edge.
+	StudyArticle *StudyArticle `json:"studyArticle,omitempty"`
 	// Parent holds the value of the parent edge.
 	Parent *Comment `json:"parent,omitempty"`
 	// Children holds the value of the children edge.
@@ -48,7 +52,7 @@ type CommentEdges struct {
 	Like []*LikeComment `json:"like,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // AuthorOrErr returns the Author value or an error if the edge
@@ -79,10 +83,24 @@ func (e CommentEdges) ArticleOrErr() (*Article, error) {
 	return nil, &NotLoadedError{edge: "article"}
 }
 
+// StudyArticleOrErr returns the StudyArticle value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CommentEdges) StudyArticleOrErr() (*StudyArticle, error) {
+	if e.loadedTypes[2] {
+		if e.StudyArticle == nil {
+			// The edge studyArticle was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: studyarticle.Label}
+		}
+		return e.StudyArticle, nil
+	}
+	return nil, &NotLoadedError{edge: "studyArticle"}
+}
+
 // ParentOrErr returns the Parent value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e CommentEdges) ParentOrErr() (*Comment, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		if e.Parent == nil {
 			// The edge parent was loaded in eager-loading,
 			// but was not found.
@@ -96,7 +114,7 @@ func (e CommentEdges) ParentOrErr() (*Comment, error) {
 // ChildrenOrErr returns the Children value or an error if the edge
 // was not loaded in eager-loading.
 func (e CommentEdges) ChildrenOrErr() ([]*Comment, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Children, nil
 	}
 	return nil, &NotLoadedError{edge: "children"}
@@ -105,7 +123,7 @@ func (e CommentEdges) ChildrenOrErr() ([]*Comment, error) {
 // LikeOrErr returns the Like value or an error if the edge
 // was not loaded in eager-loading.
 func (e CommentEdges) LikeOrErr() ([]*LikeComment, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.Like, nil
 	}
 	return nil, &NotLoadedError{edge: "like"}
@@ -128,6 +146,8 @@ func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case comment.ForeignKeys[2]: // author_id
 			values[i] = new(sql.NullString)
+		case comment.ForeignKeys[3]: // study_article_id
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Comment", columns[i])
 		}
@@ -194,6 +214,13 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 				c.author_id = new(string)
 				*c.author_id = value.String
 			}
+		case comment.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field study_article_id", value)
+			} else if value.Valid {
+				c.study_article_id = new(int)
+				*c.study_article_id = int(value.Int64)
+			}
 		}
 	}
 	return nil
@@ -207,6 +234,11 @@ func (c *Comment) QueryAuthor() *KhumuUserQuery {
 // QueryArticle queries the "article" edge of the Comment entity.
 func (c *Comment) QueryArticle() *ArticleQuery {
 	return (&CommentClient{config: c.config}).QueryArticle(c)
+}
+
+// QueryStudyArticle queries the "studyArticle" edge of the Comment entity.
+func (c *Comment) QueryStudyArticle() *StudyArticleQuery {
+	return (&CommentClient{config: c.config}).QueryStudyArticle(c)
 }
 
 // QueryParent queries the "parent" edge of the Comment entity.

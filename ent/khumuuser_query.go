@@ -17,6 +17,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // KhumuUserQuery is the builder for querying KhumuUser entities.
@@ -29,9 +30,10 @@ type KhumuUserQuery struct {
 	fields     []string
 	predicates []predicate.KhumuUser
 	// eager-loading edges.
-	withComments *CommentQuery
-	withArticles *ArticleQuery
-	withLike     *LikeCommentQuery
+	withComments      *CommentQuery
+	withArticles      *ArticleQuery
+	withStudyArticles *StudyArticleQuery
+	withLike          *LikeCommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -105,6 +107,28 @@ func (kuq *KhumuUserQuery) QueryArticles() *ArticleQuery {
 			sqlgraph.From(khumuuser.Table, khumuuser.FieldID, selector),
 			sqlgraph.To(article.Table, article.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, khumuuser.ArticlesTable, khumuuser.ArticlesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(kuq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStudyArticles chains the current query on the "studyArticles" edge.
+func (kuq *KhumuUserQuery) QueryStudyArticles() *StudyArticleQuery {
+	query := &StudyArticleQuery{config: kuq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := kuq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := kuq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(khumuuser.Table, khumuuser.FieldID, selector),
+			sqlgraph.To(studyarticle.Table, studyarticle.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, khumuuser.StudyArticlesTable, khumuuser.StudyArticlesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(kuq.driver.Dialect(), step)
 		return fromU, nil
@@ -310,14 +334,15 @@ func (kuq *KhumuUserQuery) Clone() *KhumuUserQuery {
 		return nil
 	}
 	return &KhumuUserQuery{
-		config:       kuq.config,
-		limit:        kuq.limit,
-		offset:       kuq.offset,
-		order:        append([]OrderFunc{}, kuq.order...),
-		predicates:   append([]predicate.KhumuUser{}, kuq.predicates...),
-		withComments: kuq.withComments.Clone(),
-		withArticles: kuq.withArticles.Clone(),
-		withLike:     kuq.withLike.Clone(),
+		config:            kuq.config,
+		limit:             kuq.limit,
+		offset:            kuq.offset,
+		order:             append([]OrderFunc{}, kuq.order...),
+		predicates:        append([]predicate.KhumuUser{}, kuq.predicates...),
+		withComments:      kuq.withComments.Clone(),
+		withArticles:      kuq.withArticles.Clone(),
+		withStudyArticles: kuq.withStudyArticles.Clone(),
+		withLike:          kuq.withLike.Clone(),
 		// clone intermediate query.
 		sql:  kuq.sql.Clone(),
 		path: kuq.path,
@@ -343,6 +368,17 @@ func (kuq *KhumuUserQuery) WithArticles(opts ...func(*ArticleQuery)) *KhumuUserQ
 		opt(query)
 	}
 	kuq.withArticles = query
+	return kuq
+}
+
+// WithStudyArticles tells the query-builder to eager-load the nodes that are connected to
+// the "studyArticles" edge. The optional arguments are used to configure the query builder of the edge.
+func (kuq *KhumuUserQuery) WithStudyArticles(opts ...func(*StudyArticleQuery)) *KhumuUserQuery {
+	query := &StudyArticleQuery{config: kuq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	kuq.withStudyArticles = query
 	return kuq
 }
 
@@ -422,9 +458,10 @@ func (kuq *KhumuUserQuery) sqlAll(ctx context.Context) ([]*KhumuUser, error) {
 	var (
 		nodes       = []*KhumuUser{}
 		_spec       = kuq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			kuq.withComments != nil,
 			kuq.withArticles != nil,
+			kuq.withStudyArticles != nil,
 			kuq.withLike != nil,
 		}
 	)
@@ -503,6 +540,35 @@ func (kuq *KhumuUserQuery) sqlAll(ctx context.Context) ([]*KhumuUser, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "author_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Articles = append(node.Edges.Articles, n)
+		}
+	}
+
+	if query := kuq.withStudyArticles; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[string]*KhumuUser)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.StudyArticles = []*StudyArticle{}
+		}
+		query.withFKs = true
+		query.Where(predicate.StudyArticle(func(s *sql.Selector) {
+			s.Where(sql.InValues(khumuuser.StudyArticlesColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.author_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "author_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "author_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.StudyArticles = append(node.Edges.StudyArticles, n)
 		}
 	}
 

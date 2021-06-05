@@ -14,6 +14,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // CommentCreate is the builder for creating a Comment entity.
@@ -113,6 +114,25 @@ func (cc *CommentCreate) SetNillableArticleID(id *int) *CommentCreate {
 // SetArticle sets the "article" edge to the Article entity.
 func (cc *CommentCreate) SetArticle(a *Article) *CommentCreate {
 	return cc.SetArticleID(a.ID)
+}
+
+// SetStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by ID.
+func (cc *CommentCreate) SetStudyArticleID(id int) *CommentCreate {
+	cc.mutation.SetStudyArticleID(id)
+	return cc
+}
+
+// SetNillableStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by ID if the given value is not nil.
+func (cc *CommentCreate) SetNillableStudyArticleID(id *int) *CommentCreate {
+	if id != nil {
+		cc = cc.SetStudyArticleID(*id)
+	}
+	return cc
+}
+
+// SetStudyArticle sets the "studyArticle" edge to the StudyArticle entity.
+func (cc *CommentCreate) SetStudyArticle(s *StudyArticle) *CommentCreate {
+	return cc.SetStudyArticleID(s.ID)
 }
 
 // SetParentID sets the "parent" edge to the Comment entity by ID.
@@ -347,6 +367,26 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.article_id = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.StudyArticleIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.StudyArticleTable,
+			Columns: []string{comment.StudyArticleColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.study_article_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := cc.mutation.ParentIDs(); len(nodes) > 0 {

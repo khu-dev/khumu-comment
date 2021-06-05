@@ -74,6 +74,19 @@ func (f LikeCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return f(ctx, mv)
 }
 
+// The StudyArticleFunc type is an adapter to allow the use of ordinary
+// function as StudyArticle mutator.
+type StudyArticleFunc func(context.Context, *ent.StudyArticleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StudyArticleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.StudyArticleMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StudyArticleMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

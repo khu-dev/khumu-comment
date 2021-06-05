@@ -15,6 +15,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 )
 
 // CommentUpdate is the builder for updating Comment entities.
@@ -116,6 +117,25 @@ func (cu *CommentUpdate) SetArticle(a *Article) *CommentUpdate {
 	return cu.SetArticleID(a.ID)
 }
 
+// SetStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by ID.
+func (cu *CommentUpdate) SetStudyArticleID(id int) *CommentUpdate {
+	cu.mutation.SetStudyArticleID(id)
+	return cu
+}
+
+// SetNillableStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by ID if the given value is not nil.
+func (cu *CommentUpdate) SetNillableStudyArticleID(id *int) *CommentUpdate {
+	if id != nil {
+		cu = cu.SetStudyArticleID(*id)
+	}
+	return cu
+}
+
+// SetStudyArticle sets the "studyArticle" edge to the StudyArticle entity.
+func (cu *CommentUpdate) SetStudyArticle(s *StudyArticle) *CommentUpdate {
+	return cu.SetStudyArticleID(s.ID)
+}
+
 // SetParentID sets the "parent" edge to the Comment entity by ID.
 func (cu *CommentUpdate) SetParentID(id int) *CommentUpdate {
 	cu.mutation.SetParentID(id)
@@ -179,6 +199,12 @@ func (cu *CommentUpdate) ClearAuthor() *CommentUpdate {
 // ClearArticle clears the "article" edge to the Article entity.
 func (cu *CommentUpdate) ClearArticle() *CommentUpdate {
 	cu.mutation.ClearArticle()
+	return cu
+}
+
+// ClearStudyArticle clears the "studyArticle" edge to the StudyArticle entity.
+func (cu *CommentUpdate) ClearStudyArticle() *CommentUpdate {
+	cu.mutation.ClearStudyArticle()
 	return cu
 }
 
@@ -389,6 +415,41 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: article.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.StudyArticleCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.StudyArticleTable,
+			Columns: []string{comment.StudyArticleColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.StudyArticleIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.StudyArticleTable,
+			Columns: []string{comment.StudyArticleColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
 				},
 			},
 		}
@@ -645,6 +706,25 @@ func (cuo *CommentUpdateOne) SetArticle(a *Article) *CommentUpdateOne {
 	return cuo.SetArticleID(a.ID)
 }
 
+// SetStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by ID.
+func (cuo *CommentUpdateOne) SetStudyArticleID(id int) *CommentUpdateOne {
+	cuo.mutation.SetStudyArticleID(id)
+	return cuo
+}
+
+// SetNillableStudyArticleID sets the "studyArticle" edge to the StudyArticle entity by ID if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableStudyArticleID(id *int) *CommentUpdateOne {
+	if id != nil {
+		cuo = cuo.SetStudyArticleID(*id)
+	}
+	return cuo
+}
+
+// SetStudyArticle sets the "studyArticle" edge to the StudyArticle entity.
+func (cuo *CommentUpdateOne) SetStudyArticle(s *StudyArticle) *CommentUpdateOne {
+	return cuo.SetStudyArticleID(s.ID)
+}
+
 // SetParentID sets the "parent" edge to the Comment entity by ID.
 func (cuo *CommentUpdateOne) SetParentID(id int) *CommentUpdateOne {
 	cuo.mutation.SetParentID(id)
@@ -708,6 +788,12 @@ func (cuo *CommentUpdateOne) ClearAuthor() *CommentUpdateOne {
 // ClearArticle clears the "article" edge to the Article entity.
 func (cuo *CommentUpdateOne) ClearArticle() *CommentUpdateOne {
 	cuo.mutation.ClearArticle()
+	return cuo
+}
+
+// ClearStudyArticle clears the "studyArticle" edge to the StudyArticle entity.
+func (cuo *CommentUpdateOne) ClearStudyArticle() *CommentUpdateOne {
+	cuo.mutation.ClearStudyArticle()
 	return cuo
 }
 
@@ -942,6 +1028,41 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: article.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.StudyArticleCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.StudyArticleTable,
+			Columns: []string{comment.StudyArticleColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.StudyArticleIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.StudyArticleTable,
+			Columns: []string{comment.StudyArticleColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: studyarticle.FieldID,
 				},
 			},
 		}

@@ -23,6 +23,8 @@ const (
 	EdgeAuthor = "author"
 	// EdgeArticle holds the string denoting the article edge name in mutations.
 	EdgeArticle = "article"
+	// EdgeStudyArticle holds the string denoting the studyarticle edge name in mutations.
+	EdgeStudyArticle = "studyArticle"
 	// EdgeParent holds the string denoting the parent edge name in mutations.
 	EdgeParent = "parent"
 	// EdgeChildren holds the string denoting the children edge name in mutations.
@@ -47,6 +49,13 @@ const (
 	ArticleInverseTable = "article_article"
 	// ArticleColumn is the table column denoting the article relation/edge.
 	ArticleColumn = "article_id"
+	// StudyArticleTable is the table the holds the studyArticle relation/edge.
+	StudyArticleTable = "comment_comment"
+	// StudyArticleInverseTable is the table name for the StudyArticle entity.
+	// It exists in this package in order to avoid circular dependency with the "studyarticle" package.
+	StudyArticleInverseTable = "article_studyarticle"
+	// StudyArticleColumn is the table column denoting the studyArticle relation/edge.
+	StudyArticleColumn = "study_article_id"
 	// ParentTable is the table the holds the parent relation/edge.
 	ParentTable = "comment_comment"
 	// ParentColumn is the table column denoting the parent relation/edge.
@@ -79,6 +88,7 @@ var ForeignKeys = []string{
 	"article_id",
 	"parent_id",
 	"author_id",
+	"study_article_id",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
