@@ -35,9 +35,11 @@ func (m *MockSnsClient) EXPECT() *MockSnsClientMockRecorder {
 }
 
 // PublishMessage mocks base method.
-func (m *MockSnsClient) PublishMessage(comment *data.CommentOutput) {
+func (m *MockSnsClient) PublishMessage(comment *data.CommentOutput) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PublishMessage", comment)
+	ret := m.ctrl.Call(m, "PublishMessage", comment)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // PublishMessage indicates an expected call of PublishMessage.

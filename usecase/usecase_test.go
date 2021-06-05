@@ -33,9 +33,10 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	}
 
 	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
-		func(message interface{}) {
+		func(message interface{}) error {
 			tb.Log("그냥 테스트라서 푸시 알림 패스")
-		}).AnyTimes()
+			return nil
+		}).Return(nil).AnyTimes()
 
 	test.SetUpUsers(repo)
 	test.SetUpArticles(repo)
