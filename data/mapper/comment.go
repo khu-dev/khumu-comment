@@ -7,6 +7,7 @@ import (
     "time"
 )
 
+// Author와 Children을 복제해서 Output으로 리턴
 func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.CommentOutput {
     if src == nil {
         return nil
@@ -26,7 +27,8 @@ func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.Comm
     dest.Content = src.Content
     dest.Kind = src.Kind
     dest.State = src.State
-    // children 처리 안함.
+    // children은 그냥 빈 배열로 저장.
+    // 필요한 경우
     dest.Children = []*data.CommentOutput{}
 
     return dest
@@ -34,6 +36,8 @@ func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.Comm
 
 func CopyCommentOutput(src *data.CommentOutput) *data.CommentOutput {
     dest := *src
+    copiedAuthor := *src.Author
+    dest.Author = &copiedAuthor
     dest.Children = make([]*data.CommentOutput, len(dest.Children))
 
     for i, child := range src.Children {

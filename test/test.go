@@ -178,7 +178,7 @@ func SetUpComments(client *ent.Client) {
 
 	Comment7SomebodyAnonymousFromComment1, err = client.Comment.Create().
 		SetArticleID(1).
-		SetAuthorID("jinsu").
+		SetAuthorID("somebody").
 		SetKind("anonymous").
 		SetContent("테스트로 작성한 somebody의 익명 코멘트").
 		SetParent(Comment1JinsuAnonymous).
