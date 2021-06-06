@@ -1,6 +1,6 @@
 # KHUMU Comment API Server
 
-**khumu-comment**는 MSA로 개발중인 khumu의 comment 관련 API를 제공하는 서버이고, `Echo` 라는 Golang의 웹프렘워크를 바탕으로 개발되고 있다. TDD와 Clean architecture를 바탕으로 개발을 진행 중이다.
+**khumu-comment**는 MSA로 개발중인 khumu의 comment 관련 API를 제공하는 서버이며 `Echo` 라는 Golang의 웹 프레임워크를 바탕으로 개발되고 있다. 주로 사용되는 개발 방법론은 TDD이며 Clean architecture를 바탕으로 개발을 진행 중이다.
 
 API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 
@@ -20,6 +20,8 @@ API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 
 ## 🐎 배포 (CI/CD)
 
+![cicd.png](assets/cicd.png)
+
 1. 현재는 Github Action에서 매 푸시마다 전체 unit test를 진행
 2. 테스트 모두 통과 시 docker image 빌드 후 private으로 관리되는 `khu-dev/devops` 레포지토리에 새 빌드된 이미지 태그를 적용
 3. `ArgoCD` 를 통해 자동 배포하며 이때 `kustomize`를 통해 새 이미지 태그를 활용
@@ -27,8 +29,6 @@ API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 ## 💯 테스트를 진행하는 방법
 
 ### 프로젝트 내의 모든 유닛 테스트
-
-
 
 ```bash
 # 프로젝트의 루트 경로에서
@@ -73,7 +73,7 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 
 ### 1. clean architecture적인 사고를 바탕으로 적절히 적용해나가자
 
-**package, type 다이어그램 추가 예정**
+![dependencies.png](assets/dependencies.png)
 
 가장 상위 계층부터 가장 하위 계층, 그리고 계층과 독립된 config나 container 순으로 정리해보겠습니다.
 
@@ -227,7 +227,7 @@ ent는 기능이 많고 편리한 대신 몇 가지 커맨드를 익혀야한다
 1.  `ent` 커맨드를 통해 정의하려는 schema의 초안을 만든다.
 2. `go generate`를 통해 해당 schema를 바탕으로한 type이나 기능 등등을 자동으로 적용한다.
 
-### `embedding` 을 통한 의존성 주입할 타입 정의하기
+### `embedding` 혹은 `type alias`를 이용해 의존성 주입할 타입 정의하기
 
 type을 기반으로 의존성 주입을 자동화하는 의존성 주입 패키지를 사용하는 경우
 동일 타입이지만 다른 객체를 주입하고 싶은 경우 난감한 경우가 있다. 이런 경우에는 `embedding` 을 통해 원래 타입의
@@ -239,6 +239,7 @@ type을 기반으로 의존성 주입을 자동화하는 의존성 주입 패키
 // embedding을 통해 *echo.Group의 메소드, 필드를 이용할 수 있는 타입 정의
 // 이 타입을 인자로 받는 메소드는 일반적인 *echo.Group 타입과 구별된 RootRouter Type을 이용할 수 있다.
 type RootRouter struct{*echo.Group}
+// 혹은 type RootRout echo.Group 도 가능
 
 func NewRootRouter(echoServer *echo.Echo, ... 인자 생략) *RootRouter{
     g := RootRouter{Group: echoServer.Group("/api")}
