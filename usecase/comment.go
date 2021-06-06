@@ -73,6 +73,31 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		SetContent(commentInput.Content).
 		SetState("exists").
 		Save(context.Background())
+	newComment = uc.Repo.Comment.Query().
+		// 댓글 작성자
+		WithAuthor().
+		WithArticle(func(query *ent.ArticleQuery) {
+			query.WithAuthor()
+		}).
+		WithStudyArticle(func(query *ent.StudyArticleQuery) {
+			query.WithAuthor()
+		}).
+		// 대댓글
+		WithChildren(
+			func(query *ent.CommentQuery) {
+				query.
+					WithAuthor().
+					WithArticle(func(query *ent.ArticleQuery) {
+						query.WithAuthor()
+					}).
+					WithStudyArticle(func(query *ent.StudyArticleQuery) {
+						query.WithAuthor()
+					})
+			},
+		).
+		Where(comment.ID(newComment.ID)).
+		OnlyX(context.TODO())
+
 	if err != nil {
 		logrus.Error(newComment, err)
 		return nil, err
@@ -86,7 +111,6 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error) {
 	logrus.WithField("username", username).Infof("Start List CommentQueryOption(%#v)", opt)
-	ctx := context.Background()
 	query := uc.Repo.Comment.Query()
 	if opt.AuthorUsername != "" {
 		query.Where(comment.HasAuthorWith(khumuuser.ID(opt.AuthorUsername)))
@@ -95,10 +119,10 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 		query.Where(comment.HasArticleWith(article.ID(opt.ArticleId)))
 	}
 
-	parents, err := query.
-		WithChildren().
+	parents, err := appendQueryForComment(query).
 		Where(comment.Not(comment.HasParent())).
-		All(ctx)
+		All(context.TODO())
+
 	if err != nil {
 		logrus.Errorf("comments 쿼리 도중 오류 발생. QueryOption(%+v)", opt)
 		return nil, err
@@ -118,17 +142,11 @@ func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOpti
 func (uc *CommentUseCase) Get(username string, id int) (*data.CommentOutput, error) {
 	logrus.WithField("username", username).Infof("Start Get Comment(id:%#v)", id)
 	ctx := context.Background()
-	comment, err := uc.Repo.Comment.Query().
-		WithAuthor(func(query *ent.KhumuUserQuery) {
-			query.Select(khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldState)
-		}).
-		WithChildren(func(query *ent.CommentQuery) {
-			query.WithAuthor(func(query *ent.KhumuUserQuery) {
-				query.Select(khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldState)
-			})
-		}).
+
+	comment, err := appendQueryForComment(uc.Repo.Comment.Query()).
 		Where(comment.ID(id)).
 		Only(ctx)
+
 	if err != nil {
 		logrus.Errorf("comment 쿼리 도중 오류 발생.")
 		return nil, err
@@ -142,14 +160,14 @@ func (uc *CommentUseCase) Get(username string, id int) (*data.CommentOutput, err
 func (uc *CommentUseCase) Update(username string, id int, opt map[string]interface{}) (*data.CommentOutput, error) {
 	logrus.WithField("username", username).WithField("id", id).Infof("Start Get CommentQueryOption(%#v)", opt)
 	ctx := context.Background()
-	comment, err := uc.Repo.Comment.Get(ctx, id)
+	commentExisting, err := uc.Repo.Comment.Get(ctx, id)
 	if err != nil {
 		logrus.Errorf("Comment(%d)를 찾는 도중 에러가 발생했습니다.", id)
 		return nil, err
 	}
 	// pk로 검색하게 하고 내용만 바꿔놓으면 저장 안 됨.
 	// JPA랑 다름.
-	updater := uc.Repo.Comment.UpdateOne(comment)
+	updater := uc.Repo.Comment.UpdateOne(commentExisting)
 
 	contentValue, contentExists := opt["content"]
 	if contentExists {
@@ -159,11 +177,14 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	if kindExists {
 		updater.SetKind(kindValue.(string))
 	}
-	commentUpdated, err := updater.Save(ctx)
-
+	_, err = updater.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	commentUpdated, err := appendQueryForComment(uc.Repo.Comment.Query()).
+		Where(comment.ID(id)).
+		Only(ctx)
 
 	output := uc.modelToOutput(username, commentUpdated, nil)
 	uc.hideFieldOfCommentOutput(username, output)
@@ -201,44 +222,16 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 	return nil
 }
 
-func (uc *CommentUseCase) listParentWithChildren(allComments []*data.CommentOutput) []*data.CommentOutput {
-	var parents []*data.CommentOutput
-
-	for _, comment := range allComments {
-		if comment.Parent == nil {
-			parents = append(parents, comment)
-		}
-	}
-	for _, comment := range allComments {
-		if comment.Parent != nil {
-
-		}
-	}
-
-	return parents
-}
-
 // CommentOutput.Children까지 재귀적으로 CommentOutput으로 만든다.
 // mapper의 단순 mapping 작업 뿐만 아니라 서비스 로직이 깃든다.
 // username: 요청자
 // comment: 원본 모델 댓글
 // output: 결과물 output 댓글. create if nil
 func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, outputRef *data.CommentOutput) *data.CommentOutput {
-	ctx := context.Background()
 	output := outputRef
 	if output == nil {
 		output = &data.CommentOutput{}
 	}
-
-	comment.Edges.StudyArticle = comment.QueryStudyArticle().WithAuthor(func(query *ent.KhumuUserQuery) {
-		query.Select(khumuuser.FieldID)
-	}).Select("id").FirstX(ctx)
-
-	comment.Edges.Article = comment.QueryArticle().WithAuthor(func(query *ent.KhumuUserQuery) {
-		query.Select(khumuuser.FieldID)
-	}).Select("id").FirstX(ctx)
-
-	comment.Edges.Author = comment.QueryAuthor().Select(khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldState).OnlyX(ctx)
 
 	mapper.CommentModelToOutput(comment, output)
 	if comment.Edges.Article != nil {
