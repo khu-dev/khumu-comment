@@ -62,10 +62,60 @@ func TestCommentUseCase_Create(t *testing.T) {
 }
 
 func TestCommentUseCase_Get(t *testing.T) {
-	t.Run("기명 댓글", func(t *testing.T) {
+	t.Run("기명 댓글과 그 대댓글들", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
+		deletedAnonymousCommentFromComment1, err := repo.Comment.Create().
+			SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
+			SetAuthorID(test.UserPuppy.ID).
+			SetContent("테스트 댓글").
+			SetKind("anonymous").
+			SetState("deleted").
+			Save(context.TODO())
+		assert.NoError(t, err)
+
+		deletedNamedCommentFromComment1, err := repo.Comment.Create().
+			SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
+			SetAuthorID(test.UserPuppy.ID).
+			SetContent("테스트 댓글").
+			SetKind("named").
+			SetState("deleted").
+			Save(context.TODO())
+		assert.NoError(t, err)
+
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, test.Comment1JinsuAnonymous.ID)
+		assert.Greater(t, len(comment.Children), 0)
+		for _, child := range comment.Children {
+			switch child.ID{
+			// 본인의 익명 대댓글
+			case test.Comment5JinsuAnonymousFromComment1.ID:
+				assert.True(t, child.IsAuthor)
+				assert.Equal(t, AnonymousCommentUsername, child.Author.Username)
+				assert.Equal(t, AnonymousCommentNickname, child.Author.Nickname)
+			// 본인의 기명 대댓글
+			case test.Comment6JinsuNamedFromComment1.ID:
+				assert.True(t, child.IsAuthor)
+				assert.Equal(t, test.UserJinsu.ID, child.Author.Username)
+				assert.Equal(t, test.UserJinsu.Nickname, child.Author.Nickname)
+			// 타인의 익명 대댓글
+			case test.Comment7SomebodyAnonymousFromComment1.ID:
+				assert.False(t, child.IsAuthor)
+				assert.Equal(t, AnonymousCommentUsername, child.Author.Username)
+				assert.Equal(t, AnonymousCommentNickname, child.Author.Nickname)
+			// 타인의 삭제된 익명 대댓글
+			case deletedAnonymousCommentFromComment1.ID:
+				assert.False(t, child.IsAuthor)
+				assert.Equal(t, DeletedCommentUsername, child.Author.Username)
+				assert.Equal(t, DeletedCommentNickname, child.Author.Nickname)
+				assert.Equal(t, child.Content, DeletedCommentContent)
+			// 타인의 삭제된 기명 대댓글
+			case deletedNamedCommentFromComment1.ID:
+				assert.False(t, child.IsAuthor)
+				assert.Equal(t, DeletedCommentUsername, child.Author.Username)
+				assert.Equal(t, DeletedCommentNickname, child.Author.Nickname)
+				assert.Equal(t, child.Content, DeletedCommentContent)
+			}
+		}
 		assert.NoError(t, err)
 		// 기본적으로는 익명 댓글임.
 		assert.Equal(t, AnonymousCommentUsername, comment.Author.Username)
@@ -105,26 +155,82 @@ func TestCommentUseCase_Get(t *testing.T) {
 func TestLikeCommentUseCase_List(t *testing.T) {
 	BeforeCommentUseCaseTest(t)
 	defer A(t)
+	deletedAnonymousCommentFromComment1, err := repo.Comment.Create().
+		SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
+		SetAuthorID(test.UserPuppy.ID).
+		SetContent("테스트 댓글").
+		SetKind("anonymous").
+		SetState("deleted").
+		Save(context.TODO())
+	assert.NoError(t, err)
+
+	deletedNamedCommentFromComment1, err := repo.Comment.Create().
+		SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
+		SetAuthorID(test.UserPuppy.ID).
+		SetContent("테스트 댓글").
+		SetKind("named").
+		SetState("deleted").
+		Save(context.TODO())
+	assert.NoError(t, err)
+
 	comments, err := commentUseCase.List(test.UserJinsu.ID, &repository.CommentQueryOption{})
 	assert.NoError(t, err)
 	for _, comment := range comments {
-		if comment.Kind == "named" {
+		if comment.State == "deleted" {
+			assert.Equal(t, DeletedCommentNickname, comment.Author.Username)
+			assert.Equal(t, DeletedCommentContent, comment.Content)
+		} else{
+			if comment.Kind == "named" {
 			assert.NotEqual(t, AnonymousCommentUsername, comment.Author.Username)
 			assert.NotEqual(t, AnonymousCommentNickname, comment.Author.Nickname)
 			assert.NotEqual(t, DeletedCommentNickname, comment.Author.Username)
 			assert.NotEqual(t, DeletedCommentUsername, comment.Author.Nickname)
-		} else if comment.Kind == "anonymous" {
-			assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
-		} else if comment.Content == "deleted" {
-			assert.Equal(t, DeletedCommentNickname, comment.Author.Username)
-			assert.Equal(t, DeletedCommentContent, comment.Content)
+			} else if comment.Kind == "anonymous" {
+				assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
+			}
 		}
+
 		// jinsu의 댓글들
 		if comment.ID == test.Comment1JinsuAnonymous.ID ||
 			comment.ID == test.Comment2JinsuNamed.ID ||
 			comment.ID == test.Comment6JinsuNamedFromComment1.ID ||
 			comment.ID == test.Comment5JinsuAnonymousFromComment1.ID {
 			assert.True(t, comment.IsAuthor)
+		}
+
+		// 대표적으로 Comment1의 Children들 테스트
+		if comment.ID == test.Comment1JinsuAnonymous.ID {
+			for _, child := range comment.Children {
+				switch child.ID{
+				// 본인의 익명 대댓글
+				case test.Comment5JinsuAnonymousFromComment1.ID:
+					assert.True(t, child.IsAuthor)
+					assert.Equal(t, AnonymousCommentUsername, child.Author.Username)
+					assert.Equal(t, AnonymousCommentNickname, child.Author.Nickname)
+				// 본인의 기명 대댓글
+				case test.Comment6JinsuNamedFromComment1.ID:
+					assert.True(t, child.IsAuthor)
+					assert.Equal(t, test.UserJinsu.ID, child.Author.Username)
+					assert.Equal(t, test.UserJinsu.Nickname, child.Author.Nickname)
+				// 타인의 익명 대댓글
+				case test.Comment7SomebodyAnonymousFromComment1.ID:
+					assert.False(t, child.IsAuthor)
+					assert.Equal(t, AnonymousCommentUsername, child.Author.Username)
+					assert.Equal(t, AnonymousCommentNickname, child.Author.Nickname)
+				// 타인의 삭제된 익명 대댓글
+				case deletedAnonymousCommentFromComment1.ID:
+					assert.False(t, child.IsAuthor)
+					assert.Equal(t, DeletedCommentUsername, child.Author.Username)
+					assert.Equal(t, DeletedCommentNickname, child.Author.Nickname)
+					assert.Equal(t, child.Content, DeletedCommentContent)
+				// 타인의 삭제된 기명 대댓글
+				case deletedNamedCommentFromComment1.ID:
+					assert.False(t, child.IsAuthor)
+					assert.Equal(t, DeletedCommentUsername, child.Author.Username)
+					assert.Equal(t, DeletedCommentNickname, child.Author.Nickname)
+					assert.Equal(t, child.Content, DeletedCommentContent)
+				}
+			}
 		}
 	}
 }

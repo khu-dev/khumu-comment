@@ -119,7 +119,14 @@ func (uc *CommentUseCase) Get(username string, id int) (*data.CommentOutput, err
 	logrus.WithField("username", username).Infof("Start Get Comment(id:%#v)", id)
 	ctx := context.Background()
 	comment, err := uc.Repo.Comment.Query().
-		WithChildren().
+		WithAuthor(func(query *ent.KhumuUserQuery) {
+			query.Select(khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldState)
+		}).
+		WithChildren(func(query *ent.CommentQuery) {
+			query.WithAuthor(func(query *ent.KhumuUserQuery) {
+				query.Select(khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldState)
+			})
+		}).
 		Where(comment.ID(id)).
 		Only(ctx)
 	if err != nil {
@@ -224,14 +231,14 @@ func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, o
 	}
 
 	comment.Edges.StudyArticle = comment.QueryStudyArticle().WithAuthor(func(query *ent.KhumuUserQuery) {
-		query.Select("username")
+		query.Select(khumuuser.FieldID)
 	}).Select("id").FirstX(ctx)
 
 	comment.Edges.Article = comment.QueryArticle().WithAuthor(func(query *ent.KhumuUserQuery) {
-		query.Select("username")
+		query.Select(khumuuser.FieldID)
 	}).Select("id").FirstX(ctx)
 
-	comment.Edges.Author = comment.QueryAuthor().Select("username").FirstX(ctx)
+	comment.Edges.Author = comment.QueryAuthor().Select(khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldState).OnlyX(ctx)
 
 	mapper.CommentModelToOutput(comment, output)
 	if comment.Edges.Article != nil {
@@ -244,18 +251,20 @@ func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, o
 		}
 	}
 
+	logrus.Warn(username, comment.Edges.Author.ID )
 	if username == comment.Edges.Author.ID {
 		output.IsAuthor = true
 	}
 
 	output.CreatedAt = mapper.NewCreatedAtExpression(comment.CreatedAt)
 	output.LikeCommentCount = uc.getLikeCommentCount(comment.ID)
+	output.Liked = uc.getLiked(comment.ID)
+
 	if comment.Edges.Children != nil {
-		for _, c := range comment.Edges.Children {
-			output.Children = append(output.Children, uc.modelToOutput(username, c, nil))
+		for _, child := range comment.Edges.Children {
+			output.Children = append(output.Children, uc.modelToOutput(username, child, nil))
 		}
 	}
-	output.Liked = uc.getLiked(comment.ID)
 
 	return output
 }
