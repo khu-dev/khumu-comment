@@ -18,14 +18,14 @@ done
 # Options
 # package full path
 # interface types
-mockgen -package repository -destination repository/mock.go \
-github.com/khu-dev/khumu-comment/repository \
-EventMessageRepository,CommentRepositoryInterface,LikeCommentRepositoryInterface
+# mockgen -package repository -destination repository/mock.go \
+# github.com/khu-dev/khumu-comment/repository \
+# EventMessageRepository,CommentRepositoryInterface,LikeCommentRepositoryInterface
 
 # service에 대한 mockgen
 # Options
 # package full path
 # interface types
-mockgen -package usecase -destination usecase/mock.go \
-github.com/khu-dev/khumu-comment/usecase \
-CommentUseCaseInterface,LikeCommentUseCaseInterface
+# mockgen -package usecase -destination usecase/mock.go \
+# github.com/khu-dev/khumu-comment/usecase \
+# CommentUseCaseInterface,LikeCommentUseCaseInterface

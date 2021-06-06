@@ -4,22 +4,31 @@
 
 API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 
-## ⚙️설정
+## ⚙️ 설정하는 방법
 
-`config/{{KHUMU_ENVIRONMENT}}.yaml` 을 통해 필요한 설정을 작성한다. KHUMU_ENVIRONMENT의 기본값은 `default`이다. 따라서 기본적으로는 `config/default.yaml`을 설정으로 로드한다.
+설정 파일 적용은 Go의 유명한 설정 관리 라이브러리인 [spf13/viper](https://github.com/spf13/viper)을 쿠뮤 서비스에서 좀 더 편리하게 사용하기 위해 한 번 래핑한 [umi0410/ezconfig](https://github.com/umi0410/ezconfig)를 이용한다. 기본적으로는 `config/default.yaml`을 이용하며 필요에 따라 `KHUMU_` prefix가 붙은 환경 변수를 통해 override할 수도 있고 `config/{{KHUMU_ENVIRONMENT}}.yaml`의 설정파일로 override할 수 있다. 자세한 사항은 [umi0410/ezconfig](https://github.com/umi0410/ezconfig)에서 확인해볼 수 있다.
 
-`KHUMU_CONFIG_PATH` 환경변수를 통해 `config` 이외의 config file이 위치한 path를 설정할 수 있다. 단순히 상대 경로를 이용하기에는 test code를 통한 테스트 시에 상대 경로가 올바르게 지정되지 못한다는 이슈가 있다.
-따라서 개발자들의 경우 편의에 따라 자신의 local에서의 config path 경로를 config 패키지의 `devKhumuConfigPath`에 추가하도록 한다.
+**`KHUMU_CONFIG_PATH` 환경변수를 통해 `config` 이외의 config file이 위치한 path를 설정**할 수 있다. 단순히 `config`라는 상대 경로만을 이용하면 간혹 test code를 진행하는 과정에 test code를 실행하는 위치에 따라 working directory가 달라지면서 올바르게 config 파일들을 찾지 못하는 경우가 있기 때문이다.
 
-`KHUMU_SECRET` 환경변수를 통해 jwt를 verify할 secret을 설정한다.
+(설정 예시: `KHUMU_CONFIG_PATH=/home/jinsu/khumu-comments/config`)
+
+### 환경 변수 정리
+
+* `KHUMU_SECRET`: 환경변수를 통해 jwt를 verify할 secret을 설정한다.
+* `KHUMU_CONFIG_PATH` : 상대 경로 `config` 이외의 경로에서 config file을 찾을 수 있도록 한다.
+* 추가적으로 `KHUMU_` prefix를 통해 환경 변수로 Config를 오버라이드 할 수 있다.
+
+## 🐎 배포 (CI/CD)
+
+1. 현재는 Github Action에서 매 푸시마다 전체 unit test를 진행
+2. 테스트 모두 통과 시 docker image 빌드 후 private으로 관리되는 `khu-dev/devops` 레포지토리에 새 빌드된 이미지 태그를 적용
+3. `ArgoCD` 를 통해 자동 배포하며 이때 `kustomize`를 통해 새 이미지 태그를 활용
 
 ## 💯 테스트를 진행하는 방법
 
 ### 프로젝트 내의 모든 유닛 테스트
 
-현재는 Github Action에서 매 푸시마다 자동으로 전체에 대한 unit test를 진행하고,
-이것이 모두 통과하면 docker image 빌드 후 private devops 레포지토리에 새 빌드를 적용시키고,
-`ArgoCD` 를 통해 자동 배포가 된다.
+
 
 ```bash
 # 프로젝트의 루트 경로에서
@@ -62,30 +71,30 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
 
 ## 🚀 개발 방향성 및 원칙
 
-### 1. clean architecture를 적절히 적용하자.
+### 1. clean architecture적인 사고를 바탕으로 적절히 적용해나가자
 
-![khumu-comment-class-diagram.png](khumu-comment-class-diagram.png)
+**package, type 다이어그램 추가 예정**
 
 가장 상위 계층부터 가장 하위 계층, 그리고 계층과 독립된 config나 container 순으로 정리해보겠습니다.
 
-* **model**
+* **model** 역할을 하는 `ent/schema`
   * khumu의 comment라는 도메인에서 사용하는 모델을 정의합니다.
   * 아무런 다른 계층도 참조하지 않는 최상위 계층입니다.
   * DB Table에 활용되거나 API Response 포함되는 등 다양하게 사용될 수 있지만, 이 계층은 하위 계층들이 자신을 어떻게 사용하는지 전혀 알 필요가 없습니다.
-  * 순수하게 우리 도메인의 코드로 정의되어 있습니다.
-* **usecase**
+* **usecase** 혹은 **service**
   * 대부분의 비즈니스 로직이 이곳에 위치합니다.
+    * e.g. 댓글 생성 시 message queue에 message를 publish. 단 이 message queue는 사실상 kafka가 될 수도 있고, sqs, sns, redis 등이 될 수도 있다. 우리는 구체화된 것에 의존하지 않고 추상적인 것에 의존하기 때문이다. (하지만 현재는 다른 message queue를 사용할 계획이 없어 SNS(+SQS의 조합)에 직접 의존해 개발 중이다.)
     * e.g. 익명 댓글의 작성자가 본인이면 `is_author: true`로 변환
-    * e.g. 단순한 array 형태의 댓글을 children 댓글을 포함한 parent 댓글들의 array로 변환합니다.
     * e.g. 익명 댓글의 경우 작성자의 username와 nickname을 감춥니다.
   * model과 마찬가지로 순수 우리 도메인의 코드로 정의되어 있습니다.
   * 하위 계층인 repository에 의존합니다. 하지만 의존성 역전 원리(DIP)에 의해 하위 계층의 구현체에 의존하는 것이 아니라 추상적인 repository interface에 의존합니다.
-  * usecase가 의존성 역전이 되는 경우는 아직 없지만, 하위 계층의 test를 위해 mock을 지원해야할 수 있기 때문에 interface로 사용 중입니다.
-* **repository**
-  * 외부 Data source와 직접 작업을 하는 계층입니다. 
-  * `interface`와 그에 대한 구현체를 정의함으로써 유연하게 동작합니다. (다형성과 의존성 역전)
-    * `inferface`를 정의함으로써 `MySQL`, `SQLite3`, `Memory`의 `array`나 `map` 그 어떤 걸 사용하든 유연하게 대처할 수 있습니다.
-  * repository를 이용하는 계층은 직접 구현체를 이용하지 않고 interface만을 이용하기 때문에 구현체가 변경되어도 코드를 변경할 필요가 없습니다.
+  * 하위 계층인 external한 message queue혹은 aws sns와 같은 것들에 의존합니다. repository와 같이 의존성 역전 원리에 의해 구현체에 의존하지 않고 추상적인 interface에 의존합니다. interface에 의존하기 때문에 유닛 테스트 진행 시 mocking을 적절히 이용하기 편합니다.
+* **repository** (일반적으로 DAO라고 부르는 계층)
+  * ~~외부 Data source와 직접 작업을 하는 계층입니다.~~
+  * ~~`interface`와 그에 대한 구현체를 정의함으로써 유연하게 동작합니다. (다형성과 의존성 역전)~~
+    * ~~`inferface`를 정의함으로써 `MySQL`, `SQLite3`, `Memory`의 `array`나 `map` 그 어떤 걸 사용하든 유연하게 대처할 수 있습니다.~~
+  * ~~repository를 이용하는 계층은 직접 구현체를 이용하지 않고 interface만을 이용하기 때문에 구현체가 변경되어도 코드를 변경할 필요가 없습니다.~~
+  * 과거 gorm을 이용할 땐 repository 작업을 직접 구현하다보니 위의 취소선으로 표시된 작업들이 필요했지만 현재는 [ent/ent](https://github.com/ent/ent)라는 라이브러리를 이용하게 되면서 repository 계층에 대한 추상화가 자동으로 진행되고 테스트 또한 거의 필요 없어졌음.
 * **http**
   * 주로 http 통신 자체에 대한 로직을 담고있습니다. repository와 함께 가장 하위 계층입니다.
   * Router, Middleware, Authentication, Authorization 와 같은 작업을 다룹니다.
@@ -132,38 +141,17 @@ $ go test ./repository/ -run TestSetUp TestLikeCommentRepositoryGorm_Create -v
     }
     ```
 
-  * `github.com/khu-dev/khumu-comment/test`  패키지에 초기 데이터 형식과 필요한 몇 가지 함수를 정의해놓았다.
 
-
+* (고민 중) 불필요한 참조 제약 조건 제거
+  * 현재는 댓글 엔티티에 참조 제약 조건으로 작성자는 `KhumuUser`, 게시글은 `Article`을 참조하게 설정되어있다.
+    * 댓글을 테스트 하기 위해서는 `KhumuUser`와 `Article` 엔티티 데이터를 만들어야 함.
+    * 추가적으로 `KhumuUser` 엔티티를 만들기 위해선 `Group` 엔티티를 만들어야 함
+    * 추가적으로 `Article` 엔티티를 만들기 위해선 `Board` 엔티티를 만들어야함.
+    * ... 이런 과정이 많다.
+  * 위와 같은 불편을 없애기 위해 불필요한 참조 제약 조건은 없애고 DB Indexing만 유지해 간결하게 데이터를 유지하고, 테스트도 진행할 수 있게 하면 어떨까 싶다.
+  * 애초에 마이크로서비스 간에는 분리된 DB를 이용하고 필요한 경우 message queue 같은 서비스를 통해 event를 받아 자기 마이크로서비스 DB에 replication을 진행하는 경우를 많이 이용하는 것 같은데 애초에 이런 작업을 수행하면 DB의 참조 제약 조건을 굳이 걸 필요가 없지 않을까 싶기도 하다. 댓글은 게시물과 유저를 참조하는데 참조 무결성이 위배된다고해서 그닥 문제는 없기 때문.
 
 ## 📚 Golang 개발 이야기
-
-### `embedding` 을 통한 의존성 주입할 타입 정의하기
-
-type을 기반으로 의존성 주입을 자동화하는 의존성 주입 패키지를 사용하는 경우
-동일 타입이지만 다른 객체를 주입하고 싶은 경우 난감한 경우가 있다. 이런 경우에는 `embedding` 을 통해 원래 타입의
-메소드와 필드를 모두 사용하면서 개별적인 type으로 이용할 수 있다. 예를 들어 router에서는 자식 router group은 parent router group을
-인자로 받고싶은데, 그냥 `*echo.Group` 을 주입받겠다고 정의하면, 어떤 `*echo.Group` 을 주입받게 될 지 모른다. 따라서 아래와 같이
-`embedding` 을 통해 원래의 메소드와 필드를 모두 사용하면서 주입받을 새로운 타입을 정의할 수 있다.
-
-```go
-// embedding을 통해 *echo.Group의 메소드, 필드를 이용할 수 있는 타입 정의
-// 이 타입을 인자로 받는 메소드는 일반적인 *echo.Group 타입과 구별된 RootRouter Type을 이용할 수 있다.
-type RootRouter struct{*echo.Group}
-
-func NewRootRouter(echoServer *echo.Echo, ... 인자 생략) *RootRouter{
-    g := RootRouter{Group: echoServer.Group("/api")}
-    //... 작업 생략
-    return &g
-}
-
-func NewCommentRouter(root *RootRouter, ... 인자 생략) *CommentRouter {
-    // 특이하게 Type명과 이용하고자하는 메소드 명이 같아서 이렇게 사용할 뿐 원래는 embed 시 root.Group("/comments")로 사용 가능 
-    group := root.Group.Group("/comments") 
-    commentRouter := &CommentRouter{group, ... 인자 생략}
-    return commentRouter
-}
-```
 
 ### `interface` 를 통해 mock type을 이용하여 의존성 주입이 필요 없는 테스트하기
 
@@ -209,20 +197,67 @@ func NewCommentRouter(root *RootRouter, uc CommentUseCaseInterface) *CommentRout
 }
 ```
 
-## How to contribute
+### Gomock을 이용한 편리한 mocking
 
-microservice로 진행되는 프로젝트이며 아직 local에서 완전히 comment 서버만을 돌리기 위한 초기 환경 구축은 지원되지 않고 있기 때문에 기여는 쉽지 않을 것으로 예상됩니다.
+```shell
+$ mockgen -package repository -destination usecase/mock.go \
+github.com/khu-dev/khumu-comment/usecase \
+CommentUseCaseInterface,LikeCommentUseCaseInterface
+```
 
+(추가 예정) 우선은 위와 같은 커맨드를 이용해 자동으로 mock type을 만들 수 있다.
 
----
+### ORM 라이브러리 `ent` 사용법
 
-## Gorm => Entgo 적용 중
+> 기존에는 [go-gorm](https://github.com/go-gorm/gorm)을 이용했지만 많은 불편을 느꼈고 마침 여러 Golang 커뮤니티에서 [ent/ent](https://github.com/ent/ent)를 극찬했기에 ent를 이용하는 방식으로 개선했다.
 
 ```shell
 # Comment에 대한 Schema를 정의하기 위한 초안
 $ go run entgo.io/ent/cmd/ent init Comment
+# 혹은 간단히
+$ ent init Comment
 
 # Schema 수정 후에는 항상 잊지 말고 아래 명령어를 통해 변경 사항이 반영된 코드를 Generate할 것.
 # 매 Compile 마다 수행시킬 수도 있지만, 지연시간이 수 초 걸려서 매번 하면 번거로울 듯.
 $ go generate ./ent
 ```
+
+ent는 기능이 많고 편리한 대신 몇 가지 커맨드를 익혀야한다.
+
+1.  `ent` 커맨드를 통해 정의하려는 schema의 초안을 만든다.
+2. `go generate`를 통해 해당 schema를 바탕으로한 type이나 기능 등등을 자동으로 적용한다.
+
+### `embedding` 을 통한 의존성 주입할 타입 정의하기
+
+type을 기반으로 의존성 주입을 자동화하는 의존성 주입 패키지를 사용하는 경우
+동일 타입이지만 다른 객체를 주입하고 싶은 경우 난감한 경우가 있다. 이런 경우에는 `embedding` 을 통해 원래 타입의
+메소드와 필드를 모두 사용하면서 개별적인 type으로 이용할 수 있다. 예를 들어 router에서는 자식 router group은 parent router group을
+인자로 받고싶은데, 그냥 `*echo.Group` 을 주입받겠다고 정의하면, 어떤 `*echo.Group` 을 주입받게 될 지 모른다. 따라서 아래와 같이
+`embedding` 을 통해 원래의 메소드와 필드를 모두 사용하면서 주입받을 새로운 타입을 정의할 수 있다.
+
+```go
+// embedding을 통해 *echo.Group의 메소드, 필드를 이용할 수 있는 타입 정의
+// 이 타입을 인자로 받는 메소드는 일반적인 *echo.Group 타입과 구별된 RootRouter Type을 이용할 수 있다.
+type RootRouter struct{*echo.Group}
+
+func NewRootRouter(echoServer *echo.Echo, ... 인자 생략) *RootRouter{
+    g := RootRouter{Group: echoServer.Group("/api")}
+    //... 작업 생략
+    return &g
+}
+
+func NewCommentRouter(root *RootRouter, ... 인자 생략) *CommentRouter {
+    // 특이하게 Type명과 이용하고자하는 메소드 명이 같아서 이렇게 사용할 뿐 원래는 embed 시 root.Group("/comments")로 사용 가능 
+    group := root.Group.Group("/comments") 
+    commentRouter := &CommentRouter{group, ... 인자 생략}
+    return commentRouter
+}
+```
+
+## How to contribute
+
+Maintainer: [@umi0410](https://github.com/umi0410) (dev.umijs@gmail.com)
+
+1. 이슈 생성 or 개인적인 연락
+2. Fork 후 PR 작성
+
