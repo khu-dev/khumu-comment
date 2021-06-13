@@ -12,7 +12,7 @@ import (
 
 var (
 	CommentCreateMessageAttribute = map[string]*sns.MessageAttributeValue{
-		"resource_kind": {DataType: aws.String("String"), StringValue: aws.String("comments")},
+		"resource_kind": {DataType: aws.String("String"), StringValue: aws.String("comment")},
 		"event_kind":    {DataType: aws.String("String"), StringValue: aws.String("create")},
 	}
 )
