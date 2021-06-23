@@ -29,7 +29,9 @@ func appendQueryForComment(query *ent.CommentQuery) *ent.CommentQuery {
 						query.WithAuthor()
 					})
 			},
-		)
+		).
+		// 부모 댓글
+		WithParent()
 
 	return query
 }

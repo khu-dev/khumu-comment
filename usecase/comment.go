@@ -70,6 +70,7 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	newComment, err := uc.Repo.Comment.Create().
 		SetNillableArticleID(commentInput.Article).
 		SetNillableStudyArticleID(commentInput.StudyArticle).
+		SetNillableParentID(commentInput.Parent).
 		SetAuthorID(commentInput.Author).
 		SetContent(commentInput.Content).
 		SetState("exists").
@@ -260,8 +261,10 @@ func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, o
 			output.IsAuthorOfArticle = true
 		}
 	}
+	if comment.Edges.Parent != nil {
+		output.Parent = &comment.Edges.Parent.ID
+	}
 
-	logrus.Warn(username, comment.Edges.Author.ID)
 	if username == comment.Edges.Author.ID {
 		output.IsAuthor = true
 	}
