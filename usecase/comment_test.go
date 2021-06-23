@@ -13,14 +13,15 @@ import (
 )
 
 func TestCommentUseCase_Create(t *testing.T) {
-	t.Run("My anonymous article comment", func(t *testing.T) {
+	t.Run("jinsu의 익명 Article 댓글", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
 
-		tmp, _ := commentUseCase.Create(&data.CommentInput{
+		tmp, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[0].ID,
 			Content: "테스트 댓글",
+			Kind: "anonymous",
 		})
 
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
@@ -31,10 +32,29 @@ func TestCommentUseCase_Create(t *testing.T) {
 		assert.Equal(t, "테스트 댓글", comment.Content)
 	})
 
+	t.Run("jinsu의 기명 Article 댓글", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+
+		tmp, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
+			Author:  test.UserJinsu.ID,
+			Article: &test.Articles[0].ID,
+			Content: "테스트 기명 댓글",
+			Kind:    "named",
+		})
+
+		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
+		assert.NoError(t, err)
+		// 기본적으로는 익명 댓글임.
+		assert.Equal(t, test.UserJinsu.ID, comment.Author.Username)
+		assert.Equal(t, test.UserJinsu.Nickname, comment.Author.Nickname)
+		assert.Equal(t, "테스트 기명 댓글", comment.Content)
+	})
+
 	t.Run("Study article comment", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
-		newComment, _ := commentUseCase.Create(&data.CommentInput{
+		newComment, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[0].ID,
 			Content: "테스트 댓글",
@@ -52,7 +72,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 	t.Run("실패) 커뮤니티 article도 study article도 아닌 경우", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
-		newComment, err := commentUseCase.Create(&data.CommentInput{
+		newComment, err := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Content: "테스트 댓글",
 		})
@@ -86,7 +106,7 @@ func TestCommentUseCase_Get(t *testing.T) {
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, test.Comment1JinsuAnonymous.ID)
 		assert.Greater(t, len(comment.Children), 0)
 		for _, child := range comment.Children {
-			switch child.ID{
+			switch child.ID {
 			// 본인의 익명 대댓글
 			case test.Comment5JinsuAnonymousFromComment1.ID:
 				assert.True(t, child.IsAuthor)
@@ -179,12 +199,12 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 		if comment.State == "deleted" {
 			assert.Equal(t, DeletedCommentNickname, comment.Author.Username)
 			assert.Equal(t, DeletedCommentContent, comment.Content)
-		} else{
+		} else {
 			if comment.Kind == "named" {
-			assert.NotEqual(t, AnonymousCommentUsername, comment.Author.Username)
-			assert.NotEqual(t, AnonymousCommentNickname, comment.Author.Nickname)
-			assert.NotEqual(t, DeletedCommentNickname, comment.Author.Username)
-			assert.NotEqual(t, DeletedCommentUsername, comment.Author.Nickname)
+				assert.NotEqual(t, AnonymousCommentUsername, comment.Author.Username)
+				assert.NotEqual(t, AnonymousCommentNickname, comment.Author.Nickname)
+				assert.NotEqual(t, DeletedCommentNickname, comment.Author.Username)
+				assert.NotEqual(t, DeletedCommentUsername, comment.Author.Nickname)
 			} else if comment.Kind == "anonymous" {
 				assert.Equal(t, AnonymousCommentNickname, comment.Author.Nickname)
 			}
@@ -201,7 +221,7 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 		// 대표적으로 Comment1의 Children들 테스트
 		if comment.ID == test.Comment1JinsuAnonymous.ID {
 			for _, child := range comment.Children {
-				switch child.ID{
+				switch child.ID {
 				// 본인의 익명 대댓글
 				case test.Comment5JinsuAnonymousFromComment1.ID:
 					assert.True(t, child.IsAuthor)

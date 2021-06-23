@@ -2,6 +2,7 @@
 // 필요한 부분만 따로 따로 수행
 
 package http
+
 //
 //import (
 //	"bytes"

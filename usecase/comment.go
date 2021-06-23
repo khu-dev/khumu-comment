@@ -23,11 +23,11 @@ var (
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
 	ErrUnAuthorized                 = errors.New("권한이 존재하지 않습니다")
 	ErrSelfLikeComment              = errors.New("본인의 댓글은 좋아요할 수 없습니다")
-	ErrNoArticleIdInput = errors.New("게시물 ID를 입력하십시오")
+	ErrNoArticleIdInput             = errors.New("게시물 ID를 입력하십시오")
 )
 
 type CommentUseCaseInterface interface {
-	Create(commentInput *data.CommentInput) (*data.CommentOutput, error)
+	Create(username string, commentInput *data.CommentInput) (*data.CommentOutput, error)
 	List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error)
 	Get(username string, id int) (*data.CommentOutput, error)
 	Update(username string, id int, opt map[string]interface{}) (*data.CommentOutput, error)
@@ -54,7 +54,7 @@ func NewCommentUseCase(
 	return &CommentUseCase{Repo: repo, SnsClient: snsClient}
 }
 
-func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.CommentOutput, error) {
+func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInput) (*data.CommentOutput, error) {
 	logrus.Infof("Start Create Comment(%#v)", commentInput)
 	//articleId := 1
 	if commentInput.Author == "" {
@@ -63,6 +63,7 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 	}
 
 	if commentInput.Article == nil && commentInput.StudyArticle == nil {
+		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
 		return nil, ErrNoArticleIdInput
 	}
 
@@ -72,8 +73,15 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		SetAuthorID(commentInput.Author).
 		SetContent(commentInput.Content).
 		SetState("exists").
+		SetKind(commentInput.Kind).
 		Save(context.Background())
-	newComment = uc.Repo.Comment.Query().
+
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	newComment, err = uc.Repo.Comment.Query().
 		// 댓글 작성자
 		WithAuthor().
 		WithArticle(func(query *ent.ArticleQuery) {
@@ -82,31 +90,40 @@ func (uc *CommentUseCase) Create(commentInput *data.CommentInput) (*data.Comment
 		WithStudyArticle(func(query *ent.StudyArticleQuery) {
 			query.WithAuthor()
 		}).
-		// 대댓글
+		// 대댓글. 근데 어차피 새 댓글에는 대댓글이 없긴 하다.
 		WithChildren(
 			func(query *ent.CommentQuery) {
 				query.
+					// 대댓글의 작성자
 					WithAuthor().
+					// 대댓글의 게시글
 					WithArticle(func(query *ent.ArticleQuery) {
 						query.WithAuthor()
 					}).
+					// 대댓글의 게시글
 					WithStudyArticle(func(query *ent.StudyArticleQuery) {
 						query.WithAuthor()
 					})
 			},
 		).
 		Where(comment.ID(newComment.ID)).
-		OnlyX(context.TODO())
-
+		Only(context.TODO())
 	if err != nil {
-		logrus.Error(newComment, err)
+		logrus.Error(err)
 		return nil, err
 	}
 
-	output := uc.modelToOutput(commentInput.Author, newComment, nil)
-	uc.SnsClient.PublishMessage(output)
+	err = uc.SnsClient.PublishMessage(uc.modelToOutput(commentInput.Author, newComment, nil))
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
 
-	return output , nil
+	// SNS에 Publish한 output을 hide하면 hide 된 채 Publish 될 수 있다는 이슈가 있어서
+	// 이렇게 두 번 output을 따로 생성한다.
+	output := uc.modelToOutput(commentInput.Author, newComment, nil)
+	uc.hideFieldOfCommentOutput(username, output)
+	return output, nil
 }
 
 func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error) {
@@ -244,7 +261,7 @@ func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, o
 		}
 	}
 
-	logrus.Warn(username, comment.Edges.Author.ID )
+	logrus.Warn(username, comment.Edges.Author.ID)
 	if username == comment.Edges.Author.ID {
 		output.IsAuthor = true
 	}

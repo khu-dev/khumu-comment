@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func init(){
+func init() {
 	workingDir, err := os.Getwd()
 	if err != nil {
 		logrus.Error(err)
@@ -20,14 +20,14 @@ func init(){
 	logrus.SetReportCaller(true)
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: false,
-		DisableQuote: true,
-		ForceColors: true,
+		DisableQuote:  true,
+		ForceColors:   true,
 		// line을 깔끔하게 보여줌.
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			filename := strings.Replace(f.File, workingDir + "/", "", -1)
+			filename := strings.Replace(f.File, workingDir+"/", "", -1)
 			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
 		},
-		FullTimestamp: false,
+		FullTimestamp:   false,
 		TimestampFormat: "2006/01/03 15:04:05",
 	})
 }

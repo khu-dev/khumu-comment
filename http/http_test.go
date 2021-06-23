@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	repo               *ent.Client
+	repo *ent.Client
 )
 
 // B는 Before each의 acronym

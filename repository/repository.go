@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-type CommentQueryOption struct{
+type CommentQueryOption struct {
 	AuthorUsername string
-	ArticleId int
-	CommentId int
+	ArticleId      int
+	CommentId      int
 }
 
 func NewEnt() *ent.Client {

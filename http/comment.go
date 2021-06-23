@@ -33,15 +33,14 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	return commentRouter
 }
 
-
 type CommentResponse struct {
 	Data    *data.CommentOutput `json:"data"` //this contains any format of comments
-	Message string       `json:"message"`
+	Message string              `json:"message"`
 }
 
 type CommentsResponse struct {
 	Data    []*data.CommentOutput `json:"data"` //this contains any format of comments
-	Message string           `json:"message"`
+	Message string                `json:"message"`
 }
 
 type LikeCommentResponse struct {
@@ -54,13 +53,13 @@ func (r *CommentRouter) Create(c echo.Context) error {
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
 	var commentInput *data.CommentInput = &data.CommentInput{}
 	err := c.Bind(commentInput)
-//wd, _ := os.Getwd()os
+	//wd, _ := os.Getwd()os
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 	commentInput.Author = c.Get("user_id").(string)
-	comment, err := r.commentUC.Create(commentInput)
+	comment, err := r.commentUC.Create(commentInput.Author, commentInput)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
@@ -202,7 +201,7 @@ func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	}
 
 	body := &data.LikeCommentInput{
-		User: username,
+		User:    username,
 		Comment: commentId,
 	}
 

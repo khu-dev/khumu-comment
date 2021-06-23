@@ -18,7 +18,7 @@ var (
 
 	Articles ent.Articles
 
-	Comment1JinsuAnonymous               *ent.Comment
+	Comment1JinsuAnonymous                *ent.Comment
 	Comment2JinsuNamed                    *ent.Comment
 	Comment3SomebodyAnonymous             *ent.Comment
 	Comment4PuppyAnonymous                *ent.Comment

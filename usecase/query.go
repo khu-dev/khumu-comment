@@ -7,8 +7,8 @@ import "github.com/khu-dev/khumu-comment/ent"
 // 게시물과 게시물의 작성자
 // 스터디 게시물과 스터디 게시물의 작성자
 // 대댓글도 마찬가지 과정
-func appendQueryForComment(query *ent.CommentQuery) *ent.CommentQuery{
-    query.
+func appendQueryForComment(query *ent.CommentQuery) *ent.CommentQuery {
+	query.
 		// 댓글 작성자
 		WithAuthor().
 		WithArticle(func(query *ent.ArticleQuery) {
@@ -31,5 +31,5 @@ func appendQueryForComment(query *ent.CommentQuery) *ent.CommentQuery{
 			},
 		)
 
-    return query
+	return query
 }

@@ -44,7 +44,7 @@ func NewSnsClient() SnsClient {
 func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) error {
 	jsonData, err := json.Marshal(comment)
 	if err != nil {
-		logrus.Error(err)
+		return err
 	}
 
 	input := &sns.PublishInput{

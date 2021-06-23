@@ -92,9 +92,9 @@ var KhumuJWTConfig middleware.JWTConfig = middleware.JWTConfig{
 func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context) (bool, error) {
 	background := context.Background()
 	user, err := a.Repo.KhumuUser.Query().
-								Select("username").
-								Where(khumuuser.ID(username)).
-								Only(background)
+		Select("username").
+		Where(khumuuser.ID(username)).
+		Only(background)
 	if err != nil {
 		logrus.Error(err, "Basic 인증 도중 에러 발생")
 		return false, err

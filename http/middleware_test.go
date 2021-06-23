@@ -1,13 +1,13 @@
 package http
 
 import (
-    "testing"
+	"testing"
 )
 
 func TestAuthenticator_Authenticate(t *testing.T) {
-    BeforeMiddlewareTest(t)
-    defer AfterMiddlewareTest(t)
-    // 생략.
+	BeforeMiddlewareTest(t)
+	defer AfterMiddlewareTest(t)
+	// 생략.
 }
 
 //var (
