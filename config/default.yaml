@@ -1,5 +1,4 @@
 host: "0.0.0.0"
-restRootEndpoint: "http://localhost:9000/api/"
 port: 9000
 db:
   kind: sqlite3
@@ -11,11 +10,5 @@ db:
     databaseName: test # Define YOUR_MYSQL_DATABASE_NAME
     user: root # Define YOUR_MYSQL_USER
     password: root # Define YOUR_MYSQL_PASSWORD
-redis:
-  address: "example.com:6379"
-  password: ""
-  db: 0
-  commentChannel: your_comment_channel
-  likeCommentChannel: your_like_comment
 sns:
   topicArn: arn:aws:sns:ap-northeast-2:xxx

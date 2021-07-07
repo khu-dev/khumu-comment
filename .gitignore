@@ -24,6 +24,7 @@ _testmain.go
 *.sqlite3
 config/*
 !config/default.yaml
+!config/config.go
 !config/config_test.go
 khumu-comment
 .run

@@ -5,11 +5,10 @@
 package usecase
 
 import (
-	reflect "reflect"
+    reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
-	data "github.com/khu-dev/khumu-comment/data"
-	repository "github.com/khu-dev/khumu-comment/repository"
+    gomock "github.com/golang/mock/gomock"
+    data "github.com/khu-dev/khumu-comment/data"
 )
 
 // MockCommentUseCaseInterface is a mock of CommentUseCaseInterface interface.
@@ -80,7 +79,7 @@ func (mr *MockCommentUseCaseInterfaceMockRecorder) Get(arg0, arg1 interface{}) *
 }
 
 // List mocks base method.
-func (m *MockCommentUseCaseInterface) List(arg0 string, arg1 *repository.CommentQueryOption) ([]*data.CommentOutput, error) {
+func (m *MockCommentUseCaseInterface) List(arg0 string, arg1 *CommentQueryOption) ([]*data.CommentOutput, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1)
 	ret0, _ := ret[0].([]*data.CommentOutput)

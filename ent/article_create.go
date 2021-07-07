@@ -28,6 +28,14 @@ func (ac *ArticleCreate) SetTitle(s string) *ArticleCreate {
 	return ac
 }
 
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (ac *ArticleCreate) SetNillableTitle(s *string) *ArticleCreate {
+	if s != nil {
+		ac.SetTitle(*s)
+	}
+	return ac
+}
+
 // SetImages sets the "images" field.
 func (ac *ArticleCreate) SetImages(s *[]string) *ArticleCreate {
 	ac.mutation.SetImages(s)
@@ -148,12 +156,6 @@ func (ac *ArticleCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *ArticleCreate) check() error {
-	if _, ok := ac.mutation.Title(); !ok {
-		return &ValidationError{Name: "title", err: errors.New("ent: missing required field \"title\"")}
-	}
-	if _, ok := ac.mutation.Images(); !ok {
-		return &ValidationError{Name: "images", err: errors.New("ent: missing required field \"images\"")}
-	}
 	if _, ok := ac.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New("ent: missing required field \"created_at\"")}
 	}

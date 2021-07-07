@@ -26,10 +26,9 @@ func init() {
 }
 
 type KhumuConfig struct {
-	Host             string `yaml:"host"`
-	RestRootEndpoint string `yaml:"restRootEndpoint"`
-	Port             string
-	DB               struct {
+	Host string `yaml:"host"`
+	Port string
+	DB   struct {
 		Kind    string `yaml:"kind"`
 		SQLite3 struct {
 			FilePath string `yaml:"filePath"`
@@ -41,13 +40,6 @@ type KhumuConfig struct {
 			User         string `yaml:"user"`
 			Password     string `yaml:"password"`
 		}
-	}
-	Redis struct {
-		Address            string
-		Password           string
-		DB                 int
-		CommentChannel     string
-		LikeCommentChannel string
 	}
 	Sns struct {
 		TopicArn string

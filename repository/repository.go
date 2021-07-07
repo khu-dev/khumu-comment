@@ -11,12 +11,6 @@ import (
 	"time"
 )
 
-type CommentQueryOption struct {
-	AuthorUsername string
-	ArticleId      int
-	CommentId      int
-}
-
 func NewEnt() *ent.Client {
 	// parseTime=true가 없을 시
 	// Error: unsupported Scan, storing driver.Value type []uint8 into type *time.Time

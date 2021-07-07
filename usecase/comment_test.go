@@ -4,8 +4,9 @@ package usecase
 
 import (
 	"context"
+	"github.com/AlekSi/pointer"
 	"github.com/khu-dev/khumu-comment/data"
-	"github.com/khu-dev/khumu-comment/repository"
+	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,8 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[0].ID,
 			Content: "테스트 댓글",
-			Kind: "anonymous",
+			Kind:    pointer.ToString("anonymous"),
+
 		})
 
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
@@ -40,7 +42,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[0].ID,
 			Content: "테스트 기명 댓글",
-			Kind:    "named",
+			Kind:    pointer.ToString("named"),
 		})
 
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
@@ -50,6 +52,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 		assert.Equal(t, test.UserJinsu.Nickname, comment.Author.Nickname)
 		assert.Equal(t, "테스트 기명 댓글", comment.Content)
 	})
+
 	t.Run("jinsu의 익명 Article 댓글에 대한 익명 대댓글", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
@@ -57,9 +60,9 @@ func TestCommentUseCase_Create(t *testing.T) {
 		tmp, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[0].ID,
-			Parent: &test.Comment1JinsuAnonymous.ID,
+			Parent:  &test.Comment1JinsuAnonymous.ID,
 			Content: "테스트 익명 댓글에 대한 익명 대댓글",
-			Kind:    "anonymous",
+			Kind:    pointer.ToString("anonymous"),
 		})
 
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
@@ -71,22 +74,25 @@ func TestCommentUseCase_Create(t *testing.T) {
 		assert.Equal(t, "테스트 익명 댓글에 대한 익명 대댓글", comment.Content)
 	})
 
-	t.Run("Study article comment", func(t *testing.T) {
+	t.Run("스터디 게시글에 대한 익명 comment", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
 		newComment, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
-			Author:  test.UserJinsu.ID,
-			Article: &test.Articles[0].ID,
-			Content: "테스트 댓글",
+			Author:       test.UserJinsu.ID,
+			StudyArticle: &test.StudyArticles[0].ID,
+			Content:      "테스트 댓글",
 		})
 
-		comment, err := commentUseCase.Repo.Comment.Get(context.TODO(), newComment.ID)
-		author := comment.QueryAuthor().FirstX(context.TODO())
+		c, err := commentUseCase.Repo.Comment.Query().Where(comment.ID(newComment.ID)).WithArticle().WithStudyArticle().First(context.TODO())
+		author := c.QueryAuthor().FirstX(context.TODO())
 		assert.NoError(t, err)
 		// 기본적으로는 익명 댓글임.
+		assert.Equal(t, "anonymous", c.Kind)
 		assert.Equal(t, test.UserJinsu.ID, author.ID)
 		assert.Equal(t, test.UserJinsu.Nickname, author.Nickname)
-		assert.Equal(t, "테스트 댓글", comment.Content)
+		assert.Nil(t, c.Edges.Article)
+		assert.NotNil(t, c.Edges.StudyArticle)
+		assert.Equal(t, "테스트 댓글", c.Content)
 	})
 
 	t.Run("실패) 커뮤니티 article도 study article도 아닌 경우", func(t *testing.T) {
@@ -101,6 +107,50 @@ func TestCommentUseCase_Create(t *testing.T) {
 	})
 }
 
+func TestCommentUseCase_List(t *testing.T) {
+	t.Run("게시글에 대한 댓글 리스트", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		var err error
+		tmpArticle, err := repo.Article.Create().SetAuthor(test.UserPuppy).Save(context.TODO())
+		assert.NoError(t, err)
+
+		correctComment, err := repo.Comment.Create().
+			// 1번 article은 이미 많은 댓
+			SetArticleID(tmpArticle.ID).
+			SetAuthorID(test.UserPuppy.ID).
+			SetContent("테스트 댓글").
+			Save(context.TODO())
+		assert.NoError(t, err)
+
+		results, err := commentUseCase.List(test.UserPuppy.ID, &CommentQueryOption{ArticleID: tmpArticle.ID})
+		assert.NoError(t, err)
+		assert.Len(t, results, 1)
+		assert.Equal(t, results[0].ID, correctComment.ID)
+	})
+	t.Run("스터디 게시글에 대한 댓글 리스트", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		var err error
+		correctComment1, err := repo.Comment.Create().
+			SetStudyArticleID(1).
+			SetAuthorID(test.UserPuppy.ID).
+			SetContent("테스트 댓글").
+			Save(context.TODO())
+		assert.NoError(t, err)
+		_, err = repo.Comment.Create().
+			SetStudyArticleID(2).
+			SetAuthorID(test.UserPuppy.ID).
+			SetContent("테스트 댓글").
+			Save(context.TODO())
+		assert.NoError(t, err)
+
+		results, err := commentUseCase.List(test.UserPuppy.ID, &CommentQueryOption{StudyArticleID: 1})
+		assert.NoError(t, err)
+		assert.Len(t, results, 1)
+		assert.Equal(t, results[0].ID, correctComment1.ID)
+	})
+}
 func TestCommentUseCase_Get(t *testing.T) {
 	t.Run("기명 댓글과 그 대댓글들", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
@@ -213,7 +263,7 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 		Save(context.TODO())
 	assert.NoError(t, err)
 
-	comments, err := commentUseCase.List(test.UserJinsu.ID, &repository.CommentQueryOption{})
+	comments, err := commentUseCase.List(test.UserJinsu.ID, &CommentQueryOption{})
 	assert.NoError(t, err)
 	for _, comment := range comments {
 		if comment.State == "deleted" {

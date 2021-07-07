@@ -25,8 +25,8 @@ func (Article) Annotations() []schema.Annotation {
 func (Article) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("id"),
-		field.String("title"),
-		field.JSON("images", &[]string{}),
+		field.String("title").Optional(),
+		field.JSON("images", &[]string{}).Optional(),
 		field.Time("created_at").Default(func() time.Time {
 			return time.Now()
 		}),

@@ -16,7 +16,8 @@ var (
 	UserPuppy    *ent.KhumuUser
 	Users        ent.KhumuUsers
 
-	Articles ent.Articles
+	Articles      ent.Articles
+	StudyArticles ent.StudyArticles
 
 	Comment1JinsuAnonymous                *ent.Comment
 	Comment2JinsuNamed                    *ent.Comment
@@ -105,6 +106,31 @@ func SetUpArticles(client *ent.Client) {
 	}
 
 	Articles, err = client.Article.Query().All(ctx)
+	if err != nil {
+		logrus.Panic(err)
+	}
+}
+
+func SetUpStudyArticles(client *ent.Client) {
+	var (
+		err error
+		ctx context.Context = context.TODO()
+	)
+
+	_, err = client.StudyArticle.Create().SetID(1).SetAuthorID("jinsu").Save(context.TODO())
+	if err != nil {
+		logrus.Panic(err)
+	}
+	_, err = client.StudyArticle.Create().SetID(2).SetAuthorID("jinsu").Save(context.TODO())
+	if err != nil {
+		logrus.Panic(err)
+	}
+	_, err = client.StudyArticle.Create().SetID(3).SetAuthorID("jinsu").Save(context.TODO())
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	StudyArticles, err = client.StudyArticle.Query().All(ctx)
 	if err != nil {
 		logrus.Panic(err)
 	}

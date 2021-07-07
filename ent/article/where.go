@@ -204,6 +204,20 @@ func TitleHasSuffix(v string) predicate.Article {
 	})
 }
 
+// TitleIsNil applies the IsNil predicate on the "title" field.
+func TitleIsNil() predicate.Article {
+	return predicate.Article(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldTitle)))
+	})
+}
+
+// TitleNotNil applies the NotNil predicate on the "title" field.
+func TitleNotNil() predicate.Article {
+	return predicate.Article(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldTitle)))
+	})
+}
+
 // TitleEqualFold applies the EqualFold predicate on the "title" field.
 func TitleEqualFold(v string) predicate.Article {
 	return predicate.Article(func(s *sql.Selector) {
@@ -215,6 +229,20 @@ func TitleEqualFold(v string) predicate.Article {
 func TitleContainsFold(v string) predicate.Article {
 	return predicate.Article(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldTitle), v))
+	})
+}
+
+// ImagesIsNil applies the IsNil predicate on the "images" field.
+func ImagesIsNil() predicate.Article {
+	return predicate.Article(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldImages)))
+	})
+}
+
+// ImagesNotNil applies the NotNil predicate on the "images" field.
+func ImagesNotNil() predicate.Article {
+	return predicate.Article(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldImages)))
 	})
 }
 

@@ -10,8 +10,8 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
+	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 	"github.com/khu-dev/khumu-comment/external"
-	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,12 +23,20 @@ var (
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
 	ErrUnAuthorized                 = errors.New("권한이 존재하지 않습니다")
 	ErrSelfLikeComment              = errors.New("본인의 댓글은 좋아요할 수 없습니다")
-	ErrNoArticleIdInput             = errors.New("게시물 ID를 입력하십시오")
+	ErrNoArticleIDInput             = errors.New("게시물 ID를 입력하십시오")
 )
+
+type CommentQueryOption struct {
+    AuthorUsername string
+    ArticleID      int
+    StudyArticleID int
+    CommentId      int
+    PostKind       *string
+}
 
 type CommentUseCaseInterface interface {
 	Create(username string, commentInput *data.CommentInput) (*data.CommentOutput, error)
-	List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error)
+	List(username string, opt *CommentQueryOption) ([]*data.CommentOutput, error)
 	Get(username string, id int) (*data.CommentOutput, error)
 	Update(username string, id int, opt map[string]interface{}) (*data.CommentOutput, error)
 	Delete(username string, id int) error
@@ -64,7 +72,7 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 
 	if commentInput.Article == nil && commentInput.StudyArticle == nil {
 		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
-		return nil, ErrNoArticleIdInput
+		return nil, ErrNoArticleIDInput
 	}
 
 	newComment, err := uc.Repo.Comment.Create().
@@ -74,7 +82,7 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 		SetAuthorID(commentInput.Author).
 		SetContent(commentInput.Content).
 		SetState("exists").
-		SetKind(commentInput.Kind).
+		SetNillableKind(commentInput.Kind).
 		Save(context.Background())
 
 	if err != nil {
@@ -127,14 +135,17 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	return output, nil
 }
 
-func (uc *CommentUseCase) List(username string, opt *repository.CommentQueryOption) ([]*data.CommentOutput, error) {
+func (uc *CommentUseCase) List(username string, opt *CommentQueryOption) ([]*data.CommentOutput, error) {
 	logrus.WithField("username", username).Infof("Start List CommentQueryOption(%#v)", opt)
 	query := uc.Repo.Comment.Query()
 	if opt.AuthorUsername != "" {
 		query.Where(comment.HasAuthorWith(khumuuser.ID(opt.AuthorUsername)))
 	}
-	if opt.ArticleId != 0 {
-		query.Where(comment.HasArticleWith(article.ID(opt.ArticleId)))
+	if opt.ArticleID != 0 {
+		query.Where(comment.HasArticleWith(article.ID(opt.ArticleID)))
+	}
+	if opt.StudyArticleID != 0 {
+		query.Where(comment.HasStudyArticleWith(studyarticle.ID(opt.StudyArticleID)))
 	}
 
 	parents, err := appendQueryForComment(query).

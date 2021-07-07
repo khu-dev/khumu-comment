@@ -1,12 +1,12 @@
 package data
 
 type CommentInput struct {
-	Author       string `json:"author"`
-	Article      *int   `json:"article"`
-	StudyArticle *int   `json:"study_article"`
-	Parent       *int   `json:"parent"`
-	Content      string `json:"content"`
-	Kind         string `json:"kind"`
+	Author       string  `json:"author"`
+	Article      *int    `json:"article"`
+	StudyArticle *int    `json:"study_article"`
+	Parent       *int    `json:"parent"`
+	Content      string  `json:"content"`
+	Kind         *string `json:"kind"`
 }
 
 type CommentOutput struct {

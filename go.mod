@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	entgo.io/ent v0.8.0
+	github.com/AlekSi/pointer v1.1.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/aws/aws-sdk-go v1.38.18
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -30,8 +31,6 @@ require (
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
 	golang.org/x/sys v0.0.0-20210507014357-30e306a8bba5 // indirect
 	golang.org/x/text v0.3.6 // indirect
-	gopkg.in/guregu/null.v4 v4.0.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/gorm v1.20.5
 )

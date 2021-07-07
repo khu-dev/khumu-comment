@@ -171,9 +171,22 @@ func (m *ArticleMutation) OldTitle(ctx context.Context) (v string, err error) {
 	return oldValue.Title, nil
 }
 
+// ClearTitle clears the value of the "title" field.
+func (m *ArticleMutation) ClearTitle() {
+	m.title = nil
+	m.clearedFields[article.FieldTitle] = struct{}{}
+}
+
+// TitleCleared returns if the "title" field was cleared in this mutation.
+func (m *ArticleMutation) TitleCleared() bool {
+	_, ok := m.clearedFields[article.FieldTitle]
+	return ok
+}
+
 // ResetTitle resets all changes to the "title" field.
 func (m *ArticleMutation) ResetTitle() {
 	m.title = nil
+	delete(m.clearedFields, article.FieldTitle)
 }
 
 // SetImages sets the "images" field.
@@ -207,9 +220,22 @@ func (m *ArticleMutation) OldImages(ctx context.Context) (v *[]string, err error
 	return oldValue.Images, nil
 }
 
+// ClearImages clears the value of the "images" field.
+func (m *ArticleMutation) ClearImages() {
+	m.images = nil
+	m.clearedFields[article.FieldImages] = struct{}{}
+}
+
+// ImagesCleared returns if the "images" field was cleared in this mutation.
+func (m *ArticleMutation) ImagesCleared() bool {
+	_, ok := m.clearedFields[article.FieldImages]
+	return ok
+}
+
 // ResetImages resets all changes to the "images" field.
 func (m *ArticleMutation) ResetImages() {
 	m.images = nil
+	delete(m.clearedFields, article.FieldImages)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -452,7 +478,14 @@ func (m *ArticleMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ArticleMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(article.FieldTitle) {
+		fields = append(fields, article.FieldTitle)
+	}
+	if m.FieldCleared(article.FieldImages) {
+		fields = append(fields, article.FieldImages)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -465,6 +498,14 @@ func (m *ArticleMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ArticleMutation) ClearField(name string) error {
+	switch name {
+	case article.FieldTitle:
+		m.ClearTitle()
+		return nil
+	case article.FieldImages:
+		m.ClearImages()
+		return nil
+	}
 	return fmt.Errorf("unknown Article nullable field %s", name)
 }
 

@@ -3,10 +3,9 @@ package http
 import (
 	"errors"
 	"github.com/khu-dev/khumu-comment/data"
-	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
@@ -49,19 +48,20 @@ type LikeCommentResponse struct {
 }
 
 func (r *CommentRouter) Create(c echo.Context) error {
-	logrus.Debug("CommentRouter_Create")
+	log.Debug("CommentRouter_Create")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
-	var commentInput *data.CommentInput = &data.CommentInput{}
+	commentInput := &data.CommentInput{}
 	err := c.Bind(commentInput)
 	//wd, _ := os.Getwd()os
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
+	log.Info("댓글 생성 요청 바디: ", *commentInput)
 	commentInput.Author = c.Get("user_id").(string)
 	comment, err := r.commentUC.Create(commentInput.Author, commentInput)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 
@@ -69,48 +69,42 @@ func (r *CommentRouter) Create(c echo.Context) error {
 }
 
 func (r *CommentRouter) List(c echo.Context) error {
-	logrus.Debug("CommentRouter_List")
+	log.Debug("CommentRouter_List")
 	username := c.Get("user_id").(string)
 	if username == "" {
 		return c.JSON(403, CommentResponse{Message: "No user_id in context"})
 	}
 	if !isAdmin(username) {
-		logrus.Println(c.QueryParams())
-		if c.QueryParam("article") == "" {
+		log.Println(c.QueryParams())
+		if c.QueryParam("article") == "" && c.QueryParam("study_article") == ""{
 			//return c.JSON(400, CommentResponse{StatusCode: 401, Message: ""})
-			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "article in query string is required"})
+			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "관리자가 아닌 경우 특정 커뮤니티 게시글 혹은 스터디 게시글의 아이디를 설정해야합니다."})
 		}
 	}
 
-	opt := &repository.CommentQueryOption{}
+	opt := &usecase.CommentQueryOption{}
 	articleIDString := c.QueryParam("article")
-	if articleIDString == "" {
-		articleIDString = "0"
+	if articleIDString != "" {
+		articleID, err := strconv.Atoi(articleIDString)
+		if err != nil {
+			return c.JSON(400, CommentResponse{Message: "article should be int"})
+		}
+		opt.ArticleID = articleID
 	}
-	articleID, err := strconv.Atoi(articleIDString)
-	//if articleID == {articleID=0}
-	if err != nil {
-		logrus.WithField("article", articleIDString).Error(err)
-		return c.JSON(400, CommentResponse{Message: "article should be int"})
-	}
-	opt.ArticleId = articleID
 
-	commentIDString := c.QueryParam("comment")
 
-	if commentIDString == "" {
-		commentIDString = "0"
+	studyArticleIDString := c.QueryParam("study_article")
+	if studyArticleIDString != "" {
+		studyArticleID, err := strconv.Atoi(studyArticleIDString)
+		if err != nil {
+			return c.JSON(400, CommentResponse{Message: "study_article should be int"})
+		}
+		opt.StudyArticleID = studyArticleID
 	}
-	commentID, err := strconv.Atoi(commentIDString)
-
-	if err != nil {
-		logrus.Println(err, commentIDString, commentID)
-		return err
-	}
-	opt.CommentId = commentID
 
 	comments, err := r.commentUC.List(username, opt)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 
@@ -118,10 +112,10 @@ func (r *CommentRouter) List(c echo.Context) error {
 }
 
 func (r *CommentRouter) Get(c echo.Context) error {
-	logrus.Debug("CommentRouter Get")
+	log.Debug("CommentRouter Get")
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 
@@ -131,7 +125,7 @@ func (r *CommentRouter) Get(c echo.Context) error {
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
 		}
 
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 
@@ -139,21 +133,21 @@ func (r *CommentRouter) Get(c echo.Context) error {
 }
 
 func (r *CommentRouter) Update(c echo.Context) error {
-	logrus.Debug("CommentRouter_Update")
+	log.Debug("CommentRouter_Update")
 	// 먼저 빈 Comment를 생성하고 거기에 값을 대입받는다. 그렇지 않으면 nil 참조 에러
 	body := make(map[string]interface{})
 	err := c.Bind(&body)
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 
 	username := c.Get("user_id").(string)
 	updated, err := r.commentUC.Update(username, id, body)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
 	}
 
@@ -161,11 +155,11 @@ func (r *CommentRouter) Update(c echo.Context) error {
 }
 
 func (r *CommentRouter) Delete(c echo.Context) error {
-	logrus.Debug("CommentRouter Delete")
+	log.Debug("CommentRouter Delete")
 	username := c.Get("user_id").(string)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 
@@ -175,7 +169,7 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
 		}
 
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 
@@ -191,12 +185,12 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 // @Router /api/like-comments [put]
 // @Success 200 {object} CommentResponse
 func (r *CommentRouter) LikeToggle(c echo.Context) error {
-	logrus.Debug("LikeCommentRouter_Toggle")
+	log.Debug("LikeCommentRouter_Toggle")
 
 	username := c.Get("user_id").(string)
 	commentId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "올바른 형태의 댓글 Id를 입력해주세요."})
 	}
 
@@ -207,7 +201,7 @@ func (r *CommentRouter) LikeToggle(c echo.Context) error {
 
 	isCreated, err := r.likeUC.Toggle(body)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
 	}
 

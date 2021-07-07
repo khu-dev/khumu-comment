@@ -40,6 +40,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 
 	test.SetUpUsers(repo)
 	test.SetUpArticles(repo)
+	test.SetUpStudyArticles(repo)
 	test.SetUpComments(repo)
 }
 
