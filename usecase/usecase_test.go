@@ -36,7 +36,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 		func(message interface{}) error {
 			tb.Log("그냥 테스트라서 푸시 알림 패스")
 			return nil
-		}).Return(nil).AnyTimes()
+		}).AnyTimes()
 
 	test.SetUpUsers(repo)
 	test.SetUpArticles(repo)

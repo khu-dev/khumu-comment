@@ -18,13 +18,14 @@ func TestCommentUseCase_Create(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
 
-		tmp, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
+		tmp, err := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[0].ID,
 			Content: "테스트 댓글",
 			Kind:    pointer.ToString("anonymous"),
 
 		})
+		assert.NoError(t, err)
 
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, tmp.ID)
 		assert.NoError(t, err)
