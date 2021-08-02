@@ -6,7 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
-	"github.com/khu-dev/khumu-comment/usecase"
+	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/khu-dev/khumu-comment/util"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -144,16 +144,31 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// HTTPErrorHandler 참고
+// https://echo.labstack.com/guide/error-handling/
 func CustomHTTPErrorHandler(err error, c echo.Context) {
 	var (
-		//ErrsForNotFound = []error{}
-		ErrsUnAuthorized = []error{usecase.ErrUnAuthorized}
+		ErrsUnAuthorized = []error{errorz.ErrUnauthorized}
+		ErrsForNotFound  = []error{errorz.ErrResourceNotFound}
 	)
 	if util.ErrorIn(err, ErrsUnAuthorized) {
-		logrus.Error("HTTP error 캐치. ", err)
 		if respErr := c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"data":    nil,
 			"message": err.Error(),
+		}); respErr != nil {
+			logrus.Error(respErr)
+		}
+	} else if util.ErrorIn(err, ErrsForNotFound) {
+		if respErr := c.JSON(http.StatusNotFound, map[string]interface{}{
+			"data":    nil,
+			"message": err.Error(),
+		}); respErr != nil {
+			logrus.Error(respErr)
+		}
+	} else {
+		if respErr := c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"data":    nil,
+			"message": "알 수 없는 오류로 작업을 수행하지 못했습니다. 쿠뮤에 문의해주세요.",
 		}); respErr != nil {
 			logrus.Error(respErr)
 		}

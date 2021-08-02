@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"entgo.io/ent/dialect/sql"
-	"errors"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/data/mapper"
 	"github.com/khu-dev/khumu-comment/ent"
@@ -12,8 +11,10 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/studyarticle"
+	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/khu-dev/khumu-comment/external"
 	"github.com/sirupsen/logrus"
+	"reflect"
 )
 
 var (
@@ -22,9 +23,6 @@ var (
 	AnonymousCommentNickname string = "익명"
 	DeletedCommentUsername   string = "삭제된 댓글의 작성자"
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
-	ErrUnAuthorized                 = errors.New("권한이 존재하지 않습니다")
-	ErrSelfLikeComment              = errors.New("본인의 댓글은 좋아요할 수 없습니다")
-	ErrNoArticleIDInput             = errors.New("게시물 ID를 입력하십시오")
 )
 
 type CommentQueryOption struct {
@@ -68,12 +66,12 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	//articleId := 1
 	if commentInput.Author == "" {
 		logrus.Error("댓글 생성에 대한 author가 존재하지 않습니다.")
-		return nil, ErrUnAuthorized
+		return nil, errorz.ErrUnauthorized
 	}
 
 	if commentInput.Article == nil && commentInput.StudyArticle == nil {
 		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
-		return nil, ErrNoArticleIDInput
+		return nil, errorz.ErrNoArticleIDInput
 	}
 
 	newComment, err := uc.Repo.Comment.Create().
@@ -236,11 +234,15 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		Where(comment.ID(id)).First(ctx)
 	// 해당 아이디의 엔티티 존재 X
 	if err != nil {
+		if reflect.TypeOf(err).ConvertibleTo(reflect.TypeOf(&ent.NotFoundError{})) {
+			logrus.Error("Here!")
+			return errorz.ErrResourceNotFound
+		}
 		return err
 	}
 
 	if commentExisting.Edges.Author.ID != username {
-		return ErrUnAuthorized
+		return errorz.ErrUnauthorized
 	}
 
 	// 대댓글이 없는 댓글 => 삭제 가능
@@ -390,7 +392,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 		return false, err
 	}
 	if commentExisting.Edges.Author.ID == input.User {
-		return false, ErrSelfLikeComment
+		return false, errorz.ErrSelfLikeComment
 	}
 
 	likeIDs, err := uc.Repo.LikeComment.Query().
