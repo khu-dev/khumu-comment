@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/AlekSi/pointer"
 	"github.com/khu-dev/khumu-comment/data"
+	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
@@ -23,7 +24,6 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Article: &test.Articles[0].ID,
 			Content: "테스트 댓글",
 			Kind:    pointer.ToString("anonymous"),
-
 		})
 		assert.NoError(t, err)
 
@@ -84,7 +84,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Content:      "테스트 댓글",
 		})
 
-		c, err := commentUseCase.Repo.Comment.Query().Where(comment.ID(newComment.ID)).WithArticle().WithStudyArticle().First(context.TODO())
+		c, err := commentUseCase.Repo.Get(newComment.ID)
 		author := c.QueryAuthor().FirstX(context.TODO())
 		assert.NoError(t, err)
 		// 기본적으로는 익명 댓글임.
@@ -343,6 +343,47 @@ func TestCommentUseCase_Update(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "수정된 1번 코멘트입니다.", after.Content)
 	assert.Equal(t, "anonymous", after.Kind)
+}
+
+func TestCommentUseCase_Delete(t *testing.T) {
+	t.Run("대댓글이 없는 부모 댓글 삭제", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		parentComment := test.Comment4PuppyAnonymous
+		// 좋아요가 있으면 삭제해야함. 그 기능 테스트를 위해 좋아요도 만들어봄.
+		for i := 0; i < 3; i++ {
+			_, err := repo.LikeComment.Create().
+				SetAbout(parentComment).
+				SetLikedBy(test.UserPuppy).
+				Save(context.TODO())
+			assert.NoError(t, err)
+		}
+		assert.NotNil(t, parentComment)
+		err := commentUseCase.Delete(test.UserPuppy.ID, parentComment.ID)
+		assert.NoError(t, err)
+		_, err = repo.Comment.Get(context.TODO(), parentComment.ID)
+		assert.IsType(t, &ent.NotFoundError{}, err)
+	})
+	t.Run("대댓글 삭제", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		toDelete := test.Comment5JinsuAnonymousFromComment1
+		err := commentUseCase.Delete(test.UserJinsu.ID, toDelete.ID)
+		assert.NoError(t, err)
+		_, err = repo.Comment.Get(context.TODO(), toDelete.ID)
+		assert.IsType(t, &ent.NotFoundError{}, err)
+	})
+	t.Run("대댓글이 있는 부모 댓글 삭제", func(t *testing.T) {
+		BeforeCommentUseCaseTest(t)
+		defer A(t)
+		toDelete := test.Comment1JinsuAnonymous
+		err := commentUseCase.Delete(test.UserJinsu.ID, toDelete.ID)
+		assert.NoError(t, err)
+		deleted, err := repo.Comment.Query().WithAuthor().Where(comment.ID(toDelete.ID)).Only(context.TODO())
+		assert.NoError(t, err)
+		assert.Equal(t, "deleted", deleted.State)
+	})
+
 }
 
 func TestLikeCommentUseCase_Toggle(t *testing.T) {

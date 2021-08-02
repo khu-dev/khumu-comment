@@ -32,8 +32,7 @@ var (
 	// parent Comment의 ID는 모두 1
 )
 
-func init() {
-}
+func init() {}
 
 // test 진행 시에 각 step에서 사용할 초기 데이터를 만든다.
 func SetUpUsers(client *ent.Client) {

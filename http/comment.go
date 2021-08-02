@@ -74,12 +74,10 @@ func (r *CommentRouter) List(c echo.Context) error {
 	if username == "" {
 		return c.JSON(403, CommentResponse{Message: "No user_id in context"})
 	}
-	if !isAdmin(username) {
-		log.Println(c.QueryParams())
-		if c.QueryParam("article") == "" && c.QueryParam("study_article") == ""{
-			//return c.JSON(400, CommentResponse{StatusCode: 401, Message: ""})
-			return c.JSON(http.StatusBadRequest, CommentResponse{Message: "관리자가 아닌 경우 특정 커뮤니티 게시글 혹은 스터디 게시글의 아이디를 설정해야합니다."})
-		}
+
+	log.Println(c.QueryParams())
+	if c.QueryParam("article") == "" && c.QueryParam("study_article") == "" {
+		return c.JSON(http.StatusBadRequest, CommentResponse{Message: "특정 커뮤니티 게시글 혹은 스터디 게시글의 아이디를 설정해야합니다."})
 	}
 
 	opt := &usecase.CommentQueryOption{}
@@ -91,7 +89,6 @@ func (r *CommentRouter) List(c echo.Context) error {
 		}
 		opt.ArticleID = articleID
 	}
-
 
 	studyArticleIDString := c.QueryParam("study_article")
 	if studyArticleIDString != "" {
@@ -165,6 +162,7 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 
 	err = r.commentUC.Delete(username, id)
 	if err != nil {
+		// 이제 gorm 안 써서 이 부분도 바꿔야함
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
 		}
