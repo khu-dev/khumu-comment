@@ -25,6 +25,12 @@ func Build() *dig.Container {
 		log.Panic(err)
 	}
 
+	// Provide repository
+	err = c.Provide(repository.NewCommentRepository)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	// Provide usecases
 	err = c.Provide(usecase.NewCommentUseCase)
 	if err != nil {

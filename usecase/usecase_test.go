@@ -5,6 +5,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/enttest"
 	"github.com/khu-dev/khumu-comment/external"
+	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
 	"testing"
@@ -25,7 +26,8 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 
 	mockSnsClient = external.NewMockSnsClient(ctrl)
 	commentUseCase = &CommentUseCase{
-		Repo:      repo,
+		Repo:      repository.NewCommentRepository(repo),
+		entclient: repo,
 		SnsClient: mockSnsClient,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{

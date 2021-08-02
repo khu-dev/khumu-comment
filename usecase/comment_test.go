@@ -84,7 +84,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 			Content:      "테스트 댓글",
 		})
 
-		c, err := commentUseCase.Repo.Comment.Query().Where(comment.ID(newComment.ID)).WithArticle().WithStudyArticle().First(context.TODO())
+		c, err := commentUseCase.Repo.Get(newComment.ID)
 		author := c.QueryAuthor().FirstX(context.TODO())
 		assert.NoError(t, err)
 		// 기본적으로는 익명 댓글임.
