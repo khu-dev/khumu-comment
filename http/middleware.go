@@ -6,6 +6,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
+	"github.com/khu-dev/khumu-comment/usecase"
+	"github.com/khu-dev/khumu-comment/util"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/meehow/go-django-hashers"
@@ -142,6 +144,18 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func isAdmin(username string) bool {
-	return username == "admin"
+func CustomHTTPErrorHandler(err error, c echo.Context) {
+	var (
+		//ErrsForNotFound = []error{}
+		ErrsUnAuthorized = []error{usecase.ErrUnAuthorized}
+	)
+	if util.ErrorIn(err, ErrsUnAuthorized) {
+		logrus.Error("HTTP error 캐치. ", err)
+		if respErr := c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"data":    nil,
+			"message": err.Error(),
+		}); respErr != nil {
+			logrus.Error(respErr)
+		}
+	}
 }
