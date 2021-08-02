@@ -50,7 +50,8 @@ type CommentUseCase struct {
 }
 
 type LikeCommentUseCase struct {
-	Repo *ent.Client
+	Repo        repository.LikeCommentRepository
+	CommentRepo repository.CommentRepository
 }
 
 func NewCommentUseCase(
@@ -279,17 +280,17 @@ func (uc *CommentUseCase) getLiked(commentID int) bool {
 }
 
 func NewLikeCommentUseCase(
-	repo *ent.Client) LikeCommentUseCaseInterface {
-	return &LikeCommentUseCase{Repo: repo}
+	repo repository.LikeCommentRepository,
+	commentRepo repository.CommentRepository) LikeCommentUseCaseInterface {
+	return &LikeCommentUseCase{
+		Repo:        repo,
+		CommentRepo: commentRepo,
+	}
 }
 
 func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error) {
 	var err error
-	ctx := context.Background()
-	commentExisting, err := uc.Repo.Comment.Query().
-		WithAuthor().
-		Where(comment.ID(input.Comment)).
-		Only(ctx)
+	commentExisting, err := uc.CommentRepo.Get(input.Comment)
 	if err != nil {
 		logrus.Error(err)
 		return false, err
@@ -298,9 +299,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 		return false, errorz.ErrSelfLikeComment
 	}
 
-	likeIDs, err := uc.Repo.LikeComment.Query().
-		Where(likecomment.HasAboutWith(comment.ID(input.Comment))).
-		IDs(ctx)
+	hisLikes, err := uc.Repo.FindAllByUserIDAndCommentID(input.User, input.Comment)
 	if err != nil {
 		logrus.Error(err)
 		return false, err
@@ -308,24 +307,27 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 
 	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
 	// 1보다 큰 경우는 비정상적으로 여러개 존재할 때
-	if len(likeIDs) >= 1 {
+	if len(hisLikes) >= 1 {
 		logrus.Infof("Comment(%d)에 대한 좋아요를 삭제합니다.", input.Comment)
-		_, err := uc.Repo.LikeComment.Delete().Where(likecomment.IDIn(likeIDs...)).Exec(ctx)
-		if err != nil {
-			logrus.Error(err)
-			return false, err
+		for _, like := range hisLikes {
+			err := uc.Repo.Delete(like.ID)
+			if err != nil {
+				logrus.Error(err)
+				return false, err
+			}
 		}
-
+		// 정상적으로 삭제한 경우
 		return false, nil
 	} else {
 		// 생성
 		logrus.Infof("Comment(%d)에 대한 좋아요를 생성.", input.Comment)
-		_, err := uc.Repo.LikeComment.Create().SetAboutID(input.Comment).SetLikedByID(input.User).Save(ctx)
+		_, err := uc.Repo.Create(input)
 		if err != nil {
 			logrus.Error(err)
 			return false, err
 		}
 
+		// 정상적으로 생성한 경우
 		return true, nil
 	}
 }

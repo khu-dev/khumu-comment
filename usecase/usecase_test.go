@@ -31,7 +31,8 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 		SnsClient: mockSnsClient,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{
-		Repo: repo,
+		Repo:        repository.NewLikeCommentRepository(repo),
+		CommentRepo: repository.NewCommentRepository(repo),
 	}
 
 	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(

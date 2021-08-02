@@ -14,13 +14,13 @@ import (
 )
 
 type CommentRepository interface {
-	Create(createInput *data.CommentInput) (*ent.Comment, error)
-	FindAllParentsByAuthorID(authorID string) ([]*ent.Comment, error)
-	FindAllParentsByArticleID(articleID int) ([]*ent.Comment, error)
-	FindAllParentsByStudyArticleID(articleID int) ([]*ent.Comment, error)
-	Get(id int) (*ent.Comment, error)
-	Update(id int, updateInput map[string]interface{}) (*ent.Comment, error)
-	Delete(id int) error
+	Create(createInput *data.CommentInput) (com *ent.Comment, err error)
+	FindAllParentsByAuthorID(authorID string) (coms []*ent.Comment, err error)
+	FindAllParentsByArticleID(articleID int) (coms []*ent.Comment, err error)
+	FindAllParentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error)
+	Get(id int) (com *ent.Comment, err error)
+	Update(id int, updateInput map[string]interface{}) (com *ent.Comment, err error)
+	Delete(id int) (err error)
 }
 
 type commentRepository struct {
@@ -86,7 +86,11 @@ func (c commentRepository) Create(createInput *data.CommentInput) (newComment *e
 	return newComment, nil
 }
 
-func (c commentRepository) FindAllParentsByAuthorID(authorID string) ([]*ent.Comment, error) {
+func (c commentRepository) FindAllParentsByAuthorID(authorID string) (coms []*ent.Comment, err error) {
+	defer func() {
+		err = WrapEntError(err)
+		//err = nil
+	}()
 	query := c.db.Comment.Query().Where(comment.HasAuthorWith(khumuuser.ID(authorID)))
 	parents, err := AppendQueryForComment(query).
 		Where(comment.Not(comment.HasParent())).
@@ -102,7 +106,11 @@ func (c commentRepository) FindAllParentsByArticleID(articleID int) ([]*ent.Comm
 	return parents, err
 }
 
-func (c commentRepository) FindAllParentsByStudyArticleID(articleID int) ([]*ent.Comment, error) {
+func (c commentRepository) FindAllParentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error) {
+	defer func() {
+		err = WrapEntError(err)
+		//err = nil
+	}()
 	query := c.db.Comment.Query().Where(comment.HasStudyArticleWith(studyarticle.ID(articleID)))
 	parents, err := AppendQueryForComment(query).
 		Where(comment.Not(comment.HasParent())).
@@ -150,6 +158,10 @@ func (c commentRepository) Update(id int, updateInput map[string]interface{}) (c
 }
 
 func (c commentRepository) Delete(id int) (err error) {
+	defer func() {
+		err = WrapEntError(err)
+		//err = nil
+	}()
 	ctx := context.TODO()
 	log.Info("부모 댓글이 없어 댓글 자체를 삭제하는 작업을 시작합니다.")
 	tx, err := c.db.BeginTx(ctx, new(sql.TxOptions))
