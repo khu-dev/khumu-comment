@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"entgo.io/ent/dialect/sql"
 	"errors"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/data/mapper"
@@ -27,11 +28,11 @@ var (
 )
 
 type CommentQueryOption struct {
-    AuthorUsername string
-    ArticleID      int
-    StudyArticleID int
-    CommentId      int
-    PostKind       *string
+	AuthorUsername string
+	ArticleID      int
+	StudyArticleID int
+	CommentId      int
+	PostKind       *string
 }
 
 type CommentUseCaseInterface interface {
@@ -228,6 +229,9 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		WithAuthor(func(query *ent.KhumuUserQuery) {
 			query.Select("username")
 		}).
+		WithChildren(func(query *ent.CommentQuery) {
+			query.Select("id")
+		}).
 		Select("id").
 		Where(comment.ID(id)).First(ctx)
 	// 해당 아이디의 엔티티 존재 X
@@ -239,13 +243,46 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		return ErrUnAuthorized
 	}
 
-	_, err = uc.Repo.Comment.Update().
-		Where(comment.ID(id)).
-		SetState("deleted").
-		SetContent(DeletedCommentContent).
-		Save(ctx)
-	if err != nil {
-		return err
+	// 대댓글이 없는 댓글 => 삭제 가능
+	if len(commentExisting.Edges.Children) == 0 {
+		logrus.Info("부모 댓글이 없어 댓글 자체를 삭제하는 작업을 시작합니다.")
+		tx, err := uc.Repo.BeginTx(ctx, new(sql.TxOptions))
+		defer func() {
+			if err = tx.Commit(); err != nil {
+				logrus.Error(err)
+			}
+		}()
+		if err != nil {
+			logrus.Error(err)
+			return err
+		}
+
+		n, err := tx.LikeComment.Delete().
+			Where(likecomment.HasAboutWith(comment.ID(commentExisting.ID))).
+			Exec(ctx)
+		if err != nil {
+			logrus.Error(err)
+			return err
+		}
+		logrus.Info(commentExisting, "에 대한 좋아요를 ", n, " 개 삭제했습니다.")
+
+		err = tx.Comment.DeleteOneID(id).Exec(ctx)
+		if err != nil {
+			logrus.Error(err)
+			return err
+		}
+		logrus.Infof("Comment(id=%d)를 삭제했습니다.", id)
+
+		return nil
+	} else {
+		_, err = uc.Repo.Comment.Update().
+			Where(comment.ID(id)).
+			SetState("deleted").
+			SetContent(DeletedCommentContent).
+			Save(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

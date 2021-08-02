@@ -11,8 +11,8 @@ mockgen -package external -destination external/mock.go -source external/*.go
 # 이렇게 자동화 할 수도 있긴한데... 유지 보수하기 복잡할 듯 까먹어서
 # 그냥 위의 방법대로 수작업으로 하는 것 추천
 # Declare an array of string with type
-declare -a directoriesToMock=("http" "repository" "usecase" "external")
-# Iterate the string array using for loop
-for dir in ${directoriesToMock[@]}; do
-   mockgen -package $dir -destination $dir/mock.go -source $dir/*.go
-done
+# declare -a directoriesToMock=("http" "repository" "usecase" "external")
+# # Iterate the string array using for loop
+# for dir in ${directoriesToMock[@]}; do
+#    mockgen -package $dir -destination $dir/mock.go -source $dir/*.go
+# done
