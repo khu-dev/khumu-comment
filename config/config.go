@@ -44,6 +44,9 @@ type KhumuConfig struct {
 	Sns struct {
 		TopicArn string `json:"topic_arn"`
 	} `json:"sns"`
+	Redis struct {
+		Addr string `json:"addr"`
+	}
 	Khumu struct {
 		CommandCenter struct {
 			RootURL string `json:"root_url"`

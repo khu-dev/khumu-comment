@@ -26,7 +26,11 @@ func Build() *dig.Container {
 		log.Panic(err)
 	}
 
-	// sns
+	err = c.Provide(external.NewRedisAdapter)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	err = c.Provide(khumu.NewKhumuAPIAdapter)
 	if err != nil {
 		log.Panic(err)

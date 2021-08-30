@@ -32,7 +32,8 @@ func NewKhumuAPIAdapter() KhumuAPIAdapter {
 
 // IsAuthor 는 concurrent하게 isAuthor 를 이용할 수 있게 해줌.
 func (a *KhumuAPIAdapterImpl) IsAuthor(articleID int, authorID string) <-chan bool {
-	resultChan := make(chan bool)
+	resultChan := make(chan bool, 1)
+	//resultChan <- false // 테스트용
 	go a.isAuthor(articleID, authorID, resultChan)
 	return resultChan
 }
@@ -51,7 +52,6 @@ func (a *KhumuAPIAdapterImpl) isAuthor(articleID int, authorID string, resultCha
 	log.Info(string(data))
 
 	resp, err := client.Post(fmt.Sprintf("%s/articles/%d/is-author", a.CommandCenterRootURL, articleID), "application/json", bytes.NewReader(data))
-
 	if err != nil {
 		log.Error(err)
 		resultChan <- false
