@@ -2,6 +2,7 @@ package container
 
 import (
 	"github.com/khu-dev/khumu-comment/external"
+	"github.com/khu-dev/khumu-comment/external/khumu"
 	"github.com/khu-dev/khumu-comment/http"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/usecase"
@@ -21,6 +22,12 @@ func Build() *dig.Container {
 
 	// sns
 	err = c.Provide(external.NewSnsClient)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// sns
+	err = c.Provide(khumu.NewKhumuAPIAdapter())
 	if err != nil {
 		log.Panic(err)
 	}

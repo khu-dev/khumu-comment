@@ -27,7 +27,7 @@ func init() {
 
 type KhumuConfig struct {
 	Host string `yaml:"host"`
-	Port string
+	Port string `json:"port"`
 	DB   struct {
 		Kind    string `yaml:"kind"`
 		SQLite3 struct {
@@ -40,8 +40,13 @@ type KhumuConfig struct {
 			User         string `yaml:"user"`
 			Password     string `yaml:"password"`
 		}
-	}
+	} `json:"db"`
 	Sns struct {
-		TopicArn string
-	}
+		TopicArn string `json:"topic_arn"`
+	} `json:"sns"`
+	Khumu struct {
+		CommandCenter struct {
+			RootURL string `json:"root_url"`
+		} `json:"command_center"`
+	} `json:"khumu"`
 }

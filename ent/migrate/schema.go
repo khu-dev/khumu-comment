@@ -48,6 +48,7 @@ var (
 		{Name: "state", Type: field.TypeString, Default: "exists"},
 		{Name: "content", Type: field.TypeString},
 		{Name: "kind", Type: field.TypeString, Default: "anonymous"},
+		{Name: "is_written_by_article_author", Type: field.TypeBool, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "article_id", Type: field.TypeInt, Nullable: true},
 		{Name: "parent_id", Type: field.TypeInt, Nullable: true},
@@ -62,25 +63,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "comment_comment_article_article_comments",
-				Columns:    []*schema.Column{CommentCommentColumns[5]},
+				Columns:    []*schema.Column{CommentCommentColumns[6]},
 				RefColumns: []*schema.Column{ArticleArticleColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "comment_comment_comment_comment_children",
-				Columns:    []*schema.Column{CommentCommentColumns[6]},
+				Columns:    []*schema.Column{CommentCommentColumns[7]},
 				RefColumns: []*schema.Column{CommentCommentColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "comment_comment_user_khumuuser_comments",
-				Columns:    []*schema.Column{CommentCommentColumns[7]},
+				Columns:    []*schema.Column{CommentCommentColumns[8]},
 				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "comment_comment_article_studyarticle_comments",
-				Columns:    []*schema.Column{CommentCommentColumns[8]},
+				Columns:    []*schema.Column{CommentCommentColumns[9]},
 				RefColumns: []*schema.Column{ArticleStudyarticleColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

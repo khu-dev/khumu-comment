@@ -65,6 +65,26 @@ func (cu *CommentUpdate) SetNillableKind(s *string) *CommentUpdate {
 	return cu
 }
 
+// SetIsWrittenByArticleAuthor sets the "is_written_by_article_author" field.
+func (cu *CommentUpdate) SetIsWrittenByArticleAuthor(b bool) *CommentUpdate {
+	cu.mutation.SetIsWrittenByArticleAuthor(b)
+	return cu
+}
+
+// SetNillableIsWrittenByArticleAuthor sets the "is_written_by_article_author" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillableIsWrittenByArticleAuthor(b *bool) *CommentUpdate {
+	if b != nil {
+		cu.SetIsWrittenByArticleAuthor(*b)
+	}
+	return cu
+}
+
+// ClearIsWrittenByArticleAuthor clears the value of the "is_written_by_article_author" field.
+func (cu *CommentUpdate) ClearIsWrittenByArticleAuthor() *CommentUpdate {
+	cu.mutation.ClearIsWrittenByArticleAuthor()
+	return cu
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (cu *CommentUpdate) SetCreatedAt(t time.Time) *CommentUpdate {
 	cu.mutation.SetCreatedAt(t)
@@ -344,6 +364,19 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: comment.FieldKind,
+		})
+	}
+	if value, ok := cu.mutation.IsWrittenByArticleAuthor(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: comment.FieldIsWrittenByArticleAuthor,
+		})
+	}
+	if cu.mutation.IsWrittenByArticleAuthorCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Column: comment.FieldIsWrittenByArticleAuthor,
 		})
 	}
 	if value, ok := cu.mutation.CreatedAt(); ok {
@@ -654,6 +687,26 @@ func (cuo *CommentUpdateOne) SetNillableKind(s *string) *CommentUpdateOne {
 	return cuo
 }
 
+// SetIsWrittenByArticleAuthor sets the "is_written_by_article_author" field.
+func (cuo *CommentUpdateOne) SetIsWrittenByArticleAuthor(b bool) *CommentUpdateOne {
+	cuo.mutation.SetIsWrittenByArticleAuthor(b)
+	return cuo
+}
+
+// SetNillableIsWrittenByArticleAuthor sets the "is_written_by_article_author" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableIsWrittenByArticleAuthor(b *bool) *CommentUpdateOne {
+	if b != nil {
+		cuo.SetIsWrittenByArticleAuthor(*b)
+	}
+	return cuo
+}
+
+// ClearIsWrittenByArticleAuthor clears the value of the "is_written_by_article_author" field.
+func (cuo *CommentUpdateOne) ClearIsWrittenByArticleAuthor() *CommentUpdateOne {
+	cuo.mutation.ClearIsWrittenByArticleAuthor()
+	return cuo
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (cuo *CommentUpdateOne) SetCreatedAt(t time.Time) *CommentUpdateOne {
 	cuo.mutation.SetCreatedAt(t)
@@ -957,6 +1010,19 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Type:   field.TypeString,
 			Value:  value,
 			Column: comment.FieldKind,
+		})
+	}
+	if value, ok := cuo.mutation.IsWrittenByArticleAuthor(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: comment.FieldIsWrittenByArticleAuthor,
+		})
+	}
+	if cuo.mutation.IsWrittenByArticleAuthorCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Column: comment.FieldIsWrittenByArticleAuthor,
 		})
 	}
 	if value, ok := cuo.mutation.CreatedAt(); ok {

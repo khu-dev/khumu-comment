@@ -856,31 +856,32 @@ func (m *BoardMutation) ResetEdge(name string) error {
 // CommentMutation represents an operation that mutates the Comment nodes in the graph.
 type CommentMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *int
-	state               *string
-	content             *string
-	kind                *string
-	created_at          *time.Time
-	clearedFields       map[string]struct{}
-	author              *string
-	clearedauthor       bool
-	article             *int
-	clearedarticle      bool
-	studyArticle        *int
-	clearedstudyArticle bool
-	parent              *int
-	clearedparent       bool
-	children            map[int]struct{}
-	removedchildren     map[int]struct{}
-	clearedchildren     bool
-	like                map[int]struct{}
-	removedlike         map[int]struct{}
-	clearedlike         bool
-	done                bool
-	oldValue            func(context.Context) (*Comment, error)
-	predicates          []predicate.Comment
+	op                           Op
+	typ                          string
+	id                           *int
+	state                        *string
+	content                      *string
+	kind                         *string
+	is_written_by_article_author *bool
+	created_at                   *time.Time
+	clearedFields                map[string]struct{}
+	author                       *string
+	clearedauthor                bool
+	article                      *int
+	clearedarticle               bool
+	studyArticle                 *int
+	clearedstudyArticle          bool
+	parent                       *int
+	clearedparent                bool
+	children                     map[int]struct{}
+	removedchildren              map[int]struct{}
+	clearedchildren              bool
+	like                         map[int]struct{}
+	removedlike                  map[int]struct{}
+	clearedlike                  bool
+	done                         bool
+	oldValue                     func(context.Context) (*Comment, error)
+	predicates                   []predicate.Comment
 }
 
 var _ ent.Mutation = (*CommentMutation)(nil)
@@ -1074,6 +1075,55 @@ func (m *CommentMutation) OldKind(ctx context.Context) (v string, err error) {
 // ResetKind resets all changes to the "kind" field.
 func (m *CommentMutation) ResetKind() {
 	m.kind = nil
+}
+
+// SetIsWrittenByArticleAuthor sets the "is_written_by_article_author" field.
+func (m *CommentMutation) SetIsWrittenByArticleAuthor(b bool) {
+	m.is_written_by_article_author = &b
+}
+
+// IsWrittenByArticleAuthor returns the value of the "is_written_by_article_author" field in the mutation.
+func (m *CommentMutation) IsWrittenByArticleAuthor() (r bool, exists bool) {
+	v := m.is_written_by_article_author
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsWrittenByArticleAuthor returns the old "is_written_by_article_author" field's value of the Comment entity.
+// If the Comment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommentMutation) OldIsWrittenByArticleAuthor(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldIsWrittenByArticleAuthor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldIsWrittenByArticleAuthor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsWrittenByArticleAuthor: %w", err)
+	}
+	return oldValue.IsWrittenByArticleAuthor, nil
+}
+
+// ClearIsWrittenByArticleAuthor clears the value of the "is_written_by_article_author" field.
+func (m *CommentMutation) ClearIsWrittenByArticleAuthor() {
+	m.is_written_by_article_author = nil
+	m.clearedFields[comment.FieldIsWrittenByArticleAuthor] = struct{}{}
+}
+
+// IsWrittenByArticleAuthorCleared returns if the "is_written_by_article_author" field was cleared in this mutation.
+func (m *CommentMutation) IsWrittenByArticleAuthorCleared() bool {
+	_, ok := m.clearedFields[comment.FieldIsWrittenByArticleAuthor]
+	return ok
+}
+
+// ResetIsWrittenByArticleAuthor resets all changes to the "is_written_by_article_author" field.
+func (m *CommentMutation) ResetIsWrittenByArticleAuthor() {
+	m.is_written_by_article_author = nil
+	delete(m.clearedFields, comment.FieldIsWrittenByArticleAuthor)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -1388,7 +1438,7 @@ func (m *CommentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CommentMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.state != nil {
 		fields = append(fields, comment.FieldState)
 	}
@@ -1397,6 +1447,9 @@ func (m *CommentMutation) Fields() []string {
 	}
 	if m.kind != nil {
 		fields = append(fields, comment.FieldKind)
+	}
+	if m.is_written_by_article_author != nil {
+		fields = append(fields, comment.FieldIsWrittenByArticleAuthor)
 	}
 	if m.created_at != nil {
 		fields = append(fields, comment.FieldCreatedAt)
@@ -1415,6 +1468,8 @@ func (m *CommentMutation) Field(name string) (ent.Value, bool) {
 		return m.Content()
 	case comment.FieldKind:
 		return m.Kind()
+	case comment.FieldIsWrittenByArticleAuthor:
+		return m.IsWrittenByArticleAuthor()
 	case comment.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -1432,6 +1487,8 @@ func (m *CommentMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldContent(ctx)
 	case comment.FieldKind:
 		return m.OldKind(ctx)
+	case comment.FieldIsWrittenByArticleAuthor:
+		return m.OldIsWrittenByArticleAuthor(ctx)
 	case comment.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -1463,6 +1520,13 @@ func (m *CommentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetKind(v)
+		return nil
+	case comment.FieldIsWrittenByArticleAuthor:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsWrittenByArticleAuthor(v)
 		return nil
 	case comment.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1500,7 +1564,11 @@ func (m *CommentMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *CommentMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(comment.FieldIsWrittenByArticleAuthor) {
+		fields = append(fields, comment.FieldIsWrittenByArticleAuthor)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1513,6 +1581,11 @@ func (m *CommentMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *CommentMutation) ClearField(name string) error {
+	switch name {
+	case comment.FieldIsWrittenByArticleAuthor:
+		m.ClearIsWrittenByArticleAuthor()
+		return nil
+	}
 	return fmt.Errorf("unknown Comment nullable field %s", name)
 }
 
@@ -1528,6 +1601,9 @@ func (m *CommentMutation) ResetField(name string) error {
 		return nil
 	case comment.FieldKind:
 		m.ResetKind()
+		return nil
+	case comment.FieldIsWrittenByArticleAuthor:
+		m.ResetIsWrittenByArticleAuthor()
 		return nil
 	case comment.FieldCreatedAt:
 		m.ResetCreatedAt()

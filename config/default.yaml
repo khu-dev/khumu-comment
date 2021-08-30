@@ -12,3 +12,6 @@ db:
     password: root # Define YOUR_MYSQL_PASSWORD
 sns:
   topicArn: arn:aws:sns:ap-northeast-2:xxx
+khumu:
+  commandCenter:
+    rootURL: http://command-center/api

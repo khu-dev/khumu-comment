@@ -58,6 +58,20 @@ func (cc *CommentCreate) SetNillableKind(s *string) *CommentCreate {
 	return cc
 }
 
+// SetIsWrittenByArticleAuthor sets the "is_written_by_article_author" field.
+func (cc *CommentCreate) SetIsWrittenByArticleAuthor(b bool) *CommentCreate {
+	cc.mutation.SetIsWrittenByArticleAuthor(b)
+	return cc
+}
+
+// SetNillableIsWrittenByArticleAuthor sets the "is_written_by_article_author" field if the given value is not nil.
+func (cc *CommentCreate) SetNillableIsWrittenByArticleAuthor(b *bool) *CommentCreate {
+	if b != nil {
+		cc.SetIsWrittenByArticleAuthor(*b)
+	}
+	return cc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (cc *CommentCreate) SetCreatedAt(t time.Time) *CommentCreate {
 	cc.mutation.SetCreatedAt(t)
@@ -320,6 +334,14 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Column: comment.FieldKind,
 		})
 		_node.Kind = value
+	}
+	if value, ok := cc.mutation.IsWrittenByArticleAuthor(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: comment.FieldIsWrittenByArticleAuthor,
+		})
+		_node.IsWrittenByArticleAuthor = value
 	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

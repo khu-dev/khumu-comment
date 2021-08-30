@@ -17,6 +17,8 @@ const (
 	FieldContent = "content"
 	// FieldKind holds the string denoting the kind field in the database.
 	FieldKind = "kind"
+	// FieldIsWrittenByArticleAuthor holds the string denoting the is_written_by_article_author field in the database.
+	FieldIsWrittenByArticleAuthor = "is_written_by_article_author"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeAuthor holds the string denoting the author edge name in mutations.
@@ -79,6 +81,7 @@ var Columns = []string{
 	FieldState,
 	FieldContent,
 	FieldKind,
+	FieldIsWrittenByArticleAuthor,
 	FieldCreatedAt,
 }
 

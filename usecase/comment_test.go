@@ -75,27 +75,6 @@ func TestCommentUseCase_Create(t *testing.T) {
 		assert.Equal(t, "테스트 익명 댓글에 대한 익명 대댓글", comment.Content)
 	})
 
-	t.Run("스터디 게시글에 대한 익명 comment", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
-		newComment, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
-			Author:       test.UserJinsu.ID,
-			StudyArticle: &test.StudyArticles[0].ID,
-			Content:      "테스트 댓글",
-		})
-
-		c, err := commentUseCase.Repo.Get(newComment.ID)
-		author := c.QueryAuthor().FirstX(context.TODO())
-		assert.NoError(t, err)
-		// 기본적으로는 익명 댓글임.
-		assert.Equal(t, "anonymous", c.Kind)
-		assert.Equal(t, test.UserJinsu.ID, author.ID)
-		assert.Equal(t, test.UserJinsu.Nickname, author.Nickname)
-		assert.Nil(t, c.Edges.Article)
-		assert.NotNil(t, c.Edges.StudyArticle)
-		assert.Equal(t, "테스트 댓글", c.Content)
-	})
-
 	t.Run("실패) 커뮤니티 article도 study article도 아닌 경우", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)

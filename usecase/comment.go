@@ -9,6 +9,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/khu-dev/khumu-comment/external"
+	"github.com/khu-dev/khumu-comment/external/khumu"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
 	"reflect"
@@ -44,9 +45,10 @@ type LikeCommentUseCaseInterface interface {
 }
 
 type CommentUseCase struct {
-	Repo      repository.CommentRepository
-	entclient *ent.Client
-	SnsClient external.SnsClient
+	Repo            repository.CommentRepository
+	entclient       *ent.Client
+	SnsClient       external.SnsClient
+	khumuAPIAdapter khumu.KhumuAPIAdapter
 }
 
 type LikeCommentUseCase struct {
@@ -57,8 +59,14 @@ type LikeCommentUseCase struct {
 func NewCommentUseCase(
 	repo repository.CommentRepository,
 	entclient *ent.Client,
-	snsClient external.SnsClient) CommentUseCaseInterface {
-	return &CommentUseCase{Repo: repo, entclient: entclient, SnsClient: snsClient}
+	snsClient external.SnsClient,
+	khumuAPIAdapter khumu.KhumuAPIAdapter) CommentUseCaseInterface {
+	return &CommentUseCase{
+		Repo:            repo,
+		entclient:       entclient,
+		SnsClient:       snsClient,
+		khumuAPIAdapter: khumuAPIAdapter,
+	}
 }
 
 func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInput) (*data.CommentOutput, error) {
@@ -73,9 +81,10 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
 		return nil, errorz.ErrNoArticleIDInput
 	}
+	isWrittenByArticleAuthor := uc.khumuAPIAdapter.IsAuthor(*commentInput.Article, commentInput.Author)
 
 	newComment, err := uc.Repo.Create(commentInput)
-
+	err = newComment.Update().SetIsWrittenByArticleAuthor(<-isWrittenByArticleAuthor).Exec(context.Background())
 	if err != nil {
 		logrus.Error(err)
 		return nil, err

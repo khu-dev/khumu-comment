@@ -6,6 +6,7 @@ mockgen -package usecase -destination usecase/mock.go -source usecase/*.go
 mockgen -package http -destination http/mock.go -source http/*.go
 mockgen -package repository -destination repository/mock.go -source repository/*.go
 mockgen -package external -destination external/mock.go -source external/*.go
+mockgen -package khumu -destination external/khumu/mock.go -source external/khumu/*.go
 
 
 # 이렇게 자동화 할 수도 있긴한데... 유지 보수하기 복잡할 듯 까먹어서

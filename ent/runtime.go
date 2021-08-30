@@ -32,7 +32,7 @@ func init() {
 	// comment.DefaultKind holds the default value on creation for the kind field.
 	comment.DefaultKind = commentDescKind.Default.(string)
 	// commentDescCreatedAt is the schema descriptor for created_at field.
-	commentDescCreatedAt := commentFields[4].Descriptor()
+	commentDescCreatedAt := commentFields[5].Descriptor()
 	// comment.DefaultCreatedAt holds the default value on creation for the created_at field.
 	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
 	khumuuserFields := schema.KhumuUser{}.Fields()

@@ -25,6 +25,8 @@ type Comment struct {
 	Content string `json:"content,omitempty"`
 	// Kind holds the value of the "kind" field.
 	Kind string `json:"kind,omitempty"`
+	// IsWrittenByArticleAuthor holds the value of the "is_written_by_article_author" field.
+	IsWrittenByArticleAuthor bool `json:"is_written_by_article_author,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -134,6 +136,8 @@ func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case comment.FieldIsWrittenByArticleAuthor:
+			values[i] = new(sql.NullBool)
 		case comment.FieldID:
 			values[i] = new(sql.NullInt64)
 		case comment.FieldState, comment.FieldContent, comment.FieldKind:
@@ -186,6 +190,12 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field kind", values[i])
 			} else if value.Valid {
 				c.Kind = value.String
+			}
+		case comment.FieldIsWrittenByArticleAuthor:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_written_by_article_author", values[i])
+			} else if value.Valid {
+				c.IsWrittenByArticleAuthor = value.Bool
 			}
 		case comment.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -285,6 +295,8 @@ func (c *Comment) String() string {
 	builder.WriteString(c.Content)
 	builder.WriteString(", kind=")
 	builder.WriteString(c.Kind)
+	builder.WriteString(", is_written_by_article_author=")
+	builder.WriteString(fmt.Sprintf("%v", c.IsWrittenByArticleAuthor))
 	builder.WriteString(", created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
