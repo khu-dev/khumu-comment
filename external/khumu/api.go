@@ -3,11 +3,11 @@ package khumu
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -48,12 +48,20 @@ func (a *KhumuAPIAdapterImpl) isAuthor(articleID int, authorID string, resultCha
 		log.Error(err)
 		resultChan <- false
 	}
+	log.Info(string(data))
 
-	resp, err := client.Post(a.CommandCenterRootURL+"/"+strconv.Itoa(articleID), "application/json", bytes.NewReader(data))
+	resp, err := client.Post(fmt.Sprintf("%s/articles/%d/is-author", a.CommandCenterRootURL, articleID), "application/json", bytes.NewReader(data))
+
+	if err != nil {
+		log.Error(err)
+		resultChan <- false
+		return
+	}
 	data, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err)
 		resultChan <- false
+		return
 	}
 	log.Info(string(data))
 	result := new(IsAuthorResp)

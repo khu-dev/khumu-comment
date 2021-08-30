@@ -7,5 +7,5 @@ type IsAuthorResp struct {
 }
 
 type IsAuthorReq struct {
-	Author string
+	Author string `json:"author"`
 }
