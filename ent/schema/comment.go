@@ -28,7 +28,7 @@ func (Comment) Fields() []ent.Field {
 		field.String("state").Default("exists"),
 		field.String("content"),
 		field.String("kind").Default("anonymous"),
-		field.Bool("is_written_by_article_author").Optional(),
+		field.Bool("is_written_by_article_author").Default(false),
 		field.Time("created_at").Default(func() time.Time {
 			return time.Now()
 		}),

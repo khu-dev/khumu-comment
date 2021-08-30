@@ -1108,22 +1108,9 @@ func (m *CommentMutation) OldIsWrittenByArticleAuthor(ctx context.Context) (v bo
 	return oldValue.IsWrittenByArticleAuthor, nil
 }
 
-// ClearIsWrittenByArticleAuthor clears the value of the "is_written_by_article_author" field.
-func (m *CommentMutation) ClearIsWrittenByArticleAuthor() {
-	m.is_written_by_article_author = nil
-	m.clearedFields[comment.FieldIsWrittenByArticleAuthor] = struct{}{}
-}
-
-// IsWrittenByArticleAuthorCleared returns if the "is_written_by_article_author" field was cleared in this mutation.
-func (m *CommentMutation) IsWrittenByArticleAuthorCleared() bool {
-	_, ok := m.clearedFields[comment.FieldIsWrittenByArticleAuthor]
-	return ok
-}
-
 // ResetIsWrittenByArticleAuthor resets all changes to the "is_written_by_article_author" field.
 func (m *CommentMutation) ResetIsWrittenByArticleAuthor() {
 	m.is_written_by_article_author = nil
-	delete(m.clearedFields, comment.FieldIsWrittenByArticleAuthor)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -1564,11 +1551,7 @@ func (m *CommentMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *CommentMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(comment.FieldIsWrittenByArticleAuthor) {
-		fields = append(fields, comment.FieldIsWrittenByArticleAuthor)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1581,11 +1564,6 @@ func (m *CommentMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *CommentMutation) ClearField(name string) error {
-	switch name {
-	case comment.FieldIsWrittenByArticleAuthor:
-		m.ClearIsWrittenByArticleAuthor()
-		return nil
-	}
 	return fmt.Errorf("unknown Comment nullable field %s", name)
 }
 

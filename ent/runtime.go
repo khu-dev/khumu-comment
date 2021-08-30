@@ -31,6 +31,10 @@ func init() {
 	commentDescKind := commentFields[3].Descriptor()
 	// comment.DefaultKind holds the default value on creation for the kind field.
 	comment.DefaultKind = commentDescKind.Default.(string)
+	// commentDescIsWrittenByArticleAuthor is the schema descriptor for is_written_by_article_author field.
+	commentDescIsWrittenByArticleAuthor := commentFields[4].Descriptor()
+	// comment.DefaultIsWrittenByArticleAuthor holds the default value on creation for the is_written_by_article_author field.
+	comment.DefaultIsWrittenByArticleAuthor = commentDescIsWrittenByArticleAuthor.Default.(bool)
 	// commentDescCreatedAt is the schema descriptor for created_at field.
 	commentDescCreatedAt := commentFields[5].Descriptor()
 	// comment.DefaultCreatedAt holds the default value on creation for the created_at field.

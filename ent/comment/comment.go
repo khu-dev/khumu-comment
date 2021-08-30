@@ -114,6 +114,8 @@ var (
 	DefaultState string
 	// DefaultKind holds the default value on creation for the "kind" field.
 	DefaultKind string
+	// DefaultIsWrittenByArticleAuthor holds the default value on creation for the "is_written_by_article_author" field.
+	DefaultIsWrittenByArticleAuthor bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 )

@@ -48,7 +48,7 @@ var (
 		{Name: "state", Type: field.TypeString, Default: "exists"},
 		{Name: "content", Type: field.TypeString},
 		{Name: "kind", Type: field.TypeString, Default: "anonymous"},
-		{Name: "is_written_by_article_author", Type: field.TypeBool, Nullable: true},
+		{Name: "is_written_by_article_author", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "article_id", Type: field.TypeInt, Nullable: true},
 		{Name: "parent_id", Type: field.TypeInt, Nullable: true},

@@ -475,20 +475,6 @@ func IsWrittenByArticleAuthorNEQ(v bool) predicate.Comment {
 	})
 }
 
-// IsWrittenByArticleAuthorIsNil applies the IsNil predicate on the "is_written_by_article_author" field.
-func IsWrittenByArticleAuthorIsNil() predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldIsWrittenByArticleAuthor)))
-	})
-}
-
-// IsWrittenByArticleAuthorNotNil applies the NotNil predicate on the "is_written_by_article_author" field.
-func IsWrittenByArticleAuthorNotNil() predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldIsWrittenByArticleAuthor)))
-	})
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {
