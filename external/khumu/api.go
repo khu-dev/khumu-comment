@@ -55,6 +55,7 @@ func (a *KhumuAPIAdapterImpl) isAuthor(articleID int, authorID string, resultCha
 		log.Error(err)
 		resultChan <- false
 	}
+	log.Info(string(data))
 	result := new(IsAuthorResp)
 	err = json.Unmarshal(data, result)
 	if err != nil {
