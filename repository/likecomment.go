@@ -42,12 +42,8 @@ func (l likeCommentRepository) FindAllByUserIDAndCommentID(userID string, commen
 		//err = nil
 	}()
 	likes, err = l.db.LikeComment.Query().
-		WithLikedBy(func(query *ent.KhumuUserQuery) {
-			query.Where(khumuuser.ID(userID))
-		}).
-		WithAbout(func(query *ent.CommentQuery) {
-			query.Where(comment.ID(commentID))
-		}).All(context.TODO())
+		Where(likecomment.HasLikedByWith(khumuuser.ID(userID)), likecomment.HasAboutWith(comment.ID(commentID))).
+		All(context.TODO())
 	return
 }
 
