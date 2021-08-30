@@ -18,7 +18,7 @@ func KhumuUserModelToSimpleOutput(src *ent.KhumuUser, dest *data.SimpleKhumuUser
 
 	dest.Username = src.ID
 	dest.Nickname = src.Nickname
-	dest.State = "enabled"
+	dest.State = src.State
 
 	return dest
 }
