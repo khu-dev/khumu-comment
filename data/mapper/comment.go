@@ -28,6 +28,7 @@ func CommentModelToOutput(src *ent.Comment, dest *data.CommentOutput) *data.Comm
 	dest.Content = src.Content
 	dest.Kind = src.Kind
 	dest.State = src.State
+	dest.IsWrittenByArticleAuthor = src.IsWrittenByArticleAuthor
 	// children은 그냥 빈 배열로 저장.
 	// 필요한 경우
 	dest.Children = []*data.CommentOutput{}

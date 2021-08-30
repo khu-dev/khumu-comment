@@ -27,7 +27,7 @@ func Build() *dig.Container {
 	}
 
 	// sns
-	err = c.Provide(khumu.NewKhumuAPIAdapter())
+	err = c.Provide(khumu.NewKhumuAPIAdapter)
 	if err != nil {
 		log.Panic(err)
 	}

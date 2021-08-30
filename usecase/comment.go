@@ -215,15 +215,7 @@ func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, o
 	}
 
 	mapper.CommentModelToOutput(comment, output)
-	if comment.Edges.Article != nil {
-		if username == comment.Edges.Article.Edges.Author.ID {
-			output.IsAuthorOfArticle = true
-		}
-	} else if comment.Edges.StudyArticle != nil {
-		if username == comment.Edges.StudyArticle.Edges.Author.ID {
-			output.IsAuthorOfArticle = true
-		}
-	}
+
 	if comment.Edges.Parent != nil {
 		output.Parent = &comment.Edges.Parent.ID
 	}
