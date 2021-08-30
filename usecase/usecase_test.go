@@ -15,6 +15,7 @@ import (
 var (
 	repo                *ent.Client
 	mockSnsClient       *external.MockSnsClient
+	mockRedisAdapter    *external.MockRedisAdapter
 	mockKhumuApiAdapter *khumu.MockKhumuAPIAdapter
 	commentUseCase      *CommentUseCase
 	likeCommentUseCase  *LikeCommentUseCase
@@ -27,12 +28,14 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	repo = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 
 	mockSnsClient = external.NewMockSnsClient(ctrl)
+	mockRedisAdapter = external.NewMockRedisAdapter(ctrl)
 	mockKhumuApiAdapter = khumu.NewMockKhumuAPIAdapter(ctrl)
 	commentUseCase = &CommentUseCase{
 		Repo:            repository.NewCommentRepository(repo),
 		entclient:       repo,
 		SnsClient:       mockSnsClient,
 		khumuAPIAdapter: mockKhumuApiAdapter,
+		redisAdapter:    mockRedisAdapter,
 	}
 	likeCommentUseCase = &LikeCommentUseCase{
 		Repo:        repository.NewLikeCommentRepository(repo),
@@ -44,6 +47,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 			tb.Log("그냥 테스트라서 푸시 알림 패스")
 			return nil
 		}).AnyTimes()
+	mockRedisAdapter.EXPECT().InvalidateCommentsOfArticle(gomock.AssignableToTypeOf(1)).AnyTimes()
 	mockKhumuApiAdapter.EXPECT().IsAuthor(gomock.Any(), gomock.Any()).DoAndReturn(func(articleID int, authorID string) <-chan bool {
 		ch := make(chan bool, 1)
 		ch <- false
