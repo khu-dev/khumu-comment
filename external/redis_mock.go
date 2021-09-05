@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	ent "github.com/khu-dev/khumu-comment/ent"
+	data "github.com/khu-dev/khumu-comment/data"
 )
 
 // MockRedisAdapter is a mock of RedisAdapter interface.
@@ -35,10 +35,10 @@ func (m *MockRedisAdapter) EXPECT() *MockRedisAdapterMockRecorder {
 }
 
 // GetAllByArticle mocks base method.
-func (m *MockRedisAdapter) GetAllByArticle(articleID int) []*ent.Comment {
+func (m *MockRedisAdapter) GetAllByArticle(articleID int) data.CommentEntities {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllByArticle", articleID)
-	ret0, _ := ret[0].([]*ent.Comment)
+	ret0, _ := ret[0].(data.CommentEntities)
 	return ret0
 }
 

@@ -47,7 +47,8 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 			tb.Log("그냥 테스트라서 푸시 알림 패스")
 			return nil
 		}).AnyTimes()
-	mockRedisAdapter.EXPECT().InvalidateCommentsOfArticle(gomock.AssignableToTypeOf(1)).AnyTimes()
+	mockRedisAdapter.EXPECT().Refresh(gomock.AssignableToTypeOf(1)).AnyTimes()
+	mockRedisAdapter.EXPECT().GetAllByArticle(gomock.AssignableToTypeOf(1)).AnyTimes()
 	mockKhumuApiAdapter.EXPECT().IsAuthor(gomock.Any(), gomock.Any()).DoAndReturn(func(articleID int, authorID string) <-chan bool {
 		ch := make(chan bool, 1)
 		ch <- false
