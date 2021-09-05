@@ -2,6 +2,7 @@ package external
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
@@ -67,7 +68,7 @@ func (a *RedisAdapterImpl) Refresh(articleID int) {
 		return
 	}
 
-	log.Infof("캐시를 refresh합니다. key=%s, val=%v", key, val)
+	log.Infof("캐시를 refresh합니다. key=%s", key)
 	err = a.cache.Set(&cache.Item{
 		Ctx:   context.TODO(),
 		Key:   key,
@@ -86,8 +87,17 @@ func (a *RedisAdapterImpl) GetAllByArticle(articleID int) data.CommentEntities {
 	log.Infof("Article에 대한 댓글 캐시를 조회합니다.key=%s", key)
 	err := a.cache.Get(context.TODO(), key, &val)
 	if err != nil {
-		log.Error(err)
-		return []*ent.Comment{}
+		// 캐시 미스
+		if errors.Is(err, cache.ErrCacheMiss) {
+			a.Refresh(articleID)
+			err = a.cache.Get(context.TODO(), key, &val)
+			if err != nil {
+				log.Errorf("캐시 미스 후 Refresh 했지만 에러 발생: %v", err)
+			}
+		} else {
+			log.Error(err)
+			return []*ent.Comment{}
+		}
 	}
 
 	return val

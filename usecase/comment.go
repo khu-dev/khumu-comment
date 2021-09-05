@@ -97,7 +97,7 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	// 절차지향방식은 의존성 주입도 많이 받아야함.
 	go uc.SnsClient.PublishMessage(uc.modelToOutput(commentInput.Author, newComment, nil))
 	// cache invalidate
-	go uc.redisAdapter.InvalidateCommentsOfArticle(*commentInput.Article)
+	go uc.redisAdapter.Refresh(*commentInput.Article)
 
 	// SNS에 Publish한 output을 hide하면 hide 된 채 Publish 될 수 있다는 이슈가 있어서
 	// 이렇게 두 번 output을 따로 생성한다.
@@ -116,7 +116,8 @@ func (uc *CommentUseCase) List(username string, opt *CommentQueryOption) ([]*dat
 		parents, err = uc.Repo.FindAllParentsByAuthorID(opt.AuthorUsername)
 	}
 	if opt.ArticleID != 0 {
-		parents, err = uc.Repo.FindAllParentsByArticleID(opt.ArticleID)
+		//parents, err = uc.Repo.FindAllParentsByArticleID(opt.ArticleID)
+		parents = uc.redisAdapter.GetAllByArticle(opt.ArticleID)
 	}
 	if opt.StudyArticleID != 0 {
 		parents, err = uc.Repo.FindAllParentsByStudyArticleID(opt.StudyArticleID)
@@ -164,7 +165,7 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	if err != nil {
 		return nil, err
 	}
-
+	go uc.redisAdapter.Refresh(com.Edges.Article.ID)
 	output := uc.modelToOutput(username, com, nil)
 	uc.hideFieldOfCommentOutput(username, output)
 	return output, err
@@ -193,7 +194,7 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		if err != nil {
 			return err
 		}
-		go uc.redisAdapter.InvalidateCommentsOfArticle(commentExisting.Edges.Article.ID)
+		go uc.redisAdapter.Refresh(commentExisting.Edges.Article.ID)
 	} else {
 		updateInput := map[string]interface{}{
 			"state": "deleted",
