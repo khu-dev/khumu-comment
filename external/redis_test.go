@@ -30,8 +30,8 @@ func TestRedisAdapterImpl_GetAllByArticle(t *testing.T) {
 	//		a := &RedisAdapterImpl{
 	//			client: tt.fields.client,
 	//		}
-	//		if got := a.GetAllByArticle(tt.args.articleID); !reflect.DeepEqual(got, tt.want) {
-	//			t.Errorf("GetAllByArticle() = %v, want %v", got, tt.want)
+	//		if got := a.GetCommentsByArticle(tt.args.articleID); !reflect.DeepEqual(got, tt.want) {
+	//			t.Errorf("GetCommentsByArticle() = %v, want %v", got, tt.want)
 	//		}
 	//	})
 	//}
@@ -44,7 +44,7 @@ func TestRedisAdapterImpl_SetNewComment(t *testing.T) {
 	test.SetUpUsers(db)
 	test.SetUpArticles(db)
 	test.SetUpComments(db)
-	a.Refresh(test.Articles[0].ID)
-	results := a.GetAllByArticle(test.Articles[0].ID)
+	a.RefreshCommentsByArticle(test.Articles[0].ID)
+	results := a.GetCommentsByArticle(test.Articles[0].ID)
 	log.Info(results)
 }

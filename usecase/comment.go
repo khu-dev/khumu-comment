@@ -53,8 +53,9 @@ type CommentUseCase struct {
 }
 
 type LikeCommentUseCase struct {
-	Repo        repository.LikeCommentRepository
-	CommentRepo repository.CommentRepository
+	Repo         repository.LikeCommentRepository
+	CommentRepo  repository.CommentRepository
+	redisAdapter external.RedisAdapter
 }
 
 func NewCommentUseCase(
@@ -97,7 +98,7 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	// 절차지향방식은 의존성 주입도 많이 받아야함.
 	go uc.SnsClient.PublishMessage(uc.modelToOutput(commentInput.Author, newComment, nil))
 	// cache invalidate
-	go uc.redisAdapter.Refresh(*commentInput.Article)
+	go uc.redisAdapter.RefreshCommentsByArticle(*commentInput.Article)
 
 	// SNS에 Publish한 output을 hide하면 hide 된 채 Publish 될 수 있다는 이슈가 있어서
 	// 이렇게 두 번 output을 따로 생성한다.
@@ -107,33 +108,52 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 }
 
 func (uc *CommentUseCase) List(username string, opt *CommentQueryOption) ([]*data.CommentOutput, error) {
+	//start := time.Now()
+	//logrus.Warn("1  ", time.Now().Sub(start))
+	//start = time.Now()
 	logrus.WithField("username", username).Infof("Start List CommentQueryOption(%#v)", opt)
 	var (
 		parents []*ent.Comment
 		err     error
 	)
+
+	//logrus.Warn("2  ", time.Now().Sub(start))
+	//start = time.Now()
+
 	if opt.AuthorUsername != "" {
 		parents, err = uc.Repo.FindAllParentsByAuthorID(opt.AuthorUsername)
 	}
 	if opt.ArticleID != 0 {
 		//parents, err = uc.Repo.FindAllParentsByArticleID(opt.ArticleID)
-		parents = uc.redisAdapter.GetAllByArticle(opt.ArticleID)
+		parents = uc.redisAdapter.GetCommentsByArticle(opt.ArticleID)
 	}
 	if opt.StudyArticleID != 0 {
 		parents, err = uc.Repo.FindAllParentsByStudyArticleID(opt.StudyArticleID)
 	}
+
+	//logrus.Warn("3  ", time.Now().Sub(start))
+	//start = time.Now()
 
 	if err != nil {
 		logrus.Errorf("comments 쿼리 도중 오류 발생. QueryOption(%+v)", opt)
 		return nil, err
 	}
 
+	//logrus.Warn("4  ", time.Now().Sub(start))
+	//start = time.Now()
+
 	outputs := make([]*data.CommentOutput, 0)
 	for _, parent := range parents {
 		output := uc.modelToOutput(username, parent, nil)
+		//logrus.Warn("modelToOuptut  ", time.Now().Sub(start))
+		//start = time.Now()
 		uc.hideFieldOfCommentOutput(username, output)
+		//logrus.Warn("hidField  ", time.Now().Sub(start))
+		//start = time.Now()
 		outputs = append(outputs, output)
 	}
+	//logrus.Warn("5  ", time.Now().Sub(start))
+	//start = time.Now()
 
 	return outputs, nil
 }
@@ -165,7 +185,7 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	if err != nil {
 		return nil, err
 	}
-	go uc.redisAdapter.Refresh(com.Edges.Article.ID)
+	go uc.redisAdapter.RefreshCommentsByArticle(com.Edges.Article.ID)
 	output := uc.modelToOutput(username, com, nil)
 	uc.hideFieldOfCommentOutput(username, output)
 	return output, err
@@ -194,7 +214,7 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		if err != nil {
 			return err
 		}
-		go uc.redisAdapter.Refresh(commentExisting.Edges.Article.ID)
+		go uc.redisAdapter.RefreshCommentsByArticle(commentExisting.Edges.Article.ID)
 	} else {
 		updateInput := map[string]interface{}{
 			"state": "deleted",
@@ -229,9 +249,17 @@ func (uc *CommentUseCase) modelToOutput(username string, comment *ent.Comment, o
 		output.IsAuthor = true
 	}
 
+	//start := time.Now()
 	output.CreatedAt = mapper.NewCreatedAtExpression(comment.CreatedAt)
-	output.LikeCommentCount = uc.getLikeCommentCount(comment.ID)
-	output.Liked = uc.getLiked(comment.ID)
+	//logrus.Warn("A ", time.Now().Sub(start))
+	//start = time.Now()
+	likes := uc.redisAdapter.GetLikeCommentsByComment(comment.ID)
+	output.LikeCommentCount = len(likes)
+	//logrus.Warn("B ", time.Now().Sub(start))
+	//start = time.Now()
+	output.Liked = likes.GetLiked(username)
+	//logrus.Warn("C ", time.Now().Sub(start))
+	//start = time.Now()
 
 	if comment.Edges.Children != nil {
 		for _, child := range comment.Edges.Children {
@@ -287,10 +315,12 @@ func (uc *CommentUseCase) getLiked(commentID int) bool {
 
 func NewLikeCommentUseCase(
 	repo repository.LikeCommentRepository,
-	commentRepo repository.CommentRepository) LikeCommentUseCaseInterface {
+	commentRepo repository.CommentRepository,
+	redisAdapter external.RedisAdapter) LikeCommentUseCaseInterface {
 	return &LikeCommentUseCase{
-		Repo:        repo,
-		CommentRepo: commentRepo,
+		Repo:         repo,
+		CommentRepo:  commentRepo,
+		redisAdapter: redisAdapter,
 	}
 }
 
@@ -322,6 +352,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 				return false, err
 			}
 		}
+		uc.redisAdapter.RefreshLikeCommentsByComment(input.Comment)
 		// 정상적으로 삭제한 경우
 		return false, nil
 	} else {
@@ -332,7 +363,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 			logrus.Error(err)
 			return false, err
 		}
-
+		uc.redisAdapter.RefreshLikeCommentsByComment(input.Comment)
 		// 정상적으로 생성한 경우
 		return true, nil
 	}

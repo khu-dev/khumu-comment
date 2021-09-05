@@ -37,7 +37,7 @@ func (m *MockRedisAdapter) EXPECT() *MockRedisAdapterMockRecorder {
 // GetAllByArticle mocks base method.
 func (m *MockRedisAdapter) GetAllByArticle(articleID int) data.CommentEntities {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllByArticle", articleID)
+	ret := m.ctrl.Call(m, "GetCommentsByArticle", articleID)
 	ret0, _ := ret[0].(data.CommentEntities)
 	return ret0
 }
@@ -45,7 +45,7 @@ func (m *MockRedisAdapter) GetAllByArticle(articleID int) data.CommentEntities {
 // GetAllByArticle indicates an expected call of GetAllByArticle.
 func (mr *MockRedisAdapterMockRecorder) GetAllByArticle(articleID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllByArticle", reflect.TypeOf((*MockRedisAdapter)(nil).GetAllByArticle), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommentsByArticle", reflect.TypeOf((*MockRedisAdapter)(nil).GetAllByArticle), articleID)
 }
 
 // InvalidateCommentsOfArticle mocks base method.
@@ -61,13 +61,13 @@ func (mr *MockRedisAdapterMockRecorder) InvalidateCommentsOfArticle(articleID in
 }
 
 // Refresh mocks base method.
-func (m *MockRedisAdapter) Refresh(articleID int) {
+func (m *MockRedisAdapter) RefreshCommentsByArticle(articleID int) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Refresh", articleID)
+	m.ctrl.Call(m, "RefreshCommentsByArticle", articleID)
 }
 
 // Refresh indicates an expected call of Refresh.
 func (mr *MockRedisAdapterMockRecorder) Refresh(articleID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockRedisAdapter)(nil).Refresh), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshCommentsByArticle", reflect.TypeOf((*MockRedisAdapter)(nil).RefreshCommentsByArticle), articleID)
 }

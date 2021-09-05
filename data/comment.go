@@ -38,6 +38,8 @@ type LikeCommentInput struct {
 
 type CommentEntities []*ent.Comment
 
+type LikeCommentEntities []*ent.LikeComment
+
 // MarshalBinary -
 func (cl *CommentEntities) MarshalBinary() ([]byte, error) {
 	return json.Marshal(cl)
@@ -64,4 +66,29 @@ func (cl *CommentEntities) GetTotalLength() int {
 
 func (cl *CommentEntities) GetParentsLength() int {
 	return len(*cl)
+}
+
+// MarshalBinary -
+func (lcl *LikeCommentEntities) MarshalBinary() ([]byte, error) {
+	return json.Marshal(lcl)
+}
+
+// UnmarshalBinary -
+func (lcl *LikeCommentEntities) UnmarshalBinary(data []byte) error {
+	if err := json.Unmarshal(data, lcl); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UnmarshalBinary -
+func (lcl *LikeCommentEntities) GetLiked(username string) bool {
+	for _, like := range *lcl {
+		if like.Edges.LikedBy.ID == username {
+			return true
+		}
+	}
+
+	return false
 }

@@ -12,6 +12,7 @@ import (
 
 type LikeCommentRepository interface {
 	Create(createInput *data.LikeCommentInput) (like *ent.LikeComment, err error)
+	FindAllByCommentID(commentID int) (likes []*ent.LikeComment, err error)
 	FindAllByUserIDAndCommentID(authorID string, commentID int) (likes []*ent.LikeComment, err error)
 	CountByCommentID(commentID int) (int, error)
 	Delete(id int) error
@@ -33,6 +34,17 @@ func (l likeCommentRepository) Create(createInput *data.LikeCommentInput) (like 
 		//err = nil
 	}()
 	like, err = l.db.LikeComment.Create().SetLikedByID(createInput.User).SetAboutID(createInput.Comment).Save(context.TODO())
+	return
+}
+
+func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.LikeComment, err error) {
+	defer func() {
+		err = WrapEntError(err)
+		//err = nil
+	}()
+	likes, err = l.db.LikeComment.Query().
+		Where(likecomment.HasAboutWith(comment.ID(commentID))).
+		All(context.TODO())
 	return
 }
 
