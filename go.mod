@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.38.18
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-openapi/spec v0.19.12 // indirect
+	github.com/go-redis/cache/v8 v8.4.2
 	github.com/go-redis/redis/v8 v8.11.3
 	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae
 	github.com/golang/mock v1.3.1
@@ -19,7 +20,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/meehow/go-django-hashers v0.0.0-20171231135116-5e5d6afe52db
 	github.com/pelletier/go-toml v1.9.0 // indirect
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

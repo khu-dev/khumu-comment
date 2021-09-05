@@ -84,10 +84,8 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
 		return nil, errorz.ErrNoArticleIDInput
 	}
-	isWrittenByArticleAuthorChan := uc.khumuAPIAdapter.IsAuthor(*commentInput.Article, commentInput.Author)
-	newComment, err := uc.Repo.Create(commentInput)
-	isWrittenByArticleAuthor := <-isWrittenByArticleAuthorChan
-	err = newComment.Update().SetIsWrittenByArticleAuthor(isWrittenByArticleAuthor).Exec(context.Background())
+	isWrittenByArticleAuthor := <-uc.khumuAPIAdapter.IsAuthor(*commentInput.Article, commentInput.Author)
+	newComment, err := uc.Repo.Create(commentInput, isWrittenByArticleAuthor)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -97,13 +95,9 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	// TODO: 이렇게 new comment에 대한 이벤트들은 chan fan in fan out 처럼 구현하는 게 더 Go스럽게 좋을 듯
 	// 현재 같은 절차지향 방식보다는.
 	// 절차지향방식은 의존성 주입도 많이 받아야함.
-	err = uc.SnsClient.PublishMessage(uc.modelToOutput(commentInput.Author, newComment, nil))
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
+	go uc.SnsClient.PublishMessage(uc.modelToOutput(commentInput.Author, newComment, nil))
 	// cache invalidate
-	uc.redisAdapter.InvalidateCommentsOfArticle(*commentInput.Article)
+	go uc.redisAdapter.InvalidateCommentsOfArticle(*commentInput.Article)
 
 	// SNS에 Publish한 output을 hide하면 hide 된 채 Publish 될 수 있다는 이슈가 있어서
 	// 이렇게 두 번 output을 따로 생성한다.
@@ -199,6 +193,7 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		if err != nil {
 			return err
 		}
+		go uc.redisAdapter.InvalidateCommentsOfArticle(commentExisting.Edges.Article.ID)
 	} else {
 		updateInput := map[string]interface{}{
 			"state": "deleted",

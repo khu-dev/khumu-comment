@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -59,4 +60,18 @@ func (Comment) Edges() []ent.Edge {
 				key.Columns = []string{"comment_id"}
 			}),
 	}
+}
+
+// MarshalBinary -
+func (c *Comment) MarshalBinary() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+// UnmarshalBinary -
+func (c *Comment) UnmarshalBinary(data []byte) error {
+	if err := json.Unmarshal(data, c); err != nil {
+		return err
+	}
+
+	return nil
 }

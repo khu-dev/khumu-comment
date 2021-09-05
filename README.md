@@ -255,6 +255,21 @@ func NewCommentRouter(root *RootRouter, ... 인자 생략) *CommentRouter {
 }
 ```
 
+### `Redis`를 이용한 캐시로 퍼포먼스를 높이자
+
+`Redis`를 이용해 **캐시로 퍼포먼스를 높이고자** 전반적인 커뮤니티 API를 담당하는 [Django 서비스](https://github.com/khu-dev/khumu-command-center)와 본 레포지토리인 댓글 서비스 모두에 레디스 캐시를 적용했다. 하지만 Django 서비스에서는 게시글 정보를 제공할 때 해당 게시글에 대한 댓글 개수가 필요했고 이를 자체적으로 DB에서 질의하거나 질의 후 django에 붙일 수 있는 caching framework인 `cacheops`를 이용해 Redis에 댓글 관련 캐시를 저장했다. 하지만 댓글 관련 데이터를 댓글 서비스가 제공하는 것이 아니라 Django 서비스가 스스로 질의하는 것은 자신 도메인의 관심사를 명백히 넘어서는 행위이고 Context가 명확히 분리되지 않은 형태였다. 별개인 다수의 서비스가 동일한 데이터에 액세스 할 경우에 발생하는 문제는 다음과 같았다.
+
+1. 댓글 작성, 삭제 이벤트 발생 시 Django 서비스는 그 이벤트를 감지할 수 없어 Django 서비스의 cacheops로 캐시를 업데이트 할 수 없음.
+2. 댓글 서비스가 캐시를 invalidate할 수는 있지만 여전히 Django 서비스와 댓글 서비스라는 별개의 두 서비스가 Redis에서 동일한 데이터를 조작하는 안티 패턴이 발생함.
+3. 댓글 서비스가 캐시를 업데이트 한다해도 cacheops가 직렬화하는 방식에 맞춰줄 수가 없기 때문에 유효한 데이터로 업데이트할 수는 없고 invalidate 밖에 할 수 없음.
+   이 경우 다음 요청을 수행하는 유저는 긴 latency를 경험하게 됨.
+
+그래서 이렇게 해결하고자한다.
+
+1. Django 서비스는 댓글 관련 내용을 위해서는 댓글 서비스에게만 질의한다. 댓글 데이터베이스나 캐시에는 절대 접근하지 않는다.
+   * get_comment_count() 메소드를 통해 게시글의 댓글 개수를 가져오는 메소드를 정의한 뒤 cache를 disable 시키는 방법을 추천.
+2. 댓글 관련 캐시는 댓글 서비스가 주인으로서 알아서 관리한다.
+
 ## How to contribute
 
 Maintainer: [@umi0410](https://github.com/umi0410) (dev.umijs@gmail.com)

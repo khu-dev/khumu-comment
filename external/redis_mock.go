@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	ent "github.com/khu-dev/khumu-comment/ent"
 )
 
 // MockRedisAdapter is a mock of RedisAdapter interface.
@@ -33,6 +34,20 @@ func (m *MockRedisAdapter) EXPECT() *MockRedisAdapterMockRecorder {
 	return m.recorder
 }
 
+// GetAllByArticle mocks base method.
+func (m *MockRedisAdapter) GetAllByArticle(articleID int) []*ent.Comment {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllByArticle", articleID)
+	ret0, _ := ret[0].([]*ent.Comment)
+	return ret0
+}
+
+// GetAllByArticle indicates an expected call of GetAllByArticle.
+func (mr *MockRedisAdapterMockRecorder) GetAllByArticle(articleID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllByArticle", reflect.TypeOf((*MockRedisAdapter)(nil).GetAllByArticle), articleID)
+}
+
 // InvalidateCommentsOfArticle mocks base method.
 func (m *MockRedisAdapter) InvalidateCommentsOfArticle(articleID int) {
 	m.ctrl.T.Helper()
@@ -43,4 +58,16 @@ func (m *MockRedisAdapter) InvalidateCommentsOfArticle(articleID int) {
 func (mr *MockRedisAdapterMockRecorder) InvalidateCommentsOfArticle(articleID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateCommentsOfArticle", reflect.TypeOf((*MockRedisAdapter)(nil).InvalidateCommentsOfArticle), articleID)
+}
+
+// Refresh mocks base method.
+func (m *MockRedisAdapter) Refresh(articleID int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Refresh", articleID)
+}
+
+// Refresh indicates an expected call of Refresh.
+func (mr *MockRedisAdapterMockRecorder) Refresh(articleID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockRedisAdapter)(nil).Refresh), articleID)
 }

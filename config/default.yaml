@@ -14,4 +14,4 @@ sns:
   topicArn: arn:aws:sns:ap-northeast-2:xxx
 khumu:
   commandCenter:
-    rootURL: http://command-center/api
+    rootURL: http://khumu-command-center/api

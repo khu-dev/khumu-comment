@@ -36,18 +36,18 @@ func (m *MockCommentRepository) EXPECT() *MockCommentRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockCommentRepository) Create(createInput *data.CommentInput) (*ent.Comment, error) {
+func (m *MockCommentRepository) Create(createInput *data.CommentInput, isWrittenByArticleAuthor bool) (*ent.Comment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", createInput)
+	ret := m.ctrl.Call(m, "Create", createInput, isWrittenByArticleAuthor)
 	ret0, _ := ret[0].(*ent.Comment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockCommentRepositoryMockRecorder) Create(createInput interface{}) *gomock.Call {
+func (mr *MockCommentRepositoryMockRecorder) Create(createInput, isWrittenByArticleAuthor interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockCommentRepository)(nil).Create), createInput)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockCommentRepository)(nil).Create), createInput, isWrittenByArticleAuthor)
 }
 
 // Delete mocks base method.

@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/data"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 type SnsClient interface {
-	PublishMessage(comment *data.CommentOutput) error
+	PublishMessage(comment *data.CommentOutput)
 }
 
 type SnsClientImpl struct {
@@ -30,7 +30,7 @@ func NewSnsClient() SnsClient {
 		Region: aws.String("ap-northeast-2"),
 	})
 	if err != nil {
-		logrus.Error("NewSession error:", err)
+		log.Error("NewSession error:", err)
 		return nil
 	}
 
@@ -41,12 +41,12 @@ func NewSnsClient() SnsClient {
 	}
 }
 
-func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) error {
+func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) {
 	jsonData, err := json.Marshal(comment)
 	if err != nil {
-		return err
+		log.Error(err)
+		return
 	}
-
 	input := &sns.PublishInput{
 		Message:           aws.String(string(jsonData)),
 		TopicArn:          aws.String(config.Config.Sns.TopicArn),
@@ -55,12 +55,11 @@ func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) error {
 
 	result, err := client.Sns.Publish(input)
 	if err != nil {
-		return err
+		log.Error(err)
+		return
 	}
-	logrus.Info("Publish SNS Message " + *input.Message)
-	logrus.Info(input.MessageAttributes)
+	log.Info("Publish SNS Message " + *input.Message)
+	log.Info(input.MessageAttributes)
 
-	logrus.Info(result)
-
-	return nil
+	log.Info(result)
 }

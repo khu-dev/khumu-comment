@@ -1,5 +1,10 @@
 package data
 
+import (
+	"encoding/json"
+	"github.com/khu-dev/khumu-comment/ent"
+)
+
 type CommentInput struct {
 	Author       string  `json:"author"`
 	Article      *int    `json:"article"`
@@ -29,4 +34,34 @@ type CommentOutput struct {
 type LikeCommentInput struct {
 	User    string `json:"username"`
 	Comment int    `json:"comment"`
+}
+
+type CommentEntities []*ent.Comment
+
+// MarshalBinary -
+func (cl *CommentEntities) MarshalBinary() ([]byte, error) {
+	return json.Marshal(cl)
+}
+
+// UnmarshalBinary -
+func (cl *CommentEntities) UnmarshalBinary(data []byte) error {
+	if err := json.Unmarshal(data, cl); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cl *CommentEntities) GetTotalLength() int {
+	length := 0
+	for _, parent := range *cl {
+		length += len(parent.Edges.Children)
+	}
+	length += len(*cl)
+
+	return length
+}
+
+func (cl *CommentEntities) GetParentsLength() int {
+	return len(*cl)
 }
