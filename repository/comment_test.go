@@ -65,12 +65,12 @@ func TestCommentRepository_FindAllParentsByAuthorID(t *testing.T) {
 			Content: "이것은 댓글",
 		}, true)
 		assert.NoError(t, err)
-		result, err := repo.FindAllParentsByAuthorID(test.UserPuppy.ID)
+		result, err := repo.FindAllParentCommentsByAuthorID(test.UserPuppy.ID)
 		assert.NoError(t, err)
 		assert.Len(t, result, 1)
 		assert.Equal(t, created1.ID, result[0].ID)
 
-		result, err = repo.FindAllParentsByArticleID(test.Articles[1].ID)
+		result, err = repo.FindAllParentCommentsByArticleID(test.Articles[1].ID)
 		assert.NoError(t, err)
 		assert.Len(t, result, 1)
 		assert.Equal(t, created2.ID, result[0].ID)

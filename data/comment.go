@@ -54,18 +54,18 @@ func (cl *CommentEntities) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (cl *CommentEntities) GetTotalLength() int {
+func (cl CommentEntities) GetTotalLength() int {
 	length := 0
-	for _, parent := range *cl {
+	for _, parent := range cl {
 		length += len(parent.Edges.Children)
 	}
-	length += len(*cl)
+	length += len(cl)
 
 	return length
 }
 
-func (cl *CommentEntities) GetParentsLength() int {
-	return len(*cl)
+func (cl CommentEntities) GetParentsLength() int {
+	return len(cl)
 }
 
 // MarshalBinary -
@@ -83,8 +83,8 @@ func (lcl *LikeCommentEntities) UnmarshalBinary(data []byte) error {
 }
 
 // UnmarshalBinary -
-func (lcl *LikeCommentEntities) GetLiked(username string) bool {
-	for _, like := range *lcl {
+func (lcl LikeCommentEntities) GetLiked(username string) bool {
+	for _, like := range lcl {
 		if like.Edges.LikedBy.ID == username {
 			return true
 		}

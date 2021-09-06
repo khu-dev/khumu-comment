@@ -26,7 +26,13 @@ func Build() *dig.Container {
 		log.Panic(err)
 	}
 
-	err = c.Provide(external.NewRedisAdapter)
+	err = c.Provide(external.NewRedisAdapter) //dig.Group("LikeCommentCacheRepository"), dig.Group("CommentCacheRepository")
+	if err != nil {
+		log.Panic(err)
+	}
+	err = c.Provide(func(adapter external.RedisAdapter) (repository.CommentCacheRepository, repository.LikeCommentCacheRepository) {
+		return repository.CommentCacheRepository(adapter), repository.LikeCommentCacheRepository(adapter)
+	})
 	if err != nil {
 		log.Panic(err)
 	}

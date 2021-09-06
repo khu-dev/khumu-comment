@@ -24,47 +24,35 @@ type RedisAdapter interface {
 }
 
 type RedisAdapterImpl struct {
-	client                *cache.Cache
-	commentRepository     repository.CommentRepository
-	likeCommentRepository repository.LikeCommentRepository
+	client *cache.Cache `name:"CommentCacheRepository,LikeCommentCacheRepository"`
 }
 
-func NewRedisAdapter(
-	commentRepository repository.CommentRepository,
-	likeCommentRepository repository.LikeCommentRepository) RedisAdapter {
+func NewRedisAdapter() RedisAdapter {
 	ring := redis.NewRing(&redis.RingOptions{Addrs: map[string]string{
 		"server_1": config.Config.Redis.Addr,
 	}})
 	client := cache.New(&cache.Options{Redis: ring})
 
 	return &RedisAdapterImpl{
-		client:                client,
-		commentRepository:     commentRepository,
-		likeCommentRepository: likeCommentRepository,
+		client: client,
 	}
 }
 
-//func (a *RedisAdapterImpl) RefreshCommentsByArticle(articleID int) {
-//	var (
-//		key = fmt.Sprintf("khumu-comment:comments:article=%d", articleID)
-//		val = data.CommentEntities(make([]*ent.Comment, 0))
-//	)
-//	val, err := a.commentRepository.FindAllParentsByArticleID(articleID)
-//	if err != nil {
-//		log.Error(err)
-//		return
-//	}
-//
-//	log.Infof("캐시를 refresh합니다. key=%s", key)
-//	err = a.cache.Set(&cache.Item{
-//		Ctx:   context.TODO(),
-//		Key:   key,
-//		Value: &val,
-//	})
-//	if err != nil {
-//		log.Error(err)
-//	}
-//}
+func (a *RedisAdapterImpl) SetCommentsByArticleID(articleID int, coms data.CommentEntities) {
+	var (
+		key = fmt.Sprintf("khumu-comment:comments:article=%d", articleID)
+	)
+
+	log.Infof("캐시를 수정합니다. key=%s", key)
+	err := a.client.Set(&cache.Item{
+		Ctx:   context.TODO(),
+		Key:   key,
+		Value: &coms,
+	})
+	if err != nil {
+		log.Error(err)
+	}
+}
 
 //func (a *RedisAdapterImpl) GetCommentsByArticle(articleID int) data.CommentEntities {
 //	var (
@@ -99,16 +87,6 @@ func (a *RedisAdapterImpl) FindAllParentCommentsByArticleID(articleID int) (data
 	err := a.client.Get(context.TODO(), key, &val)
 	if err != nil {
 		return nil, err
-		// 캐시 미스
-		//if errors.Is(err, cache.ErrCacheMiss) {
-		//	err = a.cache.Get(context.TODO(), key, &val)
-		//	if err != nil {
-		//		log.Errorf("캐시 미스 후 RefreshCommentsByArticle 했지만 에러 발생: %v", err)
-		//	}
-		//} else {
-		//	log.Error(err)
-		//	return []*ent.Comment{}
-		//}
 	}
 
 	return val, nil
@@ -138,27 +116,21 @@ func (a *RedisAdapterImpl) FindAllParentCommentsByArticleID(articleID int) (data
 //	return val
 //}
 
-//func (a *RedisAdapterImpl) RefreshLikeCommentsByComment(commentID int) {
-//	var (
-//		key = fmt.Sprintf("khumu-comment:likeComments:comment=%d", commentID)
-//		val = data.LikeCommentEntities(make([]*ent.LikeComment, 0))
-//	)
-//	val, err := a.likeCommentRepository.FindAllByCommentID(commentID)
-//	if err != nil {
-//		log.Error(err)
-//		return
-//	}
-//
-//	log.Infof("캐시를 refresh합니다. key=%s", key)
-//	err = a.cache.Set(&cache.Item{
-//		Ctx:   context.TODO(),
-//		Key:   key,
-//		Value: &val,
-//	})
-//	if err != nil {
-//		log.Error(err)
-//	}
-//}
+func (a *RedisAdapterImpl) SetLikesByCommentID(commentID int, likes data.LikeCommentEntities) {
+	var (
+		key = fmt.Sprintf("khumu-comment:likeComments:comment=%d", commentID)
+	)
+
+	log.Infof("캐시를 수정합니다. key=%s", key)
+	err := a.client.Set(&cache.Item{
+		Ctx:   context.TODO(),
+		Key:   key,
+		Value: &likes,
+	})
+	if err != nil {
+		log.Error(err)
+	}
+}
 
 func (a *RedisAdapterImpl) FindAllByCommentID(commentID int) (data.LikeCommentEntities, error) {
 	var (
@@ -169,17 +141,6 @@ func (a *RedisAdapterImpl) FindAllByCommentID(commentID int) (data.LikeCommentEn
 	err := a.client.Get(context.TODO(), key, &val)
 	if err != nil {
 		return nil, err
-		// 캐시 미스
-		//if errors.Is(err, cache.ErrCacheMiss) {
-		//	a.RefreshLikeCommentsByComment(commentID)
-		//	err = a.cache.Get(context.TODO(), key, &val)
-		//	if err != nil {
-		//		log.Errorf("캐시 미스 후 RefreshLikeCommentsByComment 했지만 에러 발생: %v", err)
-		//	}
-		//} else {
-		//	log.Error(err)
-		//	return []*ent.LikeComment{}
-		//}
 	}
 
 	return val, nil

@@ -65,9 +65,9 @@ func (mr *MockCommentRepositoryMockRecorder) Delete(id interface{}) *gomock.Call
 }
 
 // FindAllParentsByArticleID mocks base method.
-func (m *MockCommentRepository) FindAllParentsByArticleID(articleID int) ([]*ent.Comment, error) {
+func (m *MockCommentRepository) FindAllParentCommentsByArticleID(articleID int) ([]*ent.Comment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAllParentsByArticleID", articleID)
+	ret := m.ctrl.Call(m, "FindAllParentCommentsByArticleID", articleID)
 	ret0, _ := ret[0].([]*ent.Comment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -76,13 +76,13 @@ func (m *MockCommentRepository) FindAllParentsByArticleID(articleID int) ([]*ent
 // FindAllParentsByArticleID indicates an expected call of FindAllParentsByArticleID.
 func (mr *MockCommentRepositoryMockRecorder) FindAllParentsByArticleID(articleID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentsByArticleID", reflect.TypeOf((*MockCommentRepository)(nil).FindAllParentsByArticleID), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentCommentsByArticleID", reflect.TypeOf((*MockCommentRepository)(nil).FindAllParentCommentsByArticleID), articleID)
 }
 
 // FindAllParentsByAuthorID mocks base method.
-func (m *MockCommentRepository) FindAllParentsByAuthorID(authorID string) ([]*ent.Comment, error) {
+func (m *MockCommentRepository) FindAllParentCommentsByAuthorID(authorID string) ([]*ent.Comment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAllParentsByAuthorID", authorID)
+	ret := m.ctrl.Call(m, "FindAllParentCommentsByAuthorID", authorID)
 	ret0, _ := ret[0].([]*ent.Comment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -91,13 +91,13 @@ func (m *MockCommentRepository) FindAllParentsByAuthorID(authorID string) ([]*en
 // FindAllParentsByAuthorID indicates an expected call of FindAllParentsByAuthorID.
 func (mr *MockCommentRepositoryMockRecorder) FindAllParentsByAuthorID(authorID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentsByAuthorID", reflect.TypeOf((*MockCommentRepository)(nil).FindAllParentsByAuthorID), authorID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentCommentsByAuthorID", reflect.TypeOf((*MockCommentRepository)(nil).FindAllParentCommentsByAuthorID), authorID)
 }
 
 // FindAllParentsByStudyArticleID mocks base method.
-func (m *MockCommentRepository) FindAllParentsByStudyArticleID(articleID int) ([]*ent.Comment, error) {
+func (m *MockCommentRepository) FindAllParentCommentsByStudyArticleID(articleID int) ([]*ent.Comment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAllParentsByStudyArticleID", articleID)
+	ret := m.ctrl.Call(m, "FindAllParentCommentsByStudyArticleID", articleID)
 	ret0, _ := ret[0].([]*ent.Comment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -106,7 +106,7 @@ func (m *MockCommentRepository) FindAllParentsByStudyArticleID(articleID int) ([
 // FindAllParentsByStudyArticleID indicates an expected call of FindAllParentsByStudyArticleID.
 func (mr *MockCommentRepositoryMockRecorder) FindAllParentsByStudyArticleID(articleID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentsByStudyArticleID", reflect.TypeOf((*MockCommentRepository)(nil).FindAllParentsByStudyArticleID), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentCommentsByStudyArticleID", reflect.TypeOf((*MockCommentRepository)(nil).FindAllParentCommentsByStudyArticleID), articleID)
 }
 
 // Get mocks base method.

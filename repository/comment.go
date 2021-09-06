@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"entgo.io/ent/dialect/sql"
+	"errors"
+	"github.com/go-redis/cache/v8"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/article"
@@ -15,21 +17,23 @@ import (
 
 type CommentRepository interface {
 	Create(createInput *data.CommentInput, isWrittenByArticleAuthor bool) (com *ent.Comment, err error)
-	FindAllParentsByAuthorID(authorID string) (coms []*ent.Comment, err error)
-	FindAllParentsByArticleID(articleID int) (coms []*ent.Comment, err error)
-	FindAllParentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error)
+	FindAllParentCommentsByAuthorID(authorID string) (coms []*ent.Comment, err error)
+	FindAllParentCommentsByArticleID(articleID int) (coms []*ent.Comment, err error)
+	//FindAllParentCommentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error)
 	Get(id int) (com *ent.Comment, err error)
 	Update(id int, updateInput map[string]interface{}) (com *ent.Comment, err error)
 	Delete(id int) (err error)
 }
 
 type commentRepository struct {
-	db *ent.Client
+	db    *ent.Client
+	cache CommentCacheRepository `group:"CommentCacheRepository"`
 }
 
-func NewCommentRepository(client *ent.Client) CommentRepository {
+func NewCommentRepository(client *ent.Client, cache CommentCacheRepository) CommentRepository {
 	return &commentRepository{
-		db: client,
+		db:    client,
+		cache: cache,
 	}
 }
 
@@ -84,10 +88,12 @@ func (c commentRepository) Create(createInput *data.CommentInput, isWrittenByArt
 		return nil, err
 	}
 
+	go c.setCommentsCacheByArticleID(*createInput.Article)
+
 	return newComment, nil
 }
 
-func (c commentRepository) FindAllParentsByAuthorID(authorID string) (coms []*ent.Comment, err error) {
+func (c commentRepository) FindAllParentCommentsByAuthorID(authorID string) (coms []*ent.Comment, err error) {
 	defer func() {
 		err = WrapEntError(err)
 		//err = nil
@@ -99,15 +105,25 @@ func (c commentRepository) FindAllParentsByAuthorID(authorID string) (coms []*en
 	return parents, err
 }
 
-func (c commentRepository) FindAllParentsByArticleID(articleID int) ([]*ent.Comment, error) {
-	query := c.db.Comment.Query().Where(comment.HasArticleWith(article.ID(articleID)))
-	parents, err := AppendQueryForComment(query).
-		Where(comment.Not(comment.HasParent())).
-		All(context.TODO())
-	return parents, err
+func (c commentRepository) FindAllParentCommentsByArticleID(articleID int) ([]*ent.Comment, error) {
+	cached, err := c.cache.FindAllParentCommentsByArticleID(articleID)
+	if err != nil {
+		if !errors.Is(err, cache.ErrCacheMiss) {
+			log.Error(err)
+		}
+		query := c.db.Comment.Query().Where(comment.HasArticleWith(article.ID(articleID)))
+		parents, err := AppendQueryForComment(query).
+			Where(comment.Not(comment.HasParent())).
+			All(context.TODO())
+		// 캐시 미스 발생 시 캐시를 기록
+		go c.cache.SetCommentsByArticleID(articleID, parents)
+		return parents, err
+	}
+
+	return cached, nil
 }
 
-func (c commentRepository) FindAllParentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error) {
+func (c commentRepository) FindAllParentCommentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error) {
 	defer func() {
 		err = WrapEntError(err)
 		//err = nil
@@ -155,7 +171,14 @@ func (c commentRepository) Update(id int, updateInput map[string]interface{}) (c
 		return nil, err
 	}
 
-	return c.Get(id)
+	updated, err := c.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	go c.setCommentsCacheByArticleID(updated.Edges.Article.ID)
+
+	return updated, nil
 }
 
 func (c commentRepository) Delete(id int) (err error) {
@@ -185,12 +208,18 @@ func (c commentRepository) Delete(id int) (err error) {
 	}
 	log.Infof("Comment(id=%d)에 대한 좋아요를 %d개 삭제했습니다.", id, n)
 
+	com, err := c.Get(id)
+	if err != nil {
+		return err
+	}
+
 	err = tx.Comment.DeleteOneID(id).Exec(ctx)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	log.Infof("Comment(id=%d)를 삭제했습니다.", id)
+
+	go c.setCommentsCacheByArticleID(com.Edges.Article.ID)
 
 	return nil
 }
@@ -227,4 +256,14 @@ func AppendQueryForComment(query *ent.CommentQuery) *ent.CommentQuery {
 		WithParent()
 
 	return query
+}
+
+// invalidate 는 부모 댓글에 대한 캐시를 invalidate 합니다.
+func (c *commentRepository) setCommentsCacheByArticleID(articleID int) {
+	coms, queryErr := c.FindAllParentCommentsByArticleID(articleID)
+	if queryErr != nil {
+		log.Error(queryErr)
+	} else {
+		c.cache.SetCommentsByArticleID(articleID, coms)
+	}
 }
