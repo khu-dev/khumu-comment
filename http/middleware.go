@@ -69,18 +69,14 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 		} else if strings.HasPrefix(ctx.Request().Header.Get("Authorization"), "Basic") {
 			logger.Debug("Try Basic Authentication")
 			return middleware.BasicAuth(a.KhumuBasicAuth)(handlerFunc)(ctx)
-		} else {
-			return ctx.JSON(401, map[string]interface{}{
-				"statusCode": 401,
-				"response":   "Unauthorized error. Please pass a valid JWT token or Basic Auth information.",
-			})
 		}
+
+		return handlerFunc(ctx)
 	}
 }
 
-var KhumuJWTConfig middleware.JWTConfig = middleware.JWTConfig{
+var KhumuJWTConfig = middleware.JWTConfig{
 	Skipper: func(c echo.Context) bool {
-		// 이 미들웨어를 pass 시키지 않음.
 		return false
 	},
 	SigningKey:    []byte(os.Getenv("KHUMU_SECRET")),
