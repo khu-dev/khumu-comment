@@ -27,6 +27,7 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	group.GET("/:id", commentRouter.Get)
 	group.PATCH("/:id", commentRouter.Update)
 	group.DELETE("/:id", commentRouter.Delete)
+	group.POST("/get-comment-count", commentRouter.GetCommentCount)
 	group.PATCH("/:id/likes", commentRouter.LikeToggle)
 
 	return commentRouter
@@ -174,14 +175,6 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// @Tags Like Comment
-// @Summary Comment에 대한 "좋아요"를 생성하거나 삭제합니다.
-// @Description 현재 좋아요 상태이면 삭제, 좋아요 상태가 아니면 생성합니다.
-// @name create-like-comment
-// @Produce  application/json
-// @Param comment body int true "좋아요할 comment의 ID"
-// @Router /api/like-comments [put]
-// @Success 200 {object} CommentResponse
 func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	log.Debug("LikeCommentRouter_Toggle")
 
@@ -208,5 +201,31 @@ func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	} else {
 		return c.NoContent(204)
 	}
+}
 
+type GetInfoAboutArticleReq struct {
+	Article int `json:"article"`
+}
+
+type GetInfoAboutArticleResp struct {
+	CommentCount int `json:"comment_count"`
+}
+
+// 해당 Article에 대해 필요한 댓글 정보들
+func (r *CommentRouter) GetCommentCount(c echo.Context) error {
+	log.Debug("CommentRouter_GetCommentCount")
+
+	body := &GetInfoAboutArticleReq{}
+	err := c.Bind(body)
+	if err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "올바른 형태의 User와 Article을 입력해주세요."})
+	}
+
+	comments, err := r.commentUC.List("", &usecase.CommentQueryOption{ArticleID: body.Article})
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(200, &GetInfoAboutArticleResp{CommentCount: len(comments)})
 }
