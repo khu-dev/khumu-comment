@@ -56,9 +56,7 @@ func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.L
 			log.Error(err)
 		}
 
-		likes, err = l.db.LikeComment.Query().
-			Where(likecomment.HasAboutWith(comment.ID(commentID))).
-			All(context.TODO())
+		likes, err := l.findAllByCommentIDWithoutCache(commentID)
 		if err != nil {
 			return nil, err
 		}
@@ -70,6 +68,22 @@ func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.L
 	}
 
 	return cached, nil
+}
+
+func (l likeCommentRepository) findAllByCommentIDWithoutCache(commentID int) (likes []*ent.LikeComment, err error) {
+	defer func() {
+		err = WrapEntError(err)
+		//err = nil
+	}()
+	likes, err = l.db.LikeComment.Query().
+		Where(likecomment.HasAboutWith(comment.ID(commentID))).
+		WithLikedBy().
+		All(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	return likes, nil
 }
 
 func (l likeCommentRepository) FindAllByUserIDAndCommentID(userID string, commentID int) (likes []*ent.LikeComment, err error) {
@@ -111,7 +125,7 @@ func (l likeCommentRepository) DeleteAllByCommentID(commentID int) (err error) {
 
 // invalidate 는 부모 댓글에 대한 캐시를 invalidate 합니다.
 func (l *likeCommentRepository) setLikesCacheByCommentID(commentID int) {
-	likes, err := l.FindAllByCommentID(commentID)
+	likes, err := l.findAllByCommentIDWithoutCache(commentID)
 	if err != nil {
 		log.Error(err)
 	} else {
