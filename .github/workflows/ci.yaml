@@ -66,7 +66,7 @@ jobs:
           path: 'khumu-devops'
 
       - name: Edit Kustomization.yaml
-        working-directory: khumu-devops/khumu-comment
+        working-directory: khumu-devops/khumu-comment${{ ${GITHUB_REF#refs/heads/} == 'master' ? 'prd' : 'dev'}}
         run: |
           kustomize version
           kustomize edit set image umi0410/khumu-comment=umi0410/khumu-comment:${{ github.run_id }}
