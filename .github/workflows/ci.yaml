@@ -8,6 +8,20 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
+      - name: 배포 환경 설정
+        run: |
+          # master 혹은 main 브랜치의 경우 prd 환경에 배포합니다.
+          # 그 외의 브랜치는 dev로
+          environment="dev"
+          if [ ${GITHUB_REF#refs/heads/} == "master" ]; then
+          environment="prd"
+          elif [ ${GITHUB_REF#refs/heads/} == "main" ]; then
+          environment="prd"
+          fi
+          echo "현재 ref: ${GITHUB_REF#refs/heads/}"
+          echo "설정된 배포 환경 ${environment}"
+          echo "environment=${environment}" >> $GITHUB_ENV
+
       - name: 🛎️ Checkout
         uses: actions/checkout@v2.3.1 # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
         with:
@@ -66,7 +80,7 @@ jobs:
           path: 'khumu-devops'
 
       - name: Edit Kustomization.yaml
-        working-directory: khumu-devops/khumu-comment${{ ${GITHUB_REF#refs/heads/} == 'master' ? 'prd' : 'dev'}}
+        working-directory: khumu-devops/khumu-comment/${{ env.environment }}
         run: |
           kustomize version
           kustomize edit set image umi0410/khumu-comment=umi0410/khumu-comment:${{ github.run_id }}
