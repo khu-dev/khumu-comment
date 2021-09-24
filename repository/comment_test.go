@@ -30,7 +30,7 @@ func Test_commentRepository_Create(t *testing.T) {
 		Before(t)
 		db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		defer db.Close()
-		repo := NewCommentRepository(db, commentCacheRepo)
+		repo := NewCommentRepository(db, commentCacheRepo, true)
 		test.SetUpUsers(db)
 		test.SetUpArticles(db)
 
@@ -66,7 +66,7 @@ func TestCommentRepository_FindAllParentsByAuthorID(t *testing.T) {
 		Before(t)
 		db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		defer db.Close()
-		repo := NewCommentRepository(db, commentCacheRepo)
+		repo := NewCommentRepository(db, commentCacheRepo, true)
 		test.SetUpUsers(db)
 		test.SetUpArticles(db)
 
@@ -102,7 +102,7 @@ func TestCommentRepository_Get(t *testing.T) {
 		Before(t)
 		db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		defer db.Close()
-		repo := NewCommentRepository(db, commentCacheRepo)
+		repo := NewCommentRepository(db, commentCacheRepo, true)
 		test.SetUpUsers(db)
 		test.SetUpArticles(db)
 		// error type warpping 테스트

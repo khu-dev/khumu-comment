@@ -30,14 +30,14 @@ var (
 // B는 Before each의 acronym
 func BeforeCommentUseCaseTest(tb testing.TB) {
 	ctrl = gomock.NewController(tb)
-	//db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&_fk=1")
+	db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	//db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&_fk=1")
 
 	mockSnsClient = external.NewMockSnsClient(ctrl)
 	mockKhumuApiAdapter = khumu.NewMockKhumuAPIAdapter(ctrl)
 	mockCommentCacheRepo = cache.NewMockCommentCacheRepository(ctrl)
 	mockLikeCacheRepo = cache.NewMockLikeCommentCacheRepository(ctrl)
-	commentRepo = repository.NewCommentRepository(db, mockCommentCacheRepo)
+	commentRepo = repository.NewCommentRepository(db, mockCommentCacheRepo, true)
 	likeRepo = repository.NewLikeCommentRepository(db, mockLikeCacheRepo)
 
 	commentUseCase = &CommentUseCase{
@@ -65,8 +65,10 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	}).AnyTimes()
 
 	mockCommentCacheRepo.EXPECT().FindAllParentCommentsByArticleID(gomock.Any()).Return(nil, rcache.ErrCacheMiss).AnyTimes()
+	mockCommentCacheRepo.EXPECT().SetCommentsByArticleID(gomock.Any(), gomock.Any()).Return().AnyTimes()
 
 	mockLikeCacheRepo.EXPECT().FindAllByCommentID(gomock.Any()).Return([]*ent.LikeComment{}, nil).AnyTimes()
+	mockLikeCacheRepo.EXPECT().SetLikesByCommentID(gomock.Any(), gomock.Any()).Return().AnyTimes()
 
 	test.SetUpUsers(db)
 	test.SetUpArticles(db)

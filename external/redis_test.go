@@ -2,11 +2,7 @@ package external
 
 import (
 	_ "github.com/khu-dev/khumu-comment/config"
-	"github.com/khu-dev/khumu-comment/ent/enttest"
-	"github.com/khu-dev/khumu-comment/repository"
-	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
-	log "github.com/sirupsen/logrus"
 	"testing"
 )
 
@@ -37,14 +33,14 @@ func TestRedisAdapterImpl_GetAllByArticle(t *testing.T) {
 	//}
 }
 
-func TestRedisAdapterImpl_SetNewComment(t *testing.T) {
-	db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	repo := repository.NewCommentRepository(db)
-	a := NewRedisAdapter(repo)
-	test.SetUpUsers(db)
-	test.SetUpArticles(db)
-	test.SetUpComments(db)
-	a.RefreshCommentsByArticle(test.Articles[0].ID)
-	results := a.GetCommentsByArticle(test.Articles[0].ID)
-	log.Info(results)
-}
+//func TestRedisAdapterImpl_SetNewComment(t *testing.T) {
+//	db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+//	repo := repository.NewCommentRepository(db)
+//	a := NewRedisAdapter(repo)
+//	test.SetUpUsers(db)
+//	test.SetUpArticles(db)
+//	test.SetUpComments(db)
+//	a.RefreshCommentsByArticle(test.Articles[0].ID)
+//	results := a.GetCommentsByArticle(test.Articles[0].ID)
+//	log.Info(results)
+//}

@@ -28,13 +28,16 @@ type CommentRepository interface {
 
 type commentRepository struct {
 	db    *ent.Client
-	cache cache.CommentCacheRepository `group:"CommentCacheRepository"`
+	cache cache.CommentCacheRepository
+	// synchronousCacheWrite 은 cache를 concurrent하게 write할 것인지 synchrnous하게 write할 것인지를 의미
+	synchronousCacheWrite bool `optional:"true"` // dig에서 optional하게 주입받도록 설정 => zero value로 주입받을 수 있음
 }
 
-func NewCommentRepository(client *ent.Client, cache cache.CommentCacheRepository) CommentRepository {
+func NewCommentRepository(client *ent.Client, cache cache.CommentCacheRepository, synchronousCacheWrite bool) CommentRepository {
 	return &commentRepository{
-		db:    client,
-		cache: cache,
+		db:                    client,
+		cache:                 cache,
+		synchronousCacheWrite: synchronousCacheWrite,
 	}
 }
 
@@ -89,7 +92,7 @@ func (repo commentRepository) Create(createInput *data.CommentInput, isWrittenBy
 		return nil, err
 	}
 
-	go repo.setCommentsCacheByArticleID(*createInput.Article)
+	repo.setCommentsCacheByArticleID(*createInput.Article)
 
 	return newComment, nil
 }
@@ -220,7 +223,7 @@ func (repo commentRepository) Delete(id int) (err error) {
 	}
 	log.Infof("Comment(id=%d)를 삭제했습니다.", id)
 
-	go repo.setCommentsCacheByArticleID(com.Edges.Article.ID)
+	repo.setCommentsCacheByArticleID(com.Edges.Article.ID)
 
 	return nil
 }
@@ -269,10 +272,26 @@ func (repo *commentRepository) findParentCommentsByArticleWithoutCache(articleID
 
 // invalidate 는 부모 댓글에 대한 캐시를 invalidate 합니다.
 func (repo *commentRepository) setCommentsCacheByArticleID(articleID int) {
-	coms, queryErr := repo.findParentCommentsByArticleWithoutCache(articleID)
-	if queryErr != nil {
-		log.Error(queryErr)
+	var done chan struct{}
+	if repo.synchronousCacheWrite {
+		done = make(chan struct{})
 	} else {
-		repo.cache.SetCommentsByArticleID(articleID, coms)
+		done = make(chan struct{}, 1)
 	}
+	go func() {
+		defer func() {
+			<-done
+		}()
+
+		coms, queryErr := repo.findParentCommentsByArticleWithoutCache(articleID)
+		if queryErr != nil {
+			log.Error(queryErr)
+		} else {
+			repo.cache.SetCommentsByArticleID(articleID, coms)
+		}
+	}()
+	// synchronous write이 false이면 buffered chan이라 바로 값을 넣을 수 있다.
+	done <- struct{}{}
+
+	return
 }

@@ -108,28 +108,30 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Len(t, results, 1)
 		assert.Equal(t, results[0].ID, correctComment.ID)
 	})
-	t.Run("스터디 게시글에 대한 댓글 리스트", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
-		var err error
-		correctComment1, err := db.Comment.Create().
-			SetStudyArticleID(1).
-			SetAuthorID(test.UserPuppy.ID).
-			SetContent("테스트 댓글").
-			Save(context.TODO())
-		assert.NoError(t, err)
-		_, err = db.Comment.Create().
-			SetStudyArticleID(2).
-			SetAuthorID(test.UserPuppy.ID).
-			SetContent("테스트 댓글").
-			Save(context.TODO())
-		assert.NoError(t, err)
 
-		results, err := commentUseCase.List(test.UserPuppy.ID, &CommentQueryOption{StudyArticleID: 1})
-		assert.NoError(t, err)
-		assert.Len(t, results, 1)
-		assert.Equal(t, results[0].ID, correctComment1.ID)
-	})
+	// 스터디 게시글은 개발 중지
+	//t.Run("스터디 게시글에 대한 댓글 리스트", func(t *testing.T) {
+	//	BeforeCommentUseCaseTest(t)
+	//	defer A(t)
+	//	var err error
+	//	correctComment1, err := db.Comment.Create().
+	//		SetStudyArticleID(1).
+	//		SetAuthorID(test.UserPuppy.ID).
+	//		SetContent("테스트 댓글").
+	//		Save(context.TODO())
+	//	assert.NoError(t, err)
+	//	_, err = db.Comment.Create().
+	//		SetStudyArticleID(2).
+	//		SetAuthorID(test.UserPuppy.ID).
+	//		SetContent("테스트 댓글").
+	//		Save(context.TODO())
+	//	assert.NoError(t, err)
+	//
+	//	results, err := commentUseCase.List(test.UserPuppy.ID, &CommentQueryOption{StudyArticleID: 1})
+	//	assert.NoError(t, err)
+	//	assert.Len(t, results, 1)
+	//	assert.Equal(t, results[0].ID, correctComment1.ID)
+	//})
 }
 func TestCommentUseCase_Get(t *testing.T) {
 	t.Run("기명 댓글과 그 대댓글들", func(t *testing.T) {

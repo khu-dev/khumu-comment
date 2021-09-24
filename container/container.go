@@ -5,6 +5,7 @@ import (
 	"github.com/khu-dev/khumu-comment/external/khumu"
 	"github.com/khu-dev/khumu-comment/http"
 	"github.com/khu-dev/khumu-comment/repository"
+	"github.com/khu-dev/khumu-comment/repository/cache"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"go.uber.org/dig"
 	"log"
@@ -30,8 +31,8 @@ func Build() *dig.Container {
 	if err != nil {
 		log.Panic(err)
 	}
-	err = c.Provide(func(adapter external.RedisAdapter) (repository.CommentCacheRepository, repository.LikeCommentCacheRepository) {
-		return repository.CommentCacheRepository(adapter), repository.LikeCommentCacheRepository(adapter)
+	err = c.Provide(func(adapter external.RedisAdapter) (cache.CommentCacheRepository, cache.LikeCommentCacheRepository) {
+		return cache.CommentCacheRepository(adapter), cache.LikeCommentCacheRepository(adapter)
 	})
 	if err != nil {
 		log.Panic(err)
