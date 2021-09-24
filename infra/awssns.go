@@ -1,4 +1,4 @@
-package external
+package infra
 
 import (
 	"encoding/json"

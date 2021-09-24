@@ -8,8 +8,8 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/errorz"
-	"github.com/khu-dev/khumu-comment/external"
-	"github.com/khu-dev/khumu-comment/external/khumu"
+	"github.com/khu-dev/khumu-comment/infra"
+	"github.com/khu-dev/khumu-comment/infra/khumu"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
 	"reflect"
@@ -48,7 +48,7 @@ type CommentUseCase struct {
 	Repo            repository.CommentRepository
 	likeRepo        repository.LikeCommentRepository
 	entclient       *ent.Client
-	SnsClient       external.SnsClient
+	SnsClient       infra.SnsClient
 	khumuAPIAdapter khumu.KhumuAPIAdapter
 }
 
@@ -61,7 +61,7 @@ func NewCommentUseCase(
 	repo repository.CommentRepository,
 	likeRepo repository.LikeCommentRepository,
 	entclient *ent.Client,
-	snsClient external.SnsClient,
+	snsClient infra.SnsClient,
 	khumuAPIAdapter khumu.KhumuAPIAdapter) CommentUseCaseInterface {
 	return &CommentUseCase{
 		Repo:            repo,

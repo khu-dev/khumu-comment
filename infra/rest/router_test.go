@@ -1,5 +1,5 @@
 // 아직 뭘 넣어야할지 모르겠다.
-package http
+package rest
 
 import (
 	"github.com/labstack/echo/v4"
