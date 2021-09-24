@@ -24,14 +24,18 @@ type LikeCommentRepository interface {
 type likeCommentRepository struct {
 	db    *ent.Client
 	cache cache.LikeCommentCacheRepository `name:"LikeCommentCacheRepository"`
+	// synchronousCacheWrite 은 cache를 concurrent하게 write할 것인지 synchrnous하게 write할 것인지를 의미
+	synchronousCacheWrite bool `optional:"true"` // dig에서 optional하게 주입받도록 설정 => zero value로 주입받을 수 있음
 }
 
 func NewLikeCommentRepository(
 	client *ent.Client,
-	cache cache.LikeCommentCacheRepository) LikeCommentRepository {
+	cache cache.LikeCommentCacheRepository,
+	synchronousCacheWrite bool) LikeCommentRepository {
 	return &likeCommentRepository{
-		db:    client,
-		cache: cache,
+		db:                    client,
+		cache:                 cache,
+		synchronousCacheWrite: synchronousCacheWrite,
 	}
 }
 func (l likeCommentRepository) Create(createInput *data.LikeCommentInput) (like *ent.LikeComment, err error) {
@@ -41,7 +45,7 @@ func (l likeCommentRepository) Create(createInput *data.LikeCommentInput) (like 
 	}()
 	like, err = l.db.LikeComment.Create().SetLikedByID(createInput.User).SetAboutID(createInput.Comment).Save(context.TODO())
 
-	go l.setLikesCacheByCommentID(createInput.Comment)
+	l.setLikesCacheByCommentID(createInput.Comment)
 
 	return
 }
@@ -63,7 +67,7 @@ func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.L
 		}
 
 		// 캐시 미스 발생 시 캐시를 기록
-		go l.cache.SetLikesByCommentID(commentID, likes)
+		l.cache.SetLikesByCommentID(commentID, likes)
 
 		return likes, nil
 	}
@@ -106,7 +110,7 @@ func (l likeCommentRepository) Delete(id int) (err error) {
 	like, err := l.db.LikeComment.Query().WithAbout().Where(likecomment.ID(id)).First(context.TODO())
 	err = l.db.LikeComment.DeleteOneID(id).Exec(context.TODO())
 
-	go l.setLikesCacheByCommentID(like.Edges.About.ID)
+	l.setLikesCacheByCommentID(like.Edges.About.ID)
 
 	return
 }
@@ -119,17 +123,33 @@ func (l likeCommentRepository) DeleteAllByCommentID(commentID int) (err error) {
 	n, err := l.db.LikeComment.Delete().Where(likecomment.HasAboutWith(comment.ID(commentID))).Exec(context.TODO())
 	log.Infof("Comment(id=%d)에 대한 좋아요를 %d개 삭제했습니다.", commentID, n)
 
-	go l.setLikesCacheByCommentID(commentID)
+	l.setLikesCacheByCommentID(commentID)
 
 	return
 }
 
 // invalidate 는 부모 댓글에 대한 캐시를 invalidate 합니다.
 func (l *likeCommentRepository) setLikesCacheByCommentID(commentID int) {
-	likes, err := l.findAllByCommentIDWithoutCache(commentID)
-	if err != nil {
-		log.Error(err)
+	var done chan struct{}
+	if l.synchronousCacheWrite {
+		done = make(chan struct{})
 	} else {
-		l.cache.SetLikesByCommentID(commentID, likes)
+		done = make(chan struct{}, 1)
 	}
+	go func() {
+		defer func() {
+			<-done
+		}()
+
+		likes, err := l.findAllByCommentIDWithoutCache(commentID)
+		if err != nil {
+			log.Error(err)
+		} else {
+			l.cache.SetLikesByCommentID(commentID, likes)
+		}
+	}()
+	// synchronous write이 false이면 buffered chan이라 바로 값을 넣을 수 있다.
+	done <- struct{}{}
+
+	return
 }

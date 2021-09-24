@@ -7,13 +7,13 @@
 # -destination 은 mock file의 location
 # -source 는 interface input file to read
 
-mockgen -package usecase -destination usecase/mock.go -source usecase/comment.go
+mockgen -package usecase -destination usecase/comment_mock.go -source usecase/comment.go
 mockgen -package repository -destination repository/comment_mock.go -source repository/comment.go
 mockgen -package repository -destination repository/likecoment_mock.go -source repository/likecomment.go
-mockgen -package cache -destination repository/cache/mock.go -source repository/cache/cache.go
+mockgen -package cache -destination repository/cache/cache_mock.go -source repository/cache/cache.go
 mockgen -package external -destination external/awssns_mock.go -source external/awssns.go
 mockgen -package external -destination external/redis_mock.go -source external/redis.go
-mockgen -package khumu -destination external/khumu/mock.go -source external/khumu/api.go
+mockgen -package khumu -destination external/khumu/api_mock.go -source external/khumu/api.go
 
 # 이렇게 자동화 할 수도 있긴한데... 유지 보수하기 복잡할 듯 까먹어서
 # 그냥 위의 방법대로 수작업으로 하는 것 추천

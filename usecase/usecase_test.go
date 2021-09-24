@@ -38,7 +38,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	mockCommentCacheRepo = cache.NewMockCommentCacheRepository(ctrl)
 	mockLikeCacheRepo = cache.NewMockLikeCommentCacheRepository(ctrl)
 	commentRepo = repository.NewCommentRepository(db, mockCommentCacheRepo, true)
-	likeRepo = repository.NewLikeCommentRepository(db, mockLikeCacheRepo)
+	likeRepo = repository.NewLikeCommentRepository(db, mockLikeCacheRepo, true)
 
 	commentUseCase = &CommentUseCase{
 		Repo:            commentRepo,
