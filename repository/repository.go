@@ -9,7 +9,6 @@ import (
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/sirupsen/logrus"
-	"reflect"
 	"time"
 )
 
@@ -51,8 +50,7 @@ func NewEnt() *ent.Client {
 // 만약 여기서 감지되지 않은 에러 타입 케이스는 그냥 그대로 반환됨
 func WrapEntError(entErr error) error {
 	if entErr != nil {
-		if reflect.TypeOf(entErr).ConvertibleTo(reflect.TypeOf(&ent.NotFoundError{})) {
-			logrus.Error("Here!")
+		if ent.IsNotFound(entErr) {
 			return errorz.ErrResourceNotFound
 		}
 	}

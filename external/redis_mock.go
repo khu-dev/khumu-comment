@@ -34,40 +34,56 @@ func (m *MockRedisAdapter) EXPECT() *MockRedisAdapterMockRecorder {
 	return m.recorder
 }
 
-// GetAllByArticle mocks base method.
-func (m *MockRedisAdapter) GetAllByArticle(articleID int) data.CommentEntities {
+// FindAllByCommentID mocks base method.
+func (m *MockRedisAdapter) FindAllByCommentID(commentID int) (data.LikeCommentEntities, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCommentsByArticle", articleID)
+	ret := m.ctrl.Call(m, "FindAllByCommentID", commentID)
+	ret0, _ := ret[0].(data.LikeCommentEntities)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindAllByCommentID indicates an expected call of FindAllByCommentID.
+func (mr *MockRedisAdapterMockRecorder) FindAllByCommentID(commentID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByCommentID", reflect.TypeOf((*MockRedisAdapter)(nil).FindAllByCommentID), commentID)
+}
+
+// FindAllParentCommentsByArticleID mocks base method.
+func (m *MockRedisAdapter) FindAllParentCommentsByArticleID(articleID int) (data.CommentEntities, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAllParentCommentsByArticleID", articleID)
 	ret0, _ := ret[0].(data.CommentEntities)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// GetAllByArticle indicates an expected call of GetAllByArticle.
-func (mr *MockRedisAdapterMockRecorder) GetAllByArticle(articleID interface{}) *gomock.Call {
+// FindAllParentCommentsByArticleID indicates an expected call of FindAllParentCommentsByArticleID.
+func (mr *MockRedisAdapterMockRecorder) FindAllParentCommentsByArticleID(articleID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommentsByArticle", reflect.TypeOf((*MockRedisAdapter)(nil).GetAllByArticle), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllParentCommentsByArticleID", reflect.TypeOf((*MockRedisAdapter)(nil).FindAllParentCommentsByArticleID), articleID)
 }
 
-// InvalidateCommentsOfArticle mocks base method.
-func (m *MockRedisAdapter) InvalidateCommentsOfArticle(articleID int) {
+// SetCommentsByArticleID mocks base method.
+func (m *MockRedisAdapter) SetCommentsByArticleID(articleID int, coms data.CommentEntities) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "InvalidateCommentsOfArticle", articleID)
+	m.ctrl.Call(m, "SetCommentsByArticleID", articleID, coms)
 }
 
-// InvalidateCommentsOfArticle indicates an expected call of InvalidateCommentsOfArticle.
-func (mr *MockRedisAdapterMockRecorder) InvalidateCommentsOfArticle(articleID interface{}) *gomock.Call {
+// SetCommentsByArticleID indicates an expected call of SetCommentsByArticleID.
+func (mr *MockRedisAdapterMockRecorder) SetCommentsByArticleID(articleID, coms interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateCommentsOfArticle", reflect.TypeOf((*MockRedisAdapter)(nil).InvalidateCommentsOfArticle), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCommentsByArticleID", reflect.TypeOf((*MockRedisAdapter)(nil).SetCommentsByArticleID), articleID, coms)
 }
 
-// Refresh mocks base method.
-func (m *MockRedisAdapter) RefreshCommentsByArticle(articleID int) {
+// SetLikesByCommentID mocks base method.
+func (m *MockRedisAdapter) SetLikesByCommentID(commentID int, likes data.LikeCommentEntities) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RefreshCommentsByArticle", articleID)
+	m.ctrl.Call(m, "SetLikesByCommentID", commentID, likes)
 }
 
-// Refresh indicates an expected call of Refresh.
-func (mr *MockRedisAdapterMockRecorder) Refresh(articleID interface{}) *gomock.Call {
+// SetLikesByCommentID indicates an expected call of SetLikesByCommentID.
+func (mr *MockRedisAdapterMockRecorder) SetLikesByCommentID(commentID, likes interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshCommentsByArticle", reflect.TypeOf((*MockRedisAdapter)(nil).RefreshCommentsByArticle), articleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLikesByCommentID", reflect.TypeOf((*MockRedisAdapter)(nil).SetLikesByCommentID), commentID, likes)
 }
