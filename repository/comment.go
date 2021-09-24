@@ -4,7 +4,7 @@ import (
 	"context"
 	"entgo.io/ent/dialect/sql"
 	"errors"
-	"github.com/go-redis/cache/v8"
+	rcache "github.com/go-redis/cache/v8"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/article"
@@ -12,6 +12,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/studyarticle"
+	"github.com/khu-dev/khumu-comment/repository/cache"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,10 +28,10 @@ type CommentRepository interface {
 
 type commentRepository struct {
 	db    *ent.Client
-	cache CommentCacheRepository `group:"CommentCacheRepository"`
+	cache cache.CommentCacheRepository `group:"CommentCacheRepository"`
 }
 
-func NewCommentRepository(client *ent.Client, cache CommentCacheRepository) CommentRepository {
+func NewCommentRepository(client *ent.Client, cache cache.CommentCacheRepository) CommentRepository {
 	return &commentRepository{
 		db:    client,
 		cache: cache,
@@ -108,7 +109,7 @@ func (repo commentRepository) FindAllParentCommentsByAuthorID(authorID string) (
 func (repo commentRepository) FindAllParentCommentsByArticleID(articleID int) ([]*ent.Comment, error) {
 	cached, err := repo.cache.FindAllParentCommentsByArticleID(articleID)
 	if err != nil {
-		if !errors.Is(err, cache.ErrCacheMiss) {
+		if !errors.Is(err, rcache.ErrCacheMiss) {
 			log.Error(err)
 		}
 		coms, err := repo.findParentCommentsByArticleWithoutCache(articleID)

@@ -2,7 +2,7 @@
 // Source: repository/cache.go
 
 // Package repository is a generated GoMock package.
-package repository
+package cache
 
 import (
 	reflect "reflect"

@@ -3,12 +3,13 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/go-redis/cache/v8"
+	rcache "github.com/go-redis/cache/v8"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
+	"github.com/khu-dev/khumu-comment/repository/cache"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,12 +23,12 @@ type LikeCommentRepository interface {
 
 type likeCommentRepository struct {
 	db    *ent.Client
-	cache LikeCommentCacheRepository `name:"LikeCommentCacheRepository"`
+	cache cache.LikeCommentCacheRepository `name:"LikeCommentCacheRepository"`
 }
 
 func NewLikeCommentRepository(
 	client *ent.Client,
-	cache LikeCommentCacheRepository) LikeCommentRepository {
+	cache cache.LikeCommentCacheRepository) LikeCommentRepository {
 	return &likeCommentRepository{
 		db:    client,
 		cache: cache,
@@ -52,7 +53,7 @@ func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.L
 	}()
 	cached, err := l.cache.FindAllByCommentID(commentID)
 	if err != nil {
-		if !errors.Is(err, cache.ErrCacheMiss) {
+		if !errors.Is(err, rcache.ErrCacheMiss) {
 			log.Error(err)
 		}
 
