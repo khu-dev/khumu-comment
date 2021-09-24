@@ -1,4 +1,4 @@
-package external
+package infra
 
 import (
 	_ "github.com/khu-dev/khumu-comment/config"

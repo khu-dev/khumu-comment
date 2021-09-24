@@ -1,4 +1,4 @@
-package external
+package infra
 
 import (
 	"context"
@@ -15,12 +15,6 @@ import (
 type RedisAdapter interface {
 	cache.CommentCacheRepository
 	cache.LikeCommentCacheRepository
-	//RefreshCommentsByArticle(articleID int)
-	//GetCommentsByArticle(articleID int) (data.CommentEntities, error)
-	//RefreshLikeCommentsByUserAndComment(username string, commentID int)
-	//GetLikeCommentsByUserAndComment(username string, commentID int) data.LikeCommentEntities
-	//RefreshLikeCommentsByComment(commentID int)
-	//GetLikeCommentsByComment(commentID int) (data.LikeCommentEntities, error)
 }
 
 type RedisAdapterImpl struct {

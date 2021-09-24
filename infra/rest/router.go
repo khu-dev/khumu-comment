@@ -1,4 +1,4 @@
-package http
+package rest
 
 import (
 	"github.com/khu-dev/khumu-comment/ent"

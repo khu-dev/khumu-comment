@@ -5,8 +5,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/enttest"
-	"github.com/khu-dev/khumu-comment/external"
-	"github.com/khu-dev/khumu-comment/external/khumu"
+	"github.com/khu-dev/khumu-comment/infra"
+	"github.com/khu-dev/khumu-comment/infra/khumu"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/repository/cache"
 	"github.com/khu-dev/khumu-comment/test"
@@ -16,7 +16,7 @@ import (
 
 var (
 	db                   *ent.Client
-	mockSnsClient        *external.MockSnsClient
+	mockSnsClient        *infra.MockSnsClient
 	mockKhumuApiAdapter  *khumu.MockKhumuAPIAdapter
 	mockCommentCacheRepo *cache.MockCommentCacheRepository
 	mockLikeCacheRepo    *cache.MockLikeCommentCacheRepository
@@ -33,7 +33,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	//db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&_fk=1")
 
-	mockSnsClient = external.NewMockSnsClient(ctrl)
+	mockSnsClient = infra.NewMockSnsClient(ctrl)
 	mockKhumuApiAdapter = khumu.NewMockKhumuAPIAdapter(ctrl)
 	mockCommentCacheRepo = cache.NewMockCommentCacheRepository(ctrl)
 	mockLikeCacheRepo = cache.NewMockLikeCommentCacheRepository(ctrl)

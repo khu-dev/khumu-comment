@@ -1,9 +1,9 @@
 package container
 
 import (
-	"github.com/khu-dev/khumu-comment/external"
-	"github.com/khu-dev/khumu-comment/external/khumu"
-	"github.com/khu-dev/khumu-comment/http"
+	"github.com/khu-dev/khumu-comment/infra"
+	"github.com/khu-dev/khumu-comment/infra/khumu"
+	"github.com/khu-dev/khumu-comment/infra/rest"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/repository/cache"
 	"github.com/khu-dev/khumu-comment/usecase"
@@ -22,16 +22,16 @@ func Build() *dig.Container {
 	}
 
 	// sns
-	err = c.Provide(external.NewSnsClient)
+	err = c.Provide(infra.NewSnsClient)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	err = c.Provide(external.NewRedisAdapter) //dig.Group("LikeCommentCacheRepository"), dig.Group("CommentCacheRepository")
+	err = c.Provide(infra.NewRedisAdapter) //dig.Group("LikeCommentCacheRepository"), dig.Group("CommentCacheRepository")
 	if err != nil {
 		log.Panic(err)
 	}
-	err = c.Provide(func(adapter external.RedisAdapter) (cache.CommentCacheRepository, cache.LikeCommentCacheRepository) {
+	err = c.Provide(func(adapter infra.RedisAdapter) (cache.CommentCacheRepository, cache.LikeCommentCacheRepository) {
 		return cache.CommentCacheRepository(adapter), cache.LikeCommentCacheRepository(adapter)
 	})
 	if err != nil {
@@ -67,7 +67,7 @@ func Build() *dig.Container {
 	// Provide Echo and routers
 	// http내에서 echo와 router 그룹등은 의존성이 없기때문에 한 번에
 	// NewEcho에서 Group 생성등까지 처리한다.
-	err = c.Provide(http.NewEcho)
+	err = c.Provide(rest.NewEcho)
 	if err != nil {
 		log.Panic(err)
 	}
