@@ -3,18 +3,18 @@ package external
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/cache/v8"
+	rcache "github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
-	"github.com/khu-dev/khumu-comment/repository"
+	"github.com/khu-dev/khumu-comment/repository/cache"
 	log "github.com/sirupsen/logrus"
 )
 
 type RedisAdapter interface {
-	repository.CommentCacheRepository
-	repository.LikeCommentCacheRepository
+	cache.CommentCacheRepository
+	cache.LikeCommentCacheRepository
 	//RefreshCommentsByArticle(articleID int)
 	//GetCommentsByArticle(articleID int) (data.CommentEntities, error)
 	//RefreshLikeCommentsByUserAndComment(username string, commentID int)
@@ -24,14 +24,14 @@ type RedisAdapter interface {
 }
 
 type RedisAdapterImpl struct {
-	client *cache.Cache `name:"CommentCacheRepository,LikeCommentCacheRepository"`
+	client *rcache.Cache `name:"CommentCacheRepository,LikeCommentCacheRepository"`
 }
 
 func NewRedisAdapter() RedisAdapter {
 	ring := redis.NewRing(&redis.RingOptions{Addrs: map[string]string{
 		"server_1": config.Config.Redis.Addr,
 	}})
-	client := cache.New(&cache.Options{Redis: ring})
+	client := rcache.New(&rcache.Options{Redis: ring})
 
 	return &RedisAdapterImpl{
 		client: client,
@@ -44,7 +44,7 @@ func (a *RedisAdapterImpl) SetCommentsByArticleID(articleID int, coms data.Comme
 	)
 
 	log.Infof("캐시를 수정합니다. key=%s", key)
-	err := a.client.Set(&cache.Item{
+	err := a.client.Set(&rcache.Item{
 		Ctx:   context.TODO(),
 		Key:   key,
 		Value: &coms,
@@ -122,7 +122,7 @@ func (a *RedisAdapterImpl) SetLikesByCommentID(commentID int, likes data.LikeCom
 	)
 
 	log.Infof("캐시를 수정합니다. key=%s", key)
-	err := a.client.Set(&cache.Item{
+	err := a.client.Set(&rcache.Item{
 		Ctx:   context.TODO(),
 		Key:   key,
 		Value: &likes,
