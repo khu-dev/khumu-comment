@@ -56,3 +56,5 @@ func WrapEntError(entErr error) error {
 	}
 	return entErr
 }
+
+type SynchronousCacheWrite bool

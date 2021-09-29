@@ -21,6 +21,10 @@ func Build() *dig.Container {
 		log.Panic(err)
 	}
 
+	err = c.Provide(func() repository.SynchronousCacheWrite { return false })
+	if err != nil {
+		log.Panic(err)
+	}
 	// sns
 	err = c.Provide(infra.NewSnsClient)
 	if err != nil {

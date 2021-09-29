@@ -25,13 +25,13 @@ type likeCommentRepository struct {
 	db    *ent.Client
 	cache cache.LikeCommentCacheRepository `name:"LikeCommentCacheRepository"`
 	// synchronousCacheWrite 은 cache를 concurrent하게 write할 것인지 synchrnous하게 write할 것인지를 의미
-	synchronousCacheWrite bool `optional:"true"` // dig에서 optional하게 주입받도록 설정 => zero value로 주입받을 수 있음
+	synchronousCacheWrite SynchronousCacheWrite
 }
 
 func NewLikeCommentRepository(
 	client *ent.Client,
 	cache cache.LikeCommentCacheRepository,
-	synchronousCacheWrite bool) LikeCommentRepository {
+	synchronousCacheWrite SynchronousCacheWrite) LikeCommentRepository {
 	return &likeCommentRepository{
 		db:                    client,
 		cache:                 cache,
