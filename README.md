@@ -12,19 +12,19 @@ API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 
 (설정 예시: `KHUMU_CONFIG_PATH=/home/jinsu/khumu-comments/config`)
 
-### 환경 변수 정리
+### 환경 변수 설정
 
 * `KHUMU_SECRET`: 환경변수를 통해 jwt를 verify할 secret을 설정한다.
 * `KHUMU_CONFIG_PATH` : 상대 경로 `config` 이외의 경로에서 config file을 찾을 수 있도록 한다.
-* 추가적으로 `KHUMU_` prefix를 통해 환경 변수로 Config를 오버라이드 할 수 있다.
+* 추가적으로 `KHUMU_` prefix를 통해 환경 변수로 Config의 필드들을 오버라이드 할 수 있다.
 
 ## 🐎 배포 (CI/CD)
 
 ![cicd.png](assets/cicd.png)
 
 1. 현재는 Github Action에서 매 푸시마다 전체 unit test를 진행
-2. 테스트 모두 통과 시 docker image 빌드 후 private으로 관리되는 `khu-dev/devops` 레포지토리에 새 빌드된 이미지 태그를 적용
-3. `ArgoCD` 를 통해 자동 배포하며 이때 `kustomize`를 통해 새 이미지 태그를 활용
+2. 테스트 모두 통과 시 docker image 빌드 후 새로 빌드된 이미지 태그를 private repository로 관리되는 `khu-dev/devops` 레포지토리에 반영
+3. `ArgoCD` 를 통해 자동 배포하며 이때 `kustomize`를 통해 새 이미지 태그가 적용됨
 
 ## 💯 테스트를 진행하는 방법
 
@@ -35,11 +35,16 @@ API Documentation: https://documenter.getpostman.com/view/13384984/TVsvfkxs
 $ go test ./...
 # 혹은 자세한 로그를 보고싶다면
 $ go test ./... -v
+# 혹은 간단히
+$ make test
 ```
 
 ### TDD 식의 개발 방법 - 선 유닛 테스트 작성. 후 개발/리팩토링 
 
 > test는 MySQL이 아닌 SQLite3를 메모리를 바탕으로 간단하게 이용한다.
+>
+> **TODO: Service layer 테스트 시에는 Repository layer나 외부 모듈들을 Mocking하여 유닛 테스트 진행하기**. 기존에는 비즈니스 로직을 테스트할 때에도 SQLite3과 DAO를 이용해 영속화까지 진행하는 통합 테스트 같은 형태로 진행했으나
+> 테스트가 DAO에 대한 의존성을 갖다보니 불필요한 초기 데이터들을 생성해줘야하는 불편이 있었고 이로 인해 많은 테스트 케이스를 작성하는 데에 불편을 느낌  
 
 * 개발할 기능에 대한 최소한의 기능과 사용하고자하는 타입, 네이밍등을 미리 `xxx_test.go` 파일에 작성한다.
 * 해당 기능을 `xxx.go` 에서 구현한다.
@@ -280,8 +285,6 @@ func NewCommentRouter(root *RootRouter, ... 인자 생략) *CommentRouter {
 | Django가 게시글 하나 조회 시 관련 댓글 개수를 직접 조회 후 응답(개발 환경) | 약 150 ms     | 약 40ms    |
 
 물론 많은 경우의 수마다 다르겠지만 **대체로 Redis를 이용하는 경우 거의 5분 1 정도로 latency가 감소**하는 효과가 있었다. 이러니 캐시를 안 쓸 수가 없다... Django가 게시글 하나를 조회 시 관련 댓글의 개수를 직접 조회하더라도 Redis를 사용하면 위와 같이 latency가 적은 것을 알 수 있다. 하지만 앞서 언급했듯 이는 성능의 측면이 아닌 도메인을 분리해서 설계하는 설계의 측면에서 좋지 않은 패턴이므로 댓글과 관련된 기능은 댓글 서비스가 전담하고자 Django는 게시글과 관련된 댓글 정보가 필요할 시 직접 DB나 캐시에서 조회하는 것이 아니라 댓글 서비스를 통해 조회하는 형태로 변경했다.
-
-
 
 ## How to contribute
 
