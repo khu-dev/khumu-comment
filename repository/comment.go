@@ -4,7 +4,7 @@ import (
 	"context"
 	"entgo.io/ent/dialect/sql"
 	"errors"
-	"github.com/go-redis/cache/v8"
+	rcache "github.com/go-redis/cache/v8"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/article"
@@ -12,6 +12,7 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/studyarticle"
+	"github.com/khu-dev/khumu-comment/repository/cache"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,13 +28,16 @@ type CommentRepository interface {
 
 type commentRepository struct {
 	db    *ent.Client
-	cache CommentCacheRepository `group:"CommentCacheRepository"`
+	cache cache.CommentCacheRepository
+	// synchronousCacheWrite 은 cache를 concurrent하게 write할 것인지 synchrnous하게 write할 것인지를 의미
+	synchronousCacheWrite SynchronousCacheWrite
 }
 
-func NewCommentRepository(client *ent.Client, cache CommentCacheRepository) CommentRepository {
+func NewCommentRepository(client *ent.Client, cache cache.CommentCacheRepository, synchronousCacheWrite SynchronousCacheWrite) CommentRepository {
 	return &commentRepository{
-		db:    client,
-		cache: cache,
+		db:                    client,
+		cache:                 cache,
+		synchronousCacheWrite: synchronousCacheWrite,
 	}
 }
 
@@ -88,7 +92,7 @@ func (repo commentRepository) Create(createInput *data.CommentInput, isWrittenBy
 		return nil, err
 	}
 
-	go repo.setCommentsCacheByArticleID(*createInput.Article)
+	repo.setCommentsCacheByArticleID(*createInput.Article)
 
 	return newComment, nil
 }
@@ -108,7 +112,7 @@ func (repo commentRepository) FindAllParentCommentsByAuthorID(authorID string) (
 func (repo commentRepository) FindAllParentCommentsByArticleID(articleID int) ([]*ent.Comment, error) {
 	cached, err := repo.cache.FindAllParentCommentsByArticleID(articleID)
 	if err != nil {
-		if !errors.Is(err, cache.ErrCacheMiss) {
+		if !errors.Is(err, rcache.ErrCacheMiss) {
 			log.Error(err)
 		}
 		coms, err := repo.findParentCommentsByArticleWithoutCache(articleID)
@@ -219,7 +223,7 @@ func (repo commentRepository) Delete(id int) (err error) {
 	}
 	log.Infof("Comment(id=%d)를 삭제했습니다.", id)
 
-	go repo.setCommentsCacheByArticleID(com.Edges.Article.ID)
+	repo.setCommentsCacheByArticleID(com.Edges.Article.ID)
 
 	return nil
 }
@@ -268,10 +272,26 @@ func (repo *commentRepository) findParentCommentsByArticleWithoutCache(articleID
 
 // invalidate 는 부모 댓글에 대한 캐시를 invalidate 합니다.
 func (repo *commentRepository) setCommentsCacheByArticleID(articleID int) {
-	coms, queryErr := repo.findParentCommentsByArticleWithoutCache(articleID)
-	if queryErr != nil {
-		log.Error(queryErr)
+	var done chan struct{}
+	if repo.synchronousCacheWrite {
+		done = make(chan struct{})
 	} else {
-		repo.cache.SetCommentsByArticleID(articleID, coms)
+		done = make(chan struct{}, 1)
 	}
+	go func() {
+		defer func() {
+			<-done
+		}()
+
+		coms, queryErr := repo.findParentCommentsByArticleWithoutCache(articleID)
+		if queryErr != nil {
+			log.Error(queryErr)
+		} else {
+			repo.cache.SetCommentsByArticleID(articleID, coms)
+		}
+	}()
+	// synchronous write이 false이면 buffered chan이라 바로 값을 넣을 수 있다.
+	done <- struct{}{}
+
+	return
 }

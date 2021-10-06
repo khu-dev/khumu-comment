@@ -92,10 +92,10 @@ func TestCommentUseCase_List(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
 		var err error
-		tmpArticle, err := repo.Article.Create().SetAuthor(test.UserPuppy).Save(context.TODO())
+		tmpArticle, err := db.Article.Create().SetAuthor(test.UserPuppy).Save(context.TODO())
 		assert.NoError(t, err)
 
-		correctComment, err := repo.Comment.Create().
+		correctComment, err := db.Comment.Create().
 			// 1번 article은 이미 많은 댓
 			SetArticleID(tmpArticle.ID).
 			SetAuthorID(test.UserPuppy.ID).
@@ -108,34 +108,36 @@ func TestCommentUseCase_List(t *testing.T) {
 		assert.Len(t, results, 1)
 		assert.Equal(t, results[0].ID, correctComment.ID)
 	})
-	t.Run("스터디 게시글에 대한 댓글 리스트", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
-		var err error
-		correctComment1, err := repo.Comment.Create().
-			SetStudyArticleID(1).
-			SetAuthorID(test.UserPuppy.ID).
-			SetContent("테스트 댓글").
-			Save(context.TODO())
-		assert.NoError(t, err)
-		_, err = repo.Comment.Create().
-			SetStudyArticleID(2).
-			SetAuthorID(test.UserPuppy.ID).
-			SetContent("테스트 댓글").
-			Save(context.TODO())
-		assert.NoError(t, err)
 
-		results, err := commentUseCase.List(test.UserPuppy.ID, &CommentQueryOption{StudyArticleID: 1})
-		assert.NoError(t, err)
-		assert.Len(t, results, 1)
-		assert.Equal(t, results[0].ID, correctComment1.ID)
-	})
+	// 스터디 게시글은 개발 중지
+	//t.Run("스터디 게시글에 대한 댓글 리스트", func(t *testing.T) {
+	//	BeforeCommentUseCaseTest(t)
+	//	defer A(t)
+	//	var err error
+	//	correctComment1, err := db.Comment.Create().
+	//		SetStudyArticleID(1).
+	//		SetAuthorID(test.UserPuppy.ID).
+	//		SetContent("테스트 댓글").
+	//		Save(context.TODO())
+	//	assert.NoError(t, err)
+	//	_, err = db.Comment.Create().
+	//		SetStudyArticleID(2).
+	//		SetAuthorID(test.UserPuppy.ID).
+	//		SetContent("테스트 댓글").
+	//		Save(context.TODO())
+	//	assert.NoError(t, err)
+	//
+	//	results, err := commentUseCase.List(test.UserPuppy.ID, &CommentQueryOption{StudyArticleID: 1})
+	//	assert.NoError(t, err)
+	//	assert.Len(t, results, 1)
+	//	assert.Equal(t, results[0].ID, correctComment1.ID)
+	//})
 }
 func TestCommentUseCase_Get(t *testing.T) {
 	t.Run("기명 댓글과 그 대댓글들", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
-		deletedAnonymousCommentFromComment1, err := repo.Comment.Create().
+		deletedAnonymousCommentFromComment1, err := db.Comment.Create().
 			SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
 			SetAuthorID(test.UserPuppy.ID).
 			SetContent("테스트 댓글").
@@ -144,7 +146,7 @@ func TestCommentUseCase_Get(t *testing.T) {
 			Save(context.TODO())
 		assert.NoError(t, err)
 
-		deletedNamedCommentFromComment1, err := repo.Comment.Create().
+		deletedNamedCommentFromComment1, err := db.Comment.Create().
 			SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
 			SetAuthorID(test.UserPuppy.ID).
 			SetContent("테스트 댓글").
@@ -205,7 +207,7 @@ func TestCommentUseCase_Get(t *testing.T) {
 	t.Run("삭제된 댓글", func(t *testing.T) {
 		BeforeCommentUseCaseTest(t)
 		defer A(t)
-		tmp, err := repo.Comment.Create().
+		tmp, err := db.Comment.Create().
 			SetArticleID(1).
 			SetAuthor(test.UserJinsu).
 			SetContent("삭제되어 보여져라!").
@@ -225,7 +227,7 @@ func TestCommentUseCase_Get(t *testing.T) {
 func TestLikeCommentUseCase_List(t *testing.T) {
 	BeforeCommentUseCaseTest(t)
 	defer A(t)
-	deletedAnonymousCommentFromComment1, err := repo.Comment.Create().
+	deletedAnonymousCommentFromComment1, err := db.Comment.Create().
 		SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
 		SetAuthorID(test.UserPuppy.ID).
 		SetContent("테스트 댓글").
@@ -234,7 +236,7 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 		Save(context.TODO())
 	assert.NoError(t, err)
 
-	deletedNamedCommentFromComment1, err := repo.Comment.Create().
+	deletedNamedCommentFromComment1, err := db.Comment.Create().
 		SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
 		SetAuthorID(test.UserPuppy.ID).
 		SetContent("테스트 댓글").
@@ -331,7 +333,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		parentComment := test.Comment4PuppyAnonymous
 		// 좋아요가 있으면 삭제해야함. 그 기능 테스트를 위해 좋아요도 만들어봄.
 		for i := 0; i < 3; i++ {
-			_, err := repo.LikeComment.Create().
+			_, err := db.LikeComment.Create().
 				SetAbout(parentComment).
 				SetLikedBy(test.UserPuppy).
 				Save(context.TODO())
@@ -340,7 +342,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.NotNil(t, parentComment)
 		err := commentUseCase.Delete(test.UserPuppy.ID, parentComment.ID)
 		assert.NoError(t, err)
-		_, err = repo.Comment.Get(context.TODO(), parentComment.ID)
+		_, err = db.Comment.Get(context.TODO(), parentComment.ID)
 		assert.IsType(t, &ent.NotFoundError{}, err)
 	})
 	t.Run("대댓글 삭제", func(t *testing.T) {
@@ -349,7 +351,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		toDelete := test.Comment5JinsuAnonymousFromComment1
 		err := commentUseCase.Delete(test.UserJinsu.ID, toDelete.ID)
 		assert.NoError(t, err)
-		_, err = repo.Comment.Get(context.TODO(), toDelete.ID)
+		_, err = db.Comment.Get(context.TODO(), toDelete.ID)
 		assert.IsType(t, &ent.NotFoundError{}, err)
 	})
 	t.Run("대댓글이 있는 부모 댓글 삭제", func(t *testing.T) {
@@ -358,7 +360,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		toDelete := test.Comment1JinsuAnonymous
 		err := commentUseCase.Delete(test.UserJinsu.ID, toDelete.ID)
 		assert.NoError(t, err)
-		deleted, err := repo.Comment.Query().WithAuthor().Where(comment.ID(toDelete.ID)).Only(context.TODO())
+		deleted, err := db.Comment.Query().WithAuthor().Where(comment.ID(toDelete.ID)).Only(context.TODO())
 		assert.NoError(t, err)
 		assert.Equal(t, "deleted", deleted.State)
 	})

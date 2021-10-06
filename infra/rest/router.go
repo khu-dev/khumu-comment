@@ -1,7 +1,6 @@
-package http
+package rest
 
 import (
-	_ "github.com/khu-dev/khumu-comment/docs"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"

@@ -1,4 +1,4 @@
-package repository
+package cache
 
 import (
 	"github.com/khu-dev/khumu-comment/data"

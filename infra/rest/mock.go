@@ -2,4 +2,4 @@
 // Source: http/binder.go
 
 // Package http is a generated GoMock package.
-package http
+package rest
