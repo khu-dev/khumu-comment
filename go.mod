@@ -5,7 +5,6 @@ go 1.14
 require (
 	entgo.io/ent v0.8.0
 	github.com/AlekSi/pointer v1.1.0
-	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/aws/aws-sdk-go v1.38.18
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-openapi/spec v0.19.12 // indirect
@@ -26,7 +25,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/swaggo/echo-swagger v1.0.0
-	github.com/swaggo/swag v1.6.9
+	github.com/swaggo/swag v1.6.9 // indirect
 	github.com/umi0410/ezconfig v0.0.0-20210524051235-5fb1e5782b52
 	go.uber.org/dig v1.10.0
 	golang.org/x/sys v0.0.0-20210507014357-30e306a8bba5 // indirect
