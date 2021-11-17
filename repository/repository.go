@@ -17,11 +17,12 @@ func NewEnt() *ent.Client {
 	// Error: unsupported Scan, storing driver.Value type []uint8 into type *time.Time
 	// ref: https://stackoverflow.com/questions/45040319/unsupported-scan-storing-driver-value-type-uint8-into-type-time-time
 	drv, err := sql.Open("mysql",
-		fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true",
+		fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&loc=%s",
 			config.Config.DB.MySQL.User,
 			config.Config.DB.MySQL.Password,
 			config.Config.DB.MySQL.Host,
 			config.Config.DB.MySQL.DatabaseName,
+			"Asia%2FSeoul",
 		))
 	if err != nil {
 		logrus.Panic(err)
