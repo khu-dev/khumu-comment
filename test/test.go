@@ -42,7 +42,7 @@ func SetUpUsers(client *ent.Client) {
 		SetID("jinsu").
 		SetPassword("123123").
 		SetNickname("진수짱짱맨").
-		SetState("active").
+		SetStatus("active").
 		Save(ctx)
 	if err != nil {
 		logrus.Panic(err)
@@ -52,7 +52,7 @@ func SetUpUsers(client *ent.Client) {
 		SetID("somebody").
 		SetPassword("123123").
 		SetNickname("썸바디").
-		SetState("active").
+		SetStatus("active").
 		Save(ctx)
 	if err != nil {
 		logrus.Panic(err)
@@ -62,7 +62,7 @@ func SetUpUsers(client *ent.Client) {
 		SetID("puppy").
 		SetPassword("123123").
 		SetNickname("댕댕이").
-		SetState("active").
+		SetStatus("active").
 		Save(ctx)
 	if err != nil {
 		logrus.Panic(err)

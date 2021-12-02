@@ -16,9 +16,15 @@ func KhumuUserModelToSimpleOutput(src *ent.KhumuUser, dest *data.SimpleKhumuUser
 		dest = &data.SimpleKhumuUserOutput{}
 	}
 
+	if src.Status == "deleted" {
+		dest.Username = "탈퇴한 유저"
+		dest.Nickname = "탈퇴한 유저"
+		dest.Status = "deleted"
+	}
+
 	dest.Username = src.ID
 	dest.Nickname = src.Nickname
-	dest.State = src.State
+	dest.Status = src.Status
 
 	return dest
 }

@@ -13,8 +13,8 @@ const (
 	FieldPassword = "password"
 	// FieldStudentNumber holds the string denoting the student_number field in the database.
 	FieldStudentNumber = "student_number"
-	// FieldState holds the string denoting the state field in the database.
-	FieldState = "state"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
 	// EdgeArticles holds the string denoting the articles edge name in mutations.
@@ -69,7 +69,7 @@ var Columns = []string{
 	FieldNickname,
 	FieldPassword,
 	FieldStudentNumber,
-	FieldState,
+	FieldStatus,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -83,6 +83,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultState holds the default value on creation for the "state" field.
-	DefaultState string
+	// DefaultStatus holds the default value on creation for the "status" field.
+	DefaultStatus string
 )

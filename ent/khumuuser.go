@@ -21,8 +21,8 @@ type KhumuUser struct {
 	Password string `json:"password,omitempty"`
 	// StudentNumber holds the value of the "student_number" field.
 	StudentNumber string `json:"student_number,omitempty"`
-	// State holds the value of the "state" field.
-	State string `json:"state,omitempty"`
+	// Status holds the value of the "status" field.
+	Status string `json:"status,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the KhumuUserQuery when eager-loading is set.
 	Edges KhumuUserEdges `json:"edges"`
@@ -84,7 +84,7 @@ func (*KhumuUser) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldPassword, khumuuser.FieldStudentNumber, khumuuser.FieldState:
+		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldPassword, khumuuser.FieldStudentNumber, khumuuser.FieldStatus:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type KhumuUser", columns[i])
@@ -125,11 +125,11 @@ func (ku *KhumuUser) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				ku.StudentNumber = value.String
 			}
-		case khumuuser.FieldState:
+		case khumuuser.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field state", values[i])
+				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				ku.State = value.String
+				ku.Status = value.String
 			}
 		}
 	}
@@ -185,8 +185,8 @@ func (ku *KhumuUser) String() string {
 	builder.WriteString(ku.Password)
 	builder.WriteString(", student_number=")
 	builder.WriteString(ku.StudentNumber)
-	builder.WriteString(", state=")
-	builder.WriteString(ku.State)
+	builder.WriteString(", status=")
+	builder.WriteString(ku.Status)
 	builder.WriteByte(')')
 	return builder.String()
 }

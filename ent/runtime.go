@@ -41,8 +41,8 @@ func init() {
 	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
 	khumuuserFields := schema.KhumuUser{}.Fields()
 	_ = khumuuserFields
-	// khumuuserDescState is the schema descriptor for state field.
-	khumuuserDescState := khumuuserFields[4].Descriptor()
-	// khumuuser.DefaultState holds the default value on creation for the state field.
-	khumuuser.DefaultState = khumuuserDescState.Default.(string)
+	// khumuuserDescStatus is the schema descriptor for status field.
+	khumuuserDescStatus := khumuuserFields[4].Descriptor()
+	// khumuuser.DefaultStatus holds the default value on creation for the status field.
+	khumuuser.DefaultStatus = khumuuserDescStatus.Default.(string)
 }

@@ -1781,7 +1781,7 @@ type KhumuUserMutation struct {
 	nickname             *string
 	password             *string
 	student_number       *string
-	state                *string
+	status               *string
 	clearedFields        map[string]struct{}
 	comments             map[int]struct{}
 	removedcomments      map[int]struct{}
@@ -2006,40 +2006,40 @@ func (m *KhumuUserMutation) ResetStudentNumber() {
 	delete(m.clearedFields, khumuuser.FieldStudentNumber)
 }
 
-// SetState sets the "state" field.
-func (m *KhumuUserMutation) SetState(s string) {
-	m.state = &s
+// SetStatus sets the "status" field.
+func (m *KhumuUserMutation) SetStatus(s string) {
+	m.status = &s
 }
 
-// State returns the value of the "state" field in the mutation.
-func (m *KhumuUserMutation) State() (r string, exists bool) {
-	v := m.state
+// Status returns the value of the "status" field in the mutation.
+func (m *KhumuUserMutation) Status() (r string, exists bool) {
+	v := m.status
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldState returns the old "state" field's value of the KhumuUser entity.
+// OldStatus returns the old "status" field's value of the KhumuUser entity.
 // If the KhumuUser object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *KhumuUserMutation) OldState(ctx context.Context) (v string, err error) {
+func (m *KhumuUserMutation) OldStatus(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldState is only allowed on UpdateOne operations")
+		return v, fmt.Errorf("OldStatus is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldState requires an ID field in the mutation")
+		return v, fmt.Errorf("OldStatus requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldState: %w", err)
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
 	}
-	return oldValue.State, nil
+	return oldValue.Status, nil
 }
 
-// ResetState resets all changes to the "state" field.
-func (m *KhumuUserMutation) ResetState() {
-	m.state = nil
+// ResetStatus resets all changes to the "status" field.
+func (m *KhumuUserMutation) ResetStatus() {
+	m.status = nil
 }
 
 // AddCommentIDs adds the "comments" edge to the Comment entity by ids.
@@ -2278,8 +2278,8 @@ func (m *KhumuUserMutation) Fields() []string {
 	if m.student_number != nil {
 		fields = append(fields, khumuuser.FieldStudentNumber)
 	}
-	if m.state != nil {
-		fields = append(fields, khumuuser.FieldState)
+	if m.status != nil {
+		fields = append(fields, khumuuser.FieldStatus)
 	}
 	return fields
 }
@@ -2295,8 +2295,8 @@ func (m *KhumuUserMutation) Field(name string) (ent.Value, bool) {
 		return m.Password()
 	case khumuuser.FieldStudentNumber:
 		return m.StudentNumber()
-	case khumuuser.FieldState:
-		return m.State()
+	case khumuuser.FieldStatus:
+		return m.Status()
 	}
 	return nil, false
 }
@@ -2312,8 +2312,8 @@ func (m *KhumuUserMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldPassword(ctx)
 	case khumuuser.FieldStudentNumber:
 		return m.OldStudentNumber(ctx)
-	case khumuuser.FieldState:
-		return m.OldState(ctx)
+	case khumuuser.FieldStatus:
+		return m.OldStatus(ctx)
 	}
 	return nil, fmt.Errorf("unknown KhumuUser field %s", name)
 }
@@ -2344,12 +2344,12 @@ func (m *KhumuUserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStudentNumber(v)
 		return nil
-	case khumuuser.FieldState:
+	case khumuuser.FieldStatus:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetState(v)
+		m.SetStatus(v)
 		return nil
 	}
 	return fmt.Errorf("unknown KhumuUser field %s", name)
@@ -2418,8 +2418,8 @@ func (m *KhumuUserMutation) ResetField(name string) error {
 	case khumuuser.FieldStudentNumber:
 		m.ResetStudentNumber()
 		return nil
-	case khumuuser.FieldState:
-		m.ResetState()
+	case khumuuser.FieldStatus:
+		m.ResetStatus()
 		return nil
 	}
 	return fmt.Errorf("unknown KhumuUser field %s", name)

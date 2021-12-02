@@ -62,16 +62,16 @@ func (kuu *KhumuUserUpdate) ClearStudentNumber() *KhumuUserUpdate {
 	return kuu
 }
 
-// SetState sets the "state" field.
-func (kuu *KhumuUserUpdate) SetState(s string) *KhumuUserUpdate {
-	kuu.mutation.SetState(s)
+// SetStatus sets the "status" field.
+func (kuu *KhumuUserUpdate) SetStatus(s string) *KhumuUserUpdate {
+	kuu.mutation.SetStatus(s)
 	return kuu
 }
 
-// SetNillableState sets the "state" field if the given value is not nil.
-func (kuu *KhumuUserUpdate) SetNillableState(s *string) *KhumuUserUpdate {
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (kuu *KhumuUserUpdate) SetNillableStatus(s *string) *KhumuUserUpdate {
 	if s != nil {
-		kuu.SetState(*s)
+		kuu.SetStatus(*s)
 	}
 	return kuu
 }
@@ -321,11 +321,11 @@ func (kuu *KhumuUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: khumuuser.FieldStudentNumber,
 		})
 	}
-	if value, ok := kuu.mutation.State(); ok {
+	if value, ok := kuu.mutation.Status(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldState,
+			Column: khumuuser.FieldStatus,
 		})
 	}
 	if kuu.mutation.CommentsCleared() {
@@ -595,16 +595,16 @@ func (kuuo *KhumuUserUpdateOne) ClearStudentNumber() *KhumuUserUpdateOne {
 	return kuuo
 }
 
-// SetState sets the "state" field.
-func (kuuo *KhumuUserUpdateOne) SetState(s string) *KhumuUserUpdateOne {
-	kuuo.mutation.SetState(s)
+// SetStatus sets the "status" field.
+func (kuuo *KhumuUserUpdateOne) SetStatus(s string) *KhumuUserUpdateOne {
+	kuuo.mutation.SetStatus(s)
 	return kuuo
 }
 
-// SetNillableState sets the "state" field if the given value is not nil.
-func (kuuo *KhumuUserUpdateOne) SetNillableState(s *string) *KhumuUserUpdateOne {
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (kuuo *KhumuUserUpdateOne) SetNillableStatus(s *string) *KhumuUserUpdateOne {
 	if s != nil {
-		kuuo.SetState(*s)
+		kuuo.SetStatus(*s)
 	}
 	return kuuo
 }
@@ -878,11 +878,11 @@ func (kuuo *KhumuUserUpdateOne) sqlSave(ctx context.Context) (_node *KhumuUser, 
 			Column: khumuuser.FieldStudentNumber,
 		})
 	}
-	if value, ok := kuuo.mutation.State(); ok {
+	if value, ok := kuuo.mutation.Status(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldState,
+			Column: khumuuser.FieldStatus,
 		})
 	}
 	if kuuo.mutation.CommentsCleared() {

@@ -49,16 +49,16 @@ func (kuc *KhumuUserCreate) SetNillableStudentNumber(s *string) *KhumuUserCreate
 	return kuc
 }
 
-// SetState sets the "state" field.
-func (kuc *KhumuUserCreate) SetState(s string) *KhumuUserCreate {
-	kuc.mutation.SetState(s)
+// SetStatus sets the "status" field.
+func (kuc *KhumuUserCreate) SetStatus(s string) *KhumuUserCreate {
+	kuc.mutation.SetStatus(s)
 	return kuc
 }
 
-// SetNillableState sets the "state" field if the given value is not nil.
-func (kuc *KhumuUserCreate) SetNillableState(s *string) *KhumuUserCreate {
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (kuc *KhumuUserCreate) SetNillableStatus(s *string) *KhumuUserCreate {
 	if s != nil {
-		kuc.SetState(*s)
+		kuc.SetStatus(*s)
 	}
 	return kuc
 }
@@ -181,9 +181,9 @@ func (kuc *KhumuUserCreate) SaveX(ctx context.Context) *KhumuUser {
 
 // defaults sets the default values of the builder before save.
 func (kuc *KhumuUserCreate) defaults() {
-	if _, ok := kuc.mutation.State(); !ok {
-		v := khumuuser.DefaultState
-		kuc.mutation.SetState(v)
+	if _, ok := kuc.mutation.Status(); !ok {
+		v := khumuuser.DefaultStatus
+		kuc.mutation.SetStatus(v)
 	}
 }
 
@@ -195,8 +195,8 @@ func (kuc *KhumuUserCreate) check() error {
 	if _, ok := kuc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New("ent: missing required field \"password\"")}
 	}
-	if _, ok := kuc.mutation.State(); !ok {
-		return &ValidationError{Name: "state", err: errors.New("ent: missing required field \"state\"")}
+	if _, ok := kuc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New("ent: missing required field \"status\"")}
 	}
 	return nil
 }
@@ -251,13 +251,13 @@ func (kuc *KhumuUserCreate) createSpec() (*KhumuUser, *sqlgraph.CreateSpec) {
 		})
 		_node.StudentNumber = value
 	}
-	if value, ok := kuc.mutation.State(); ok {
+	if value, ok := kuc.mutation.Status(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldState,
+			Column: khumuuser.FieldStatus,
 		})
-		_node.State = value
+		_node.Status = value
 	}
 	if nodes := kuc.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
