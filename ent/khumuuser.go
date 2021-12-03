@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
@@ -17,12 +18,10 @@ type KhumuUser struct {
 	ID string `json:"id,omitempty"`
 	// Nickname holds the value of the "nickname" field.
 	Nickname string `json:"nickname,omitempty"`
-	// Password holds the value of the "password" field.
-	Password string `json:"password,omitempty"`
-	// StudentNumber holds the value of the "student_number" field.
-	StudentNumber string `json:"student_number,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the KhumuUserQuery when eager-loading is set.
 	Edges KhumuUserEdges `json:"edges"`
@@ -84,8 +83,10 @@ func (*KhumuUser) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldPassword, khumuuser.FieldStudentNumber, khumuuser.FieldStatus:
+		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldStatus:
 			values[i] = new(sql.NullString)
+		case khumuuser.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type KhumuUser", columns[i])
 		}
@@ -113,23 +114,17 @@ func (ku *KhumuUser) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				ku.Nickname = value.String
 			}
-		case khumuuser.FieldPassword:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field password", values[i])
-			} else if value.Valid {
-				ku.Password = value.String
-			}
-		case khumuuser.FieldStudentNumber:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field student_number", values[i])
-			} else if value.Valid {
-				ku.StudentNumber = value.String
-			}
 		case khumuuser.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				ku.Status = value.String
+			}
+		case khumuuser.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				ku.CreatedAt = value.Time
 			}
 		}
 	}
@@ -181,12 +176,10 @@ func (ku *KhumuUser) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", ku.ID))
 	builder.WriteString(", nickname=")
 	builder.WriteString(ku.Nickname)
-	builder.WriteString(", password=")
-	builder.WriteString(ku.Password)
-	builder.WriteString(", student_number=")
-	builder.WriteString(ku.StudentNumber)
 	builder.WriteString(", status=")
 	builder.WriteString(ku.Status)
+	builder.WriteString(", created_at=")
+	builder.WriteString(ku.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -598,10 +598,10 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Comment)
 		for i := range nodes {
-			if nodes[i].article_id == nil {
+			if nodes[i].article_comments == nil {
 				continue
 			}
-			fk := *nodes[i].article_id
+			fk := *nodes[i].article_comments
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -615,7 +615,7 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "article_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "article_comments" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Article = n

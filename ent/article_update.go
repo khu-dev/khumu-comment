@@ -29,38 +29,6 @@ func (au *ArticleUpdate) Where(ps ...predicate.Article) *ArticleUpdate {
 	return au
 }
 
-// SetTitle sets the "title" field.
-func (au *ArticleUpdate) SetTitle(s string) *ArticleUpdate {
-	au.mutation.SetTitle(s)
-	return au
-}
-
-// SetNillableTitle sets the "title" field if the given value is not nil.
-func (au *ArticleUpdate) SetNillableTitle(s *string) *ArticleUpdate {
-	if s != nil {
-		au.SetTitle(*s)
-	}
-	return au
-}
-
-// ClearTitle clears the value of the "title" field.
-func (au *ArticleUpdate) ClearTitle() *ArticleUpdate {
-	au.mutation.ClearTitle()
-	return au
-}
-
-// SetImages sets the "images" field.
-func (au *ArticleUpdate) SetImages(s *[]string) *ArticleUpdate {
-	au.mutation.SetImages(s)
-	return au
-}
-
-// ClearImages clears the value of the "images" field.
-func (au *ArticleUpdate) ClearImages() *ArticleUpdate {
-	au.mutation.ClearImages()
-	return au
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (au *ArticleUpdate) SetCreatedAt(t time.Time) *ArticleUpdate {
 	au.mutation.SetCreatedAt(t)
@@ -210,32 +178,6 @@ func (au *ArticleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := au.mutation.Title(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: article.FieldTitle,
-		})
-	}
-	if au.mutation.TitleCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: article.FieldTitle,
-		})
-	}
-	if value, ok := au.mutation.Images(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: article.FieldImages,
-		})
-	}
-	if au.mutation.ImagesCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: article.FieldImages,
-		})
-	}
 	if value, ok := au.mutation.CreatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -349,38 +291,6 @@ type ArticleUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ArticleMutation
-}
-
-// SetTitle sets the "title" field.
-func (auo *ArticleUpdateOne) SetTitle(s string) *ArticleUpdateOne {
-	auo.mutation.SetTitle(s)
-	return auo
-}
-
-// SetNillableTitle sets the "title" field if the given value is not nil.
-func (auo *ArticleUpdateOne) SetNillableTitle(s *string) *ArticleUpdateOne {
-	if s != nil {
-		auo.SetTitle(*s)
-	}
-	return auo
-}
-
-// ClearTitle clears the value of the "title" field.
-func (auo *ArticleUpdateOne) ClearTitle() *ArticleUpdateOne {
-	auo.mutation.ClearTitle()
-	return auo
-}
-
-// SetImages sets the "images" field.
-func (auo *ArticleUpdateOne) SetImages(s *[]string) *ArticleUpdateOne {
-	auo.mutation.SetImages(s)
-	return auo
-}
-
-// ClearImages clears the value of the "images" field.
-func (auo *ArticleUpdateOne) ClearImages() *ArticleUpdateOne {
-	auo.mutation.ClearImages()
-	return auo
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -555,32 +465,6 @@ func (auo *ArticleUpdateOne) sqlSave(ctx context.Context) (_node *Article, err e
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := auo.mutation.Title(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: article.FieldTitle,
-		})
-	}
-	if auo.mutation.TitleCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: article.FieldTitle,
-		})
-	}
-	if value, ok := auo.mutation.Images(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: article.FieldImages,
-		})
-	}
-	if auo.mutation.ImagesCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: article.FieldImages,
-		})
 	}
 	if value, ok := auo.mutation.CreatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{

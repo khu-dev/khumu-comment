@@ -1,4 +1,4 @@
-package infra
+package message
 
 import (
 	"encoding/json"
@@ -17,15 +17,15 @@ var (
 	}
 )
 
-type SnsClient interface {
-	PublishMessage(comment *data.CommentOutput)
+type MessagePublisher interface {
+	Publish(comment *data.CommentOutput)
 }
 
-type SnsClientImpl struct {
+type SnsMessagePublisher struct {
 	Sns *sns.SNS
 }
 
-func NewSnsClient() SnsClient {
+func NewSnsMessagePublisher() MessagePublisher {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("ap-northeast-2"),
 	})
@@ -36,12 +36,12 @@ func NewSnsClient() SnsClient {
 
 	snsClient := sns.New(sess)
 
-	return &SnsClientImpl{
+	return &SnsMessagePublisher{
 		Sns: snsClient,
 	}
 }
 
-func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) {
+func (p *SnsMessagePublisher) Publish(comment *data.CommentOutput) {
 	jsonData, err := json.Marshal(comment)
 	if err != nil {
 		log.Error(err)
@@ -53,7 +53,7 @@ func (client *SnsClientImpl) PublishMessage(comment *data.CommentOutput) {
 		MessageAttributes: CommentCreateMessageAttribute,
 	}
 
-	result, err := client.Sns.Publish(input)
+	result, err := p.Sns.Publish(input)
 	if err != nil {
 		log.Error(err)
 		return

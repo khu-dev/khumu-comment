@@ -11,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/khu-dev/khumu-comment/ent/article"
-	"github.com/khu-dev/khumu-comment/ent/board"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
@@ -37,7 +36,6 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		article.Table:      article.ValidColumn,
-		board.Table:        board.ValidColumn,
 		comment.Table:      comment.ValidColumn,
 		khumuuser.Table:    khumuuser.ValidColumn,
 		likecomment.Table:  likecomment.ValidColumn,

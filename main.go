@@ -4,21 +4,24 @@ import (
 	"fmt"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/container"
+	"github.com/khu-dev/khumu-comment/infra/message"
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"os"
+	"os/signal"
 	"runtime"
 	"strings"
+	"syscall"
 )
 
 func init() {
 	workingDir, err := os.Getwd()
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 	}
 
-	logrus.SetReportCaller(true)
-	logrus.SetFormatter(&logrus.TextFormatter{
+	log.SetReportCaller(true)
+	log.SetFormatter(&log.TextFormatter{
 		DisableColors: false,
 		DisableQuote:  true,
 		ForceColors:   true,
@@ -32,14 +35,26 @@ func init() {
 	})
 }
 func main() {
-	logrus.Println("Args: ", len(os.Args), os.Args)
-	logrus.Printf("Default config. %#v\n", config.Config)
-	cont := container.Build()
+	log.Println("Args: ", len(os.Args), os.Args)
+	log.Printf("Default config. %#v\n", config.Config)
+
+	termSig := make(chan os.Signal, 3)
+	signal.Notify(termSig, syscall.SIGINT, syscall.SIGTERM)
+
+	cont := container.Build(termSig)
+
+	go func() {
+		err := cont.Invoke(func(h message.MessageHandler) {
+			h.Listen()
+		})
+		log.Fatal(err)
+	}()
+
 	err := cont.Invoke(func(e *echo.Echo) {
 		e.Logger.Print("Started Server")
 		e.Logger.Fatal(e.Start(config.Config.Host + ":" + config.Config.Port))
 	})
 	if err != nil {
-		logrus.Panic(err)
+		log.Panic(err)
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/migrate"
 
 	"github.com/khu-dev/khumu-comment/ent/article"
-	"github.com/khu-dev/khumu-comment/ent/board"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
@@ -28,8 +27,6 @@ type Client struct {
 	Schema *migrate.Schema
 	// Article is the client for interacting with the Article builders.
 	Article *ArticleClient
-	// Board is the client for interacting with the Board builders.
-	Board *BoardClient
 	// Comment is the client for interacting with the Comment builders.
 	Comment *CommentClient
 	// KhumuUser is the client for interacting with the KhumuUser builders.
@@ -52,7 +49,6 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Article = NewArticleClient(c.config)
-	c.Board = NewBoardClient(c.config)
 	c.Comment = NewCommentClient(c.config)
 	c.KhumuUser = NewKhumuUserClient(c.config)
 	c.LikeComment = NewLikeCommentClient(c.config)
@@ -91,7 +87,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:          ctx,
 		config:       cfg,
 		Article:      NewArticleClient(cfg),
-		Board:        NewBoardClient(cfg),
 		Comment:      NewCommentClient(cfg),
 		KhumuUser:    NewKhumuUserClient(cfg),
 		LikeComment:  NewLikeCommentClient(cfg),
@@ -115,7 +110,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		config:       cfg,
 		Article:      NewArticleClient(cfg),
-		Board:        NewBoardClient(cfg),
 		Comment:      NewCommentClient(cfg),
 		KhumuUser:    NewKhumuUserClient(cfg),
 		LikeComment:  NewLikeCommentClient(cfg),
@@ -150,7 +144,6 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Article.Use(hooks...)
-	c.Board.Use(hooks...)
 	c.Comment.Use(hooks...)
 	c.KhumuUser.Use(hooks...)
 	c.LikeComment.Use(hooks...)
@@ -277,96 +270,6 @@ func (c *ArticleClient) QueryAuthor(a *Article) *KhumuUserQuery {
 // Hooks returns the client hooks.
 func (c *ArticleClient) Hooks() []Hook {
 	return c.hooks.Article
-}
-
-// BoardClient is a client for the Board schema.
-type BoardClient struct {
-	config
-}
-
-// NewBoardClient returns a client for the Board from the given config.
-func NewBoardClient(c config) *BoardClient {
-	return &BoardClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `board.Hooks(f(g(h())))`.
-func (c *BoardClient) Use(hooks ...Hook) {
-	c.hooks.Board = append(c.hooks.Board, hooks...)
-}
-
-// Create returns a create builder for Board.
-func (c *BoardClient) Create() *BoardCreate {
-	mutation := newBoardMutation(c.config, OpCreate)
-	return &BoardCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Board entities.
-func (c *BoardClient) CreateBulk(builders ...*BoardCreate) *BoardCreateBulk {
-	return &BoardCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Board.
-func (c *BoardClient) Update() *BoardUpdate {
-	mutation := newBoardMutation(c.config, OpUpdate)
-	return &BoardUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *BoardClient) UpdateOne(b *Board) *BoardUpdateOne {
-	mutation := newBoardMutation(c.config, OpUpdateOne, withBoard(b))
-	return &BoardUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *BoardClient) UpdateOneID(id int) *BoardUpdateOne {
-	mutation := newBoardMutation(c.config, OpUpdateOne, withBoardID(id))
-	return &BoardUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Board.
-func (c *BoardClient) Delete() *BoardDelete {
-	mutation := newBoardMutation(c.config, OpDelete)
-	return &BoardDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a delete builder for the given entity.
-func (c *BoardClient) DeleteOne(b *Board) *BoardDeleteOne {
-	return c.DeleteOneID(b.ID)
-}
-
-// DeleteOneID returns a delete builder for the given id.
-func (c *BoardClient) DeleteOneID(id int) *BoardDeleteOne {
-	builder := c.Delete().Where(board.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &BoardDeleteOne{builder}
-}
-
-// Query returns a query builder for Board.
-func (c *BoardClient) Query() *BoardQuery {
-	return &BoardQuery{
-		config: c.config,
-	}
-}
-
-// Get returns a Board entity by its id.
-func (c *BoardClient) Get(ctx context.Context, id int) (*Board, error) {
-	return c.Query().Where(board.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *BoardClient) GetX(ctx context.Context, id int) *Board {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *BoardClient) Hooks() []Hook {
-	return c.hooks.Board
 }
 
 // CommentClient is a client for the Comment schema.

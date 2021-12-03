@@ -44,6 +44,9 @@ type KhumuConfig struct {
 	Sns struct {
 		TopicArn string `yaml:"topic_arn"`
 	} `yaml:"sns"`
+	Sqs struct {
+		QueueURL string
+	}
 	Redis struct {
 		Addr string `yaml:"addr"`
 	} `yaml:"redis"`

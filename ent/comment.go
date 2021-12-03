@@ -25,14 +25,12 @@ type Comment struct {
 	Content string `json:"content,omitempty"`
 	// Kind holds the value of the "kind" field.
 	Kind string `json:"kind,omitempty"`
-	// IsWrittenByArticleAuthor holds the value of the "is_written_by_article_author" field.
-	IsWrittenByArticleAuthor bool `json:"is_written_by_article_author,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CommentQuery when eager-loading is set.
 	Edges            CommentEdges `json:"edges"`
-	article_id       *int
+	article_comments *int
 	parent_id        *int
 	author_id        *string
 	study_article_id *int
@@ -136,15 +134,13 @@ func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case comment.FieldIsWrittenByArticleAuthor:
-			values[i] = new(sql.NullBool)
 		case comment.FieldID:
 			values[i] = new(sql.NullInt64)
 		case comment.FieldState, comment.FieldContent, comment.FieldKind:
 			values[i] = new(sql.NullString)
 		case comment.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case comment.ForeignKeys[0]: // article_id
+		case comment.ForeignKeys[0]: // article_comments
 			values[i] = new(sql.NullInt64)
 		case comment.ForeignKeys[1]: // parent_id
 			values[i] = new(sql.NullInt64)
@@ -191,12 +187,6 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				c.Kind = value.String
 			}
-		case comment.FieldIsWrittenByArticleAuthor:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_written_by_article_author", values[i])
-			} else if value.Valid {
-				c.IsWrittenByArticleAuthor = value.Bool
-			}
 		case comment.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -205,10 +195,10 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 			}
 		case comment.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field article_id", value)
+				return fmt.Errorf("unexpected type %T for edge-field article_comments", value)
 			} else if value.Valid {
-				c.article_id = new(int)
-				*c.article_id = int(value.Int64)
+				c.article_comments = new(int)
+				*c.article_comments = int(value.Int64)
 			}
 		case comment.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -295,8 +285,6 @@ func (c *Comment) String() string {
 	builder.WriteString(c.Content)
 	builder.WriteString(", kind=")
 	builder.WriteString(c.Kind)
-	builder.WriteString(", is_written_by_article_author=")
-	builder.WriteString(fmt.Sprintf("%v", c.IsWrittenByArticleAuthor))
 	builder.WriteString(", created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

@@ -7,13 +7,13 @@ import (
 
 // 새로운 SimpleKhumuUserOutput을 생성한다
 // 원래 KhumuUser 참조 X
-func KhumuUserModelToSimpleOutput(src *ent.KhumuUser, dest *data.SimpleKhumuUserOutput) *data.SimpleKhumuUserOutput {
+func KhumuUserModelToSimpleOutput(src *ent.KhumuUser, dest *data.SimpleKhumuUserDto) *data.SimpleKhumuUserDto {
 	if src == nil {
 		return nil
 	}
 
 	if dest == nil {
-		dest = &data.SimpleKhumuUserOutput{}
+		dest = &data.SimpleKhumuUserDto{}
 	}
 
 	if src.Status == "deleted" {

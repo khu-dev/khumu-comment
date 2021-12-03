@@ -22,26 +22,6 @@ type ArticleCreate struct {
 	hooks    []Hook
 }
 
-// SetTitle sets the "title" field.
-func (ac *ArticleCreate) SetTitle(s string) *ArticleCreate {
-	ac.mutation.SetTitle(s)
-	return ac
-}
-
-// SetNillableTitle sets the "title" field if the given value is not nil.
-func (ac *ArticleCreate) SetNillableTitle(s *string) *ArticleCreate {
-	if s != nil {
-		ac.SetTitle(*s)
-	}
-	return ac
-}
-
-// SetImages sets the "images" field.
-func (ac *ArticleCreate) SetImages(s *[]string) *ArticleCreate {
-	ac.mutation.SetImages(s)
-	return ac
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (ac *ArticleCreate) SetCreatedAt(t time.Time) *ArticleCreate {
 	ac.mutation.SetCreatedAt(t)
@@ -191,22 +171,6 @@ func (ac *ArticleCreate) createSpec() (*Article, *sqlgraph.CreateSpec) {
 	if id, ok := ac.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
-	}
-	if value, ok := ac.mutation.Title(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: article.FieldTitle,
-		})
-		_node.Title = value
-	}
-	if value, ok := ac.mutation.Images(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: article.FieldImages,
-		})
-		_node.Images = value
 	}
 	if value, ok := ac.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
