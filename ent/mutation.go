@@ -486,6 +486,7 @@ type CommentMutation struct {
 	id                  *int
 	state               *string
 	content             *string
+	kind                *string
 	created_at          *time.Time
 	clearedFields       map[string]struct{}
 	author              *string
@@ -662,6 +663,42 @@ func (m *CommentMutation) OldContent(ctx context.Context) (v string, err error) 
 // ResetContent resets all changes to the "content" field.
 func (m *CommentMutation) ResetContent() {
 	m.content = nil
+}
+
+// SetKind sets the "kind" field.
+func (m *CommentMutation) SetKind(s string) {
+	m.kind = &s
+}
+
+// Kind returns the value of the "kind" field in the mutation.
+func (m *CommentMutation) Kind() (r string, exists bool) {
+	v := m.kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKind returns the old "kind" field's value of the Comment entity.
+// If the Comment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommentMutation) OldKind(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKind: %w", err)
+	}
+	return oldValue.Kind, nil
+}
+
+// ResetKind resets all changes to the "kind" field.
+func (m *CommentMutation) ResetKind() {
+	m.kind = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -976,12 +1013,15 @@ func (m *CommentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CommentMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.state != nil {
 		fields = append(fields, comment.FieldState)
 	}
 	if m.content != nil {
 		fields = append(fields, comment.FieldContent)
+	}
+	if m.kind != nil {
+		fields = append(fields, comment.FieldKind)
 	}
 	if m.created_at != nil {
 		fields = append(fields, comment.FieldCreatedAt)
@@ -998,6 +1038,8 @@ func (m *CommentMutation) Field(name string) (ent.Value, bool) {
 		return m.State()
 	case comment.FieldContent:
 		return m.Content()
+	case comment.FieldKind:
+		return m.Kind()
 	case comment.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -1013,6 +1055,8 @@ func (m *CommentMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldState(ctx)
 	case comment.FieldContent:
 		return m.OldContent(ctx)
+	case comment.FieldKind:
+		return m.OldKind(ctx)
 	case comment.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -1037,6 +1081,13 @@ func (m *CommentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetContent(v)
+		return nil
+	case comment.FieldKind:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKind(v)
 		return nil
 	case comment.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1099,6 +1150,9 @@ func (m *CommentMutation) ResetField(name string) error {
 		return nil
 	case comment.FieldContent:
 		m.ResetContent()
+		return nil
+	case comment.FieldKind:
+		m.ResetKind()
 		return nil
 	case comment.FieldCreatedAt:
 		m.ResetCreatedAt()

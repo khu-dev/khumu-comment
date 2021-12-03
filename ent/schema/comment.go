@@ -25,6 +25,7 @@ func (Comment) Fields() []ent.Field {
 		field.Int("id"),
 		field.String("state").Default("exists"),
 		field.String("content"),
+		field.String("kind").Default("anonymous"),
 		field.Time("created_at").Default(func() time.Time {
 			return time.Now()
 		}),

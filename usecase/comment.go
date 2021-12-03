@@ -84,13 +84,12 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
 		return nil, errorz.ErrNoArticleIDInput
 	}
-	isWrittenByArticleAuthor := <-uc.khumuAPIAdapter.IsAuthor(*commentInput.Article, commentInput.Author)
-	newComment, err := uc.Repo.Create(commentInput, isWrittenByArticleAuthor)
+
+	newComment, err := uc.Repo.Create(commentInput)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
 	}
-	newComment.IsWrittenByArticleAuthor = isWrittenByArticleAuthor
 
 	// TODO: 이렇게 new comment에 대한 이벤트들은 chan fan in fan out 처럼 구현하는 게 더 Go스럽게 좋을 듯
 	// 현재 같은 절차지향 방식보다는.

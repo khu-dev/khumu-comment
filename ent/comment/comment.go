@@ -15,6 +15,8 @@ const (
 	FieldState = "state"
 	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
+	// FieldKind holds the string denoting the kind field in the database.
+	FieldKind = "kind"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeAuthor holds the string denoting the author edge name in mutations.
@@ -76,6 +78,7 @@ var Columns = []string{
 	FieldID,
 	FieldState,
 	FieldContent,
+	FieldKind,
 	FieldCreatedAt,
 }
 
@@ -106,6 +109,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultState holds the default value on creation for the "state" field.
 	DefaultState string
+	// DefaultKind holds the default value on creation for the "kind" field.
+	DefaultKind string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 )

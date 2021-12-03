@@ -23,6 +23,8 @@ type Comment struct {
 	State string `json:"state,omitempty"`
 	// Content holds the value of the "content" field.
 	Content string `json:"content,omitempty"`
+	// Kind holds the value of the "kind" field.
+	Kind string `json:"kind,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -134,7 +136,7 @@ func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case comment.FieldID:
 			values[i] = new(sql.NullInt64)
-		case comment.FieldState, comment.FieldContent:
+		case comment.FieldState, comment.FieldContent, comment.FieldKind:
 			values[i] = new(sql.NullString)
 		case comment.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -178,6 +180,12 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
 			} else if value.Valid {
 				c.Content = value.String
+			}
+		case comment.FieldKind:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kind", values[i])
+			} else if value.Valid {
+				c.Kind = value.String
 			}
 		case comment.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -275,6 +283,8 @@ func (c *Comment) String() string {
 	builder.WriteString(c.State)
 	builder.WriteString(", content=")
 	builder.WriteString(c.Content)
+	builder.WriteString(", kind=")
+	builder.WriteString(c.Kind)
 	builder.WriteString(", created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

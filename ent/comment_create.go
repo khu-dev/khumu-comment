@@ -44,6 +44,20 @@ func (cc *CommentCreate) SetContent(s string) *CommentCreate {
 	return cc
 }
 
+// SetKind sets the "kind" field.
+func (cc *CommentCreate) SetKind(s string) *CommentCreate {
+	cc.mutation.SetKind(s)
+	return cc
+}
+
+// SetNillableKind sets the "kind" field if the given value is not nil.
+func (cc *CommentCreate) SetNillableKind(s *string) *CommentCreate {
+	if s != nil {
+		cc.SetKind(*s)
+	}
+	return cc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (cc *CommentCreate) SetCreatedAt(t time.Time) *CommentCreate {
 	cc.mutation.SetCreatedAt(t)
@@ -226,6 +240,10 @@ func (cc *CommentCreate) defaults() {
 		v := comment.DefaultState
 		cc.mutation.SetState(v)
 	}
+	if _, ok := cc.mutation.Kind(); !ok {
+		v := comment.DefaultKind
+		cc.mutation.SetKind(v)
+	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
 		v := comment.DefaultCreatedAt()
 		cc.mutation.SetCreatedAt(v)
@@ -239,6 +257,9 @@ func (cc *CommentCreate) check() error {
 	}
 	if _, ok := cc.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New("ent: missing required field \"content\"")}
+	}
+	if _, ok := cc.mutation.Kind(); !ok {
+		return &ValidationError{Name: "kind", err: errors.New("ent: missing required field \"kind\"")}
 	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New("ent: missing required field \"created_at\"")}
@@ -291,6 +312,14 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Column: comment.FieldContent,
 		})
 		_node.Content = value
+	}
+	if value, ok := cc.mutation.Kind(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: comment.FieldKind,
+		})
+		_node.Kind = value
 	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

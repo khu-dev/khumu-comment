@@ -38,7 +38,7 @@ func Test_commentRepository_Create(t *testing.T) {
 			Author:  test.UserPuppy.ID,
 			Article: &test.Articles[0].ID,
 			Content: "이것은 댓글",
-		}, true)
+		})
 		assert.NoError(t, err)
 		assert.NotNil(t, created)
 		assert.Equal(t, "이것은 댓글", created.Content)
@@ -74,13 +74,13 @@ func TestCommentRepository_FindAllParentsByAuthorID(t *testing.T) {
 			Author:  test.UserPuppy.ID,
 			Article: &test.Articles[0].ID,
 			Content: "이것은 댓글",
-		}, true)
+		})
 		assert.NoError(t, err)
 		created2, err := repo.Create(&data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Article: &test.Articles[1].ID,
 			Content: "이것은 댓글",
-		}, true)
+		})
 		assert.NoError(t, err)
 		result, err := repo.FindAllParentCommentsByAuthorID(test.UserPuppy.ID)
 		assert.NoError(t, err)
