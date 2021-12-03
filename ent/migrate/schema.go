@@ -77,6 +77,7 @@ var (
 		{Name: "username", Type: field.TypeString},
 		{Name: "nickname", Type: field.TypeString},
 		{Name: "status", Type: field.TypeString, Default: "exists"},
+		{Name: "created_at", Type: field.TypeTime},
 	}
 	// KhumuUsersTable holds the schema information for the "khumu_users" table.
 	KhumuUsersTable = &schema.Table{

@@ -41,4 +41,8 @@ func init() {
 	khumuuserDescStatus := khumuuserFields[2].Descriptor()
 	// khumuuser.DefaultStatus holds the default value on creation for the status field.
 	khumuuser.DefaultStatus = khumuuserDescStatus.Default.(string)
+	// khumuuserDescCreatedAt is the schema descriptor for created_at field.
+	khumuuserDescCreatedAt := khumuuserFields[3].Descriptor()
+	// khumuuser.DefaultCreatedAt holds the default value on creation for the created_at field.
+	khumuuser.DefaultCreatedAt = khumuuserDescCreatedAt.Default.(func() time.Time)
 }

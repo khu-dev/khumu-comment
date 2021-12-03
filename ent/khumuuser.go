@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
@@ -19,6 +20,8 @@ type KhumuUser struct {
 	Nickname string `json:"nickname,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the KhumuUserQuery when eager-loading is set.
 	Edges KhumuUserEdges `json:"edges"`
@@ -82,6 +85,8 @@ func (*KhumuUser) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case khumuuser.FieldID, khumuuser.FieldNickname, khumuuser.FieldStatus:
 			values[i] = new(sql.NullString)
+		case khumuuser.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type KhumuUser", columns[i])
 		}
@@ -114,6 +119,12 @@ func (ku *KhumuUser) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				ku.Status = value.String
+			}
+		case khumuuser.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				ku.CreatedAt = value.Time
 			}
 		}
 	}
@@ -167,6 +178,8 @@ func (ku *KhumuUser) String() string {
 	builder.WriteString(ku.Nickname)
 	builder.WriteString(", status=")
 	builder.WriteString(ku.Status)
+	builder.WriteString(", created_at=")
+	builder.WriteString(ku.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

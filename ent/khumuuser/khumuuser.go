@@ -2,6 +2,10 @@
 
 package khumuuser
 
+import (
+	"time"
+)
+
 const (
 	// Label holds the string label denoting the khumuuser type in the database.
 	Label = "khumu_user"
@@ -11,6 +15,8 @@ const (
 	FieldNickname = "nickname"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
 	// EdgeArticles holds the string denoting the articles edge name in mutations.
@@ -64,6 +70,7 @@ var Columns = []string{
 	FieldID,
 	FieldNickname,
 	FieldStatus,
+	FieldCreatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -79,4 +86,6 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
 )

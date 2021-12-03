@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"time"
 )
 
 // User holds the schema definition for the User entity.
@@ -23,6 +24,7 @@ func (KhumuUser) Fields() []ent.Field {
 		field.String("id").StorageKey("username"),
 		field.String("nickname"),
 		field.String("status").Default("exists"),
+		field.Time("created_at").Default(time.Now),
 	}
 }
 

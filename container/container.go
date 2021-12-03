@@ -10,24 +10,36 @@ import (
 	"github.com/khu-dev/khumu-comment/usecase"
 	"go.uber.org/dig"
 	"log"
+	"os"
 )
 
-func Build() *dig.Container {
+func Build(termSig <-chan os.Signal) *dig.Container {
 	c := dig.New()
 
-	// Provide DB Connection
+	// os의 signal을 받아서 종료할 수 있게해주는 channel
+	err := c.Provide(func() <-chan os.Signal {
+		return termSig
+	})
 
-	err := c.Provide(repository.NewEnt)
+	// Provide DB Connection
+	err = c.Provide(repository.NewEnt)
 	if err != nil {
 		log.Panic(err)
 	}
 
+	// 캐시에 동기적으로 write할 지 비동기적으로 write할지
 	err = c.Provide(func() repository.SynchronousCacheWrite { return false })
 	if err != nil {
 		log.Panic(err)
 	}
 	// sns
-	err = c.Provide(message.NewSnsClient)
+	err = c.Provide(message.NewSnsMessagePublisher)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// sqs
+	err = c.Provide(message.NewSqsMessageHandler)
 	if err != nil {
 		log.Panic(err)
 	}

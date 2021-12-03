@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -46,6 +47,20 @@ func (kuu *KhumuUserUpdate) SetStatus(s string) *KhumuUserUpdate {
 func (kuu *KhumuUserUpdate) SetNillableStatus(s *string) *KhumuUserUpdate {
 	if s != nil {
 		kuu.SetStatus(*s)
+	}
+	return kuu
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (kuu *KhumuUserUpdate) SetCreatedAt(t time.Time) *KhumuUserUpdate {
+	kuu.mutation.SetCreatedAt(t)
+	return kuu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (kuu *KhumuUserUpdate) SetNillableCreatedAt(t *time.Time) *KhumuUserUpdate {
+	if t != nil {
+		kuu.SetCreatedAt(*t)
 	}
 	return kuu
 }
@@ -280,6 +295,13 @@ func (kuu *KhumuUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: khumuuser.FieldStatus,
+		})
+	}
+	if value, ok := kuu.mutation.CreatedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: khumuuser.FieldCreatedAt,
 		})
 	}
 	if kuu.mutation.CommentsCleared() {
@@ -533,6 +555,20 @@ func (kuuo *KhumuUserUpdateOne) SetStatus(s string) *KhumuUserUpdateOne {
 func (kuuo *KhumuUserUpdateOne) SetNillableStatus(s *string) *KhumuUserUpdateOne {
 	if s != nil {
 		kuuo.SetStatus(*s)
+	}
+	return kuuo
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (kuuo *KhumuUserUpdateOne) SetCreatedAt(t time.Time) *KhumuUserUpdateOne {
+	kuuo.mutation.SetCreatedAt(t)
+	return kuuo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (kuuo *KhumuUserUpdateOne) SetNillableCreatedAt(t *time.Time) *KhumuUserUpdateOne {
+	if t != nil {
+		kuuo.SetCreatedAt(*t)
 	}
 	return kuuo
 }
@@ -791,6 +827,13 @@ func (kuuo *KhumuUserUpdateOne) sqlSave(ctx context.Context) (_node *KhumuUser, 
 			Type:   field.TypeString,
 			Value:  value,
 			Column: khumuuser.FieldStatus,
+		})
+	}
+	if value, ok := kuuo.mutation.CreatedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: khumuuser.FieldCreatedAt,
 		})
 	}
 	if kuuo.mutation.CommentsCleared() {

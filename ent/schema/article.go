@@ -22,9 +22,7 @@ func (Article) Annotations() []schema.Annotation {
 func (Article) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("id"),
-		field.Time("created_at").Default(func() time.Time {
-			return time.Now()
-		}),
+		field.Time("created_at").Default(time.Now),
 	}
 }
 
