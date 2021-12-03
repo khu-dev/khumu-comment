@@ -3,183 +3,149 @@
 package migrate
 
 import (
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
-	// ArticleArticleColumns holds the columns for the "article_article" table.
-	ArticleArticleColumns = []*schema.Column{
+	// ArticlesColumns holds the columns for the "articles" table.
+	ArticlesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "title", Type: field.TypeString, Nullable: true},
-		{Name: "images", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "author_id", Type: field.TypeString, Nullable: true},
 	}
-	// ArticleArticleTable holds the schema information for the "article_article" table.
-	ArticleArticleTable = &schema.Table{
-		Name:       "article_article",
-		Columns:    ArticleArticleColumns,
-		PrimaryKey: []*schema.Column{ArticleArticleColumns[0]},
+	// ArticlesTable holds the schema information for the "articles" table.
+	ArticlesTable = &schema.Table{
+		Name:       "articles",
+		Columns:    ArticlesColumns,
+		PrimaryKey: []*schema.Column{ArticlesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "article_article_user_khumuuser_articles",
-				Columns:    []*schema.Column{ArticleArticleColumns[4]},
-				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				Symbol:     "articles_khumu_users_articles",
+				Columns:    []*schema.Column{ArticlesColumns[2]},
+				RefColumns: []*schema.Column{KhumuUsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 	}
-	// BoardsColumns holds the columns for the "boards" table.
-	BoardsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-	}
-	// BoardsTable holds the schema information for the "boards" table.
-	BoardsTable = &schema.Table{
-		Name:        "boards",
-		Columns:     BoardsColumns,
-		PrimaryKey:  []*schema.Column{BoardsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{},
-	}
-	// CommentCommentColumns holds the columns for the "comment_comment" table.
-	CommentCommentColumns = []*schema.Column{
+	// CommentsColumns holds the columns for the "comments" table.
+	CommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "state", Type: field.TypeString, Default: "exists"},
 		{Name: "content", Type: field.TypeString},
-		{Name: "kind", Type: field.TypeString, Default: "anonymous"},
-		{Name: "is_written_by_article_author", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "article_id", Type: field.TypeInt, Nullable: true},
+		{Name: "article_comments", Type: field.TypeInt, Nullable: true},
 		{Name: "parent_id", Type: field.TypeInt, Nullable: true},
 		{Name: "author_id", Type: field.TypeString, Nullable: true},
 		{Name: "study_article_id", Type: field.TypeInt, Nullable: true},
 	}
-	// CommentCommentTable holds the schema information for the "comment_comment" table.
-	CommentCommentTable = &schema.Table{
-		Name:       "comment_comment",
-		Columns:    CommentCommentColumns,
-		PrimaryKey: []*schema.Column{CommentCommentColumns[0]},
+	// CommentsTable holds the schema information for the "comments" table.
+	CommentsTable = &schema.Table{
+		Name:       "comments",
+		Columns:    CommentsColumns,
+		PrimaryKey: []*schema.Column{CommentsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "comment_comment_article_article_comments",
-				Columns:    []*schema.Column{CommentCommentColumns[6]},
-				RefColumns: []*schema.Column{ArticleArticleColumns[0]},
+				Symbol:     "comments_articles_comments",
+				Columns:    []*schema.Column{CommentsColumns[4]},
+				RefColumns: []*schema.Column{ArticlesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "comment_comment_comment_comment_children",
-				Columns:    []*schema.Column{CommentCommentColumns[7]},
-				RefColumns: []*schema.Column{CommentCommentColumns[0]},
+				Symbol:     "comments_comments_children",
+				Columns:    []*schema.Column{CommentsColumns[5]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "comment_comment_user_khumuuser_comments",
-				Columns:    []*schema.Column{CommentCommentColumns[8]},
-				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				Symbol:     "comments_khumu_users_comments",
+				Columns:    []*schema.Column{CommentsColumns[6]},
+				RefColumns: []*schema.Column{KhumuUsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "comment_comment_article_studyarticle_comments",
-				Columns:    []*schema.Column{CommentCommentColumns[9]},
-				RefColumns: []*schema.Column{ArticleStudyarticleColumns[0]},
+				Symbol:     "comments_study_articles_comments",
+				Columns:    []*schema.Column{CommentsColumns[7]},
+				RefColumns: []*schema.Column{StudyArticlesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 	}
-	// UserKhumuuserColumns holds the columns for the "user_khumuuser" table.
-	UserKhumuuserColumns = []*schema.Column{
+	// KhumuUsersColumns holds the columns for the "khumu_users" table.
+	KhumuUsersColumns = []*schema.Column{
 		{Name: "username", Type: field.TypeString},
 		{Name: "nickname", Type: field.TypeString},
-		{Name: "password", Type: field.TypeString},
-		{Name: "student_number", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "exists"},
 	}
-	// UserKhumuuserTable holds the schema information for the "user_khumuuser" table.
-	UserKhumuuserTable = &schema.Table{
-		Name:        "user_khumuuser",
-		Columns:     UserKhumuuserColumns,
-		PrimaryKey:  []*schema.Column{UserKhumuuserColumns[0]},
+	// KhumuUsersTable holds the schema information for the "khumu_users" table.
+	KhumuUsersTable = &schema.Table{
+		Name:        "khumu_users",
+		Columns:     KhumuUsersColumns,
+		PrimaryKey:  []*schema.Column{KhumuUsersColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{},
 	}
-	// CommentLikecommentColumns holds the columns for the "comment_likecomment" table.
-	CommentLikecommentColumns = []*schema.Column{
+	// LikeCommentsColumns holds the columns for the "like_comments" table.
+	LikeCommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "comment_id", Type: field.TypeInt, Nullable: true},
 		{Name: "user_id", Type: field.TypeString, Nullable: true},
 	}
-	// CommentLikecommentTable holds the schema information for the "comment_likecomment" table.
-	CommentLikecommentTable = &schema.Table{
-		Name:       "comment_likecomment",
-		Columns:    CommentLikecommentColumns,
-		PrimaryKey: []*schema.Column{CommentLikecommentColumns[0]},
+	// LikeCommentsTable holds the schema information for the "like_comments" table.
+	LikeCommentsTable = &schema.Table{
+		Name:       "like_comments",
+		Columns:    LikeCommentsColumns,
+		PrimaryKey: []*schema.Column{LikeCommentsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "comment_likecomment_comment_comment_like",
-				Columns:    []*schema.Column{CommentLikecommentColumns[1]},
-				RefColumns: []*schema.Column{CommentCommentColumns[0]},
+				Symbol:     "like_comments_comments_like",
+				Columns:    []*schema.Column{LikeCommentsColumns[1]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "comment_likecomment_user_khumuuser_like",
-				Columns:    []*schema.Column{CommentLikecommentColumns[2]},
-				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				Symbol:     "like_comments_khumu_users_like",
+				Columns:    []*schema.Column{LikeCommentsColumns[2]},
+				RefColumns: []*schema.Column{KhumuUsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 	}
-	// ArticleStudyarticleColumns holds the columns for the "article_studyarticle" table.
-	ArticleStudyarticleColumns = []*schema.Column{
+	// StudyArticlesColumns holds the columns for the "study_articles" table.
+	StudyArticlesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "author_id", Type: field.TypeString, Nullable: true},
 	}
-	// ArticleStudyarticleTable holds the schema information for the "article_studyarticle" table.
-	ArticleStudyarticleTable = &schema.Table{
-		Name:       "article_studyarticle",
-		Columns:    ArticleStudyarticleColumns,
-		PrimaryKey: []*schema.Column{ArticleStudyarticleColumns[0]},
+	// StudyArticlesTable holds the schema information for the "study_articles" table.
+	StudyArticlesTable = &schema.Table{
+		Name:       "study_articles",
+		Columns:    StudyArticlesColumns,
+		PrimaryKey: []*schema.Column{StudyArticlesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "article_studyarticle_user_khumuuser_studyArticles",
-				Columns:    []*schema.Column{ArticleStudyarticleColumns[1]},
-				RefColumns: []*schema.Column{UserKhumuuserColumns[0]},
+				Symbol:     "study_articles_khumu_users_studyArticles",
+				Columns:    []*schema.Column{StudyArticlesColumns[1]},
+				RefColumns: []*schema.Column{KhumuUsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		ArticleArticleTable,
-		BoardsTable,
-		CommentCommentTable,
-		UserKhumuuserTable,
-		CommentLikecommentTable,
-		ArticleStudyarticleTable,
+		ArticlesTable,
+		CommentsTable,
+		KhumuUsersTable,
+		LikeCommentsTable,
+		StudyArticlesTable,
 	}
 )
 
 func init() {
-	ArticleArticleTable.ForeignKeys[0].RefTable = UserKhumuuserTable
-	ArticleArticleTable.Annotation = &entsql.Annotation{
-		Table: "article_article",
-	}
-	CommentCommentTable.ForeignKeys[0].RefTable = ArticleArticleTable
-	CommentCommentTable.ForeignKeys[1].RefTable = CommentCommentTable
-	CommentCommentTable.ForeignKeys[2].RefTable = UserKhumuuserTable
-	CommentCommentTable.ForeignKeys[3].RefTable = ArticleStudyarticleTable
-	CommentCommentTable.Annotation = &entsql.Annotation{
-		Table: "comment_comment",
-	}
-	UserKhumuuserTable.Annotation = &entsql.Annotation{
-		Table: "user_khumuuser",
-	}
-	CommentLikecommentTable.ForeignKeys[0].RefTable = CommentCommentTable
-	CommentLikecommentTable.ForeignKeys[1].RefTable = UserKhumuuserTable
-	CommentLikecommentTable.Annotation = &entsql.Annotation{
-		Table: "comment_likecomment",
-	}
-	ArticleStudyarticleTable.ForeignKeys[0].RefTable = UserKhumuuserTable
-	ArticleStudyarticleTable.Annotation = &entsql.Annotation{
-		Table: "article_studyarticle",
-	}
+	ArticlesTable.ForeignKeys[0].RefTable = KhumuUsersTable
+	CommentsTable.ForeignKeys[0].RefTable = ArticlesTable
+	CommentsTable.ForeignKeys[1].RefTable = CommentsTable
+	CommentsTable.ForeignKeys[2].RefTable = KhumuUsersTable
+	CommentsTable.ForeignKeys[3].RefTable = StudyArticlesTable
+	LikeCommentsTable.ForeignKeys[0].RefTable = CommentsTable
+	LikeCommentsTable.ForeignKeys[1].RefTable = KhumuUsersTable
+	StudyArticlesTable.ForeignKeys[0].RefTable = KhumuUsersTable
 }

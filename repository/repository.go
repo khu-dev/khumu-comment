@@ -7,6 +7,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/ent"
+	"github.com/khu-dev/khumu-comment/ent/migrate"
 	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -30,7 +31,7 @@ func NewEnt() *ent.Client {
 	// Get the underlying sql.DB object of the driver.
 	db := drv.DB()
 	db.SetMaxIdleConns(10)
-	db.SetMaxOpenConns(100)
+	db.SetMaxOpenConns(30)
 
 	conn, err := db.Conn(context.TODO())
 	if err != nil {
@@ -44,6 +45,12 @@ func NewEnt() *ent.Client {
 		logrus.Warn(i...)
 	})
 	client := ent.NewClient(ent.Driver(drv))
+	err = client.Schema.Create(context.TODO(),
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(false),
+		migrate.WithForeignKeys(true),
+	)
+
 	return client
 }
 

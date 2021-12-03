@@ -18,7 +18,7 @@ func init() {
 	articleFields := schema.Article{}.Fields()
 	_ = articleFields
 	// articleDescCreatedAt is the schema descriptor for created_at field.
-	articleDescCreatedAt := articleFields[3].Descriptor()
+	articleDescCreatedAt := articleFields[1].Descriptor()
 	// article.DefaultCreatedAt holds the default value on creation for the created_at field.
 	article.DefaultCreatedAt = articleDescCreatedAt.Default.(func() time.Time)
 	commentFields := schema.Comment{}.Fields()
@@ -27,22 +27,14 @@ func init() {
 	commentDescState := commentFields[1].Descriptor()
 	// comment.DefaultState holds the default value on creation for the state field.
 	comment.DefaultState = commentDescState.Default.(string)
-	// commentDescKind is the schema descriptor for kind field.
-	commentDescKind := commentFields[3].Descriptor()
-	// comment.DefaultKind holds the default value on creation for the kind field.
-	comment.DefaultKind = commentDescKind.Default.(string)
-	// commentDescIsWrittenByArticleAuthor is the schema descriptor for is_written_by_article_author field.
-	commentDescIsWrittenByArticleAuthor := commentFields[4].Descriptor()
-	// comment.DefaultIsWrittenByArticleAuthor holds the default value on creation for the is_written_by_article_author field.
-	comment.DefaultIsWrittenByArticleAuthor = commentDescIsWrittenByArticleAuthor.Default.(bool)
 	// commentDescCreatedAt is the schema descriptor for created_at field.
-	commentDescCreatedAt := commentFields[5].Descriptor()
+	commentDescCreatedAt := commentFields[3].Descriptor()
 	// comment.DefaultCreatedAt holds the default value on creation for the created_at field.
 	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
 	khumuuserFields := schema.KhumuUser{}.Fields()
 	_ = khumuuserFields
 	// khumuuserDescStatus is the schema descriptor for status field.
-	khumuuserDescStatus := khumuuserFields[4].Descriptor()
+	khumuuserDescStatus := khumuuserFields[2].Descriptor()
 	// khumuuser.DefaultStatus holds the default value on creation for the status field.
 	khumuuser.DefaultStatus = khumuuserDescStatus.Default.(string)
 }

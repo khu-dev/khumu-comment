@@ -328,12 +328,12 @@ func (aq *ArticleQuery) WithAuthor(opts ...func(*KhumuUserQuery)) *ArticleQuery 
 // Example:
 //
 //	var v []struct {
-//		Title string `json:"title,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Article.Query().
-//		GroupBy(article.FieldTitle).
+//		GroupBy(article.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -355,11 +355,11 @@ func (aq *ArticleQuery) GroupBy(field string, fields ...string) *ArticleGroupBy 
 // Example:
 //
 //	var v []struct {
-//		Title string `json:"title,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Article.Query().
-//		Select(article.FieldTitle).
+//		Select(article.FieldCreatedAt).
 //		Scan(ctx, &v)
 //
 func (aq *ArticleQuery) Select(field string, fields ...string) *ArticleSelect {
@@ -436,13 +436,13 @@ func (aq *ArticleQuery) sqlAll(ctx context.Context) ([]*Article, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.article_id
+			fk := n.article_comments
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "article_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "article_comments" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "article_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "article_comments" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Comments = append(node.Edges.Comments, n)
 		}

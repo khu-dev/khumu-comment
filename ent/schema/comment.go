@@ -3,7 +3,6 @@ package schema
 import (
 	"encoding/json"
 	"entgo.io/ent"
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -17,9 +16,7 @@ type Comment struct {
 
 // Annotations of the Comment.
 func (Comment) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{Table: "comment_comment"},
-	}
+	return nil
 }
 
 // Fields of the Comment.
@@ -28,8 +25,6 @@ func (Comment) Fields() []ent.Field {
 		field.Int("id"),
 		field.String("state").Default("exists"),
 		field.String("content"),
-		field.String("kind").Default("anonymous"),
-		field.Bool("is_written_by_article_author").Default(false),
 		field.Time("created_at").Default(func() time.Time {
 			return time.Now()
 		}),

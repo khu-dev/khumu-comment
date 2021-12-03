@@ -22,19 +22,6 @@ func (f ArticleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return f(ctx, mv)
 }
 
-// The BoardFunc type is an adapter to allow the use of ordinary
-// function as Board mutator.
-type BoardFunc func(context.Context, *ent.BoardMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f BoardFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.BoardMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BoardMutation", m)
-	}
-	return f(ctx, mv)
-}
-
 // The CommentFunc type is an adapter to allow the use of ordinary
 // function as Comment mutator.
 type CommentFunc func(context.Context, *ent.CommentMutation) (ent.Value, error)

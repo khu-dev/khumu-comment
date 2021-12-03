@@ -11,10 +11,6 @@ const (
 	Label = "article"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldTitle holds the string denoting the title field in the database.
-	FieldTitle = "title"
-	// FieldImages holds the string denoting the images field in the database.
-	FieldImages = "images"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
@@ -24,19 +20,19 @@ const (
 	// KhumuUserFieldID holds the string denoting the ID field of the KhumuUser.
 	KhumuUserFieldID = "username"
 	// Table holds the table name of the article in the database.
-	Table = "article_article"
+	Table = "articles"
 	// CommentsTable is the table the holds the comments relation/edge.
-	CommentsTable = "comment_comment"
+	CommentsTable = "comments"
 	// CommentsInverseTable is the table name for the Comment entity.
 	// It exists in this package in order to avoid circular dependency with the "comment" package.
-	CommentsInverseTable = "comment_comment"
+	CommentsInverseTable = "comments"
 	// CommentsColumn is the table column denoting the comments relation/edge.
-	CommentsColumn = "article_id"
+	CommentsColumn = "article_comments"
 	// AuthorTable is the table the holds the author relation/edge.
-	AuthorTable = "article_article"
+	AuthorTable = "articles"
 	// AuthorInverseTable is the table name for the KhumuUser entity.
 	// It exists in this package in order to avoid circular dependency with the "khumuuser" package.
-	AuthorInverseTable = "user_khumuuser"
+	AuthorInverseTable = "khumu_users"
 	// AuthorColumn is the table column denoting the author relation/edge.
 	AuthorColumn = "author_id"
 )
@@ -44,12 +40,10 @@ const (
 // Columns holds all SQL columns for article fields.
 var Columns = []string{
 	FieldID,
-	FieldTitle,
-	FieldImages,
 	FieldCreatedAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "article_article"
+// ForeignKeys holds the SQL foreign-keys that are owned by the "articles"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"author_id",

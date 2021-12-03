@@ -2,7 +2,6 @@ package schema
 
 import (
 	"entgo.io/ent"
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -15,9 +14,7 @@ type KhumuUser struct {
 
 // Annotations of the User.
 func (KhumuUser) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{Table: "user_khumuuser"},
-	}
+	return nil
 }
 
 // Fields of the KhumuUser.
@@ -25,8 +22,6 @@ func (KhumuUser) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").StorageKey("username"),
 		field.String("nickname"),
-		field.String("password"),
-		field.String("student_number").Optional(),
 		field.String("status").Default("exists"),
 	}
 }

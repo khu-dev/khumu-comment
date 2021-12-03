@@ -36,32 +36,6 @@ func (kuu *KhumuUserUpdate) SetNickname(s string) *KhumuUserUpdate {
 	return kuu
 }
 
-// SetPassword sets the "password" field.
-func (kuu *KhumuUserUpdate) SetPassword(s string) *KhumuUserUpdate {
-	kuu.mutation.SetPassword(s)
-	return kuu
-}
-
-// SetStudentNumber sets the "student_number" field.
-func (kuu *KhumuUserUpdate) SetStudentNumber(s string) *KhumuUserUpdate {
-	kuu.mutation.SetStudentNumber(s)
-	return kuu
-}
-
-// SetNillableStudentNumber sets the "student_number" field if the given value is not nil.
-func (kuu *KhumuUserUpdate) SetNillableStudentNumber(s *string) *KhumuUserUpdate {
-	if s != nil {
-		kuu.SetStudentNumber(*s)
-	}
-	return kuu
-}
-
-// ClearStudentNumber clears the value of the "student_number" field.
-func (kuu *KhumuUserUpdate) ClearStudentNumber() *KhumuUserUpdate {
-	kuu.mutation.ClearStudentNumber()
-	return kuu
-}
-
 // SetStatus sets the "status" field.
 func (kuu *KhumuUserUpdate) SetStatus(s string) *KhumuUserUpdate {
 	kuu.mutation.SetStatus(s)
@@ -299,26 +273,6 @@ func (kuu *KhumuUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: khumuuser.FieldNickname,
-		})
-	}
-	if value, ok := kuu.mutation.Password(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: khumuuser.FieldPassword,
-		})
-	}
-	if value, ok := kuu.mutation.StudentNumber(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: khumuuser.FieldStudentNumber,
-		})
-	}
-	if kuu.mutation.StudentNumberCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: khumuuser.FieldStudentNumber,
 		})
 	}
 	if value, ok := kuu.mutation.Status(); ok {
@@ -566,32 +520,6 @@ type KhumuUserUpdateOne struct {
 // SetNickname sets the "nickname" field.
 func (kuuo *KhumuUserUpdateOne) SetNickname(s string) *KhumuUserUpdateOne {
 	kuuo.mutation.SetNickname(s)
-	return kuuo
-}
-
-// SetPassword sets the "password" field.
-func (kuuo *KhumuUserUpdateOne) SetPassword(s string) *KhumuUserUpdateOne {
-	kuuo.mutation.SetPassword(s)
-	return kuuo
-}
-
-// SetStudentNumber sets the "student_number" field.
-func (kuuo *KhumuUserUpdateOne) SetStudentNumber(s string) *KhumuUserUpdateOne {
-	kuuo.mutation.SetStudentNumber(s)
-	return kuuo
-}
-
-// SetNillableStudentNumber sets the "student_number" field if the given value is not nil.
-func (kuuo *KhumuUserUpdateOne) SetNillableStudentNumber(s *string) *KhumuUserUpdateOne {
-	if s != nil {
-		kuuo.SetStudentNumber(*s)
-	}
-	return kuuo
-}
-
-// ClearStudentNumber clears the value of the "student_number" field.
-func (kuuo *KhumuUserUpdateOne) ClearStudentNumber() *KhumuUserUpdateOne {
-	kuuo.mutation.ClearStudentNumber()
 	return kuuo
 }
 
@@ -856,26 +784,6 @@ func (kuuo *KhumuUserUpdateOne) sqlSave(ctx context.Context) (_node *KhumuUser, 
 			Type:   field.TypeString,
 			Value:  value,
 			Column: khumuuser.FieldNickname,
-		})
-	}
-	if value, ok := kuuo.mutation.Password(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: khumuuser.FieldPassword,
-		})
-	}
-	if value, ok := kuuo.mutation.StudentNumber(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: khumuuser.FieldStudentNumber,
-		})
-	}
-	if kuuo.mutation.StudentNumberCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: khumuuser.FieldStudentNumber,
 		})
 	}
 	if value, ok := kuuo.mutation.Status(); ok {

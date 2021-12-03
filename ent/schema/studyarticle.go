@@ -2,7 +2,6 @@ package schema
 
 import (
 	"entgo.io/ent"
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -15,9 +14,7 @@ type StudyArticle struct {
 
 // Annotations of the StudyArticle.
 func (StudyArticle) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{Table: "article_studyarticle"},
-	}
+	return nil
 }
 
 // Fields of the StudyArticle.

@@ -44,34 +44,6 @@ func (cc *CommentCreate) SetContent(s string) *CommentCreate {
 	return cc
 }
 
-// SetKind sets the "kind" field.
-func (cc *CommentCreate) SetKind(s string) *CommentCreate {
-	cc.mutation.SetKind(s)
-	return cc
-}
-
-// SetNillableKind sets the "kind" field if the given value is not nil.
-func (cc *CommentCreate) SetNillableKind(s *string) *CommentCreate {
-	if s != nil {
-		cc.SetKind(*s)
-	}
-	return cc
-}
-
-// SetIsWrittenByArticleAuthor sets the "is_written_by_article_author" field.
-func (cc *CommentCreate) SetIsWrittenByArticleAuthor(b bool) *CommentCreate {
-	cc.mutation.SetIsWrittenByArticleAuthor(b)
-	return cc
-}
-
-// SetNillableIsWrittenByArticleAuthor sets the "is_written_by_article_author" field if the given value is not nil.
-func (cc *CommentCreate) SetNillableIsWrittenByArticleAuthor(b *bool) *CommentCreate {
-	if b != nil {
-		cc.SetIsWrittenByArticleAuthor(*b)
-	}
-	return cc
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (cc *CommentCreate) SetCreatedAt(t time.Time) *CommentCreate {
 	cc.mutation.SetCreatedAt(t)
@@ -254,14 +226,6 @@ func (cc *CommentCreate) defaults() {
 		v := comment.DefaultState
 		cc.mutation.SetState(v)
 	}
-	if _, ok := cc.mutation.Kind(); !ok {
-		v := comment.DefaultKind
-		cc.mutation.SetKind(v)
-	}
-	if _, ok := cc.mutation.IsWrittenByArticleAuthor(); !ok {
-		v := comment.DefaultIsWrittenByArticleAuthor
-		cc.mutation.SetIsWrittenByArticleAuthor(v)
-	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
 		v := comment.DefaultCreatedAt()
 		cc.mutation.SetCreatedAt(v)
@@ -275,12 +239,6 @@ func (cc *CommentCreate) check() error {
 	}
 	if _, ok := cc.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New("ent: missing required field \"content\"")}
-	}
-	if _, ok := cc.mutation.Kind(); !ok {
-		return &ValidationError{Name: "kind", err: errors.New("ent: missing required field \"kind\"")}
-	}
-	if _, ok := cc.mutation.IsWrittenByArticleAuthor(); !ok {
-		return &ValidationError{Name: "is_written_by_article_author", err: errors.New("ent: missing required field \"is_written_by_article_author\"")}
 	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New("ent: missing required field \"created_at\"")}
@@ -334,22 +292,6 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 		})
 		_node.Content = value
 	}
-	if value, ok := cc.mutation.Kind(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: comment.FieldKind,
-		})
-		_node.Kind = value
-	}
-	if value, ok := cc.mutation.IsWrittenByArticleAuthor(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: comment.FieldIsWrittenByArticleAuthor,
-		})
-		_node.IsWrittenByArticleAuthor = value
-	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -395,7 +337,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.article_id = &nodes[0]
+		_node.article_comments = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := cc.mutation.StudyArticleIDs(); len(nodes) > 0 {

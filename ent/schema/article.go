@@ -2,7 +2,6 @@ package schema
 
 import (
 	"entgo.io/ent"
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -16,17 +15,13 @@ type Article struct {
 
 // Annotations of the Article.
 func (Article) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{Table: "article_article"},
-	}
+	return nil
 }
 
 // Fields of the Article.
 func (Article) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("id"),
-		field.String("title").Optional(),
-		field.JSON("images", &[]string{}).Optional(),
 		field.Time("created_at").Default(func() time.Time {
 			return time.Now()
 		}),
@@ -36,9 +31,7 @@ func (Article) Fields() []ent.Field {
 // Edges of the Article.
 func (Article) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("comments", Comment.Type).StorageKey(func(key *edge.StorageKey) {
-			key.Columns = []string{"article_id"}
-		}),
+		edge.To("comments", Comment.Type),
 		edge.From("author", KhumuUser.Type).Unique().Ref("articles"),
 	}
 }

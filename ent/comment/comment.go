@@ -15,10 +15,6 @@ const (
 	FieldState = "state"
 	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
-	// FieldKind holds the string denoting the kind field in the database.
-	FieldKind = "kind"
-	// FieldIsWrittenByArticleAuthor holds the string denoting the is_written_by_article_author field in the database.
-	FieldIsWrittenByArticleAuthor = "is_written_by_article_author"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeAuthor holds the string denoting the author edge name in mutations.
@@ -36,41 +32,41 @@ const (
 	// KhumuUserFieldID holds the string denoting the ID field of the KhumuUser.
 	KhumuUserFieldID = "username"
 	// Table holds the table name of the comment in the database.
-	Table = "comment_comment"
+	Table = "comments"
 	// AuthorTable is the table the holds the author relation/edge.
-	AuthorTable = "comment_comment"
+	AuthorTable = "comments"
 	// AuthorInverseTable is the table name for the KhumuUser entity.
 	// It exists in this package in order to avoid circular dependency with the "khumuuser" package.
-	AuthorInverseTable = "user_khumuuser"
+	AuthorInverseTable = "khumu_users"
 	// AuthorColumn is the table column denoting the author relation/edge.
 	AuthorColumn = "author_id"
 	// ArticleTable is the table the holds the article relation/edge.
-	ArticleTable = "comment_comment"
+	ArticleTable = "comments"
 	// ArticleInverseTable is the table name for the Article entity.
 	// It exists in this package in order to avoid circular dependency with the "article" package.
-	ArticleInverseTable = "article_article"
+	ArticleInverseTable = "articles"
 	// ArticleColumn is the table column denoting the article relation/edge.
-	ArticleColumn = "article_id"
+	ArticleColumn = "article_comments"
 	// StudyArticleTable is the table the holds the studyArticle relation/edge.
-	StudyArticleTable = "comment_comment"
+	StudyArticleTable = "comments"
 	// StudyArticleInverseTable is the table name for the StudyArticle entity.
 	// It exists in this package in order to avoid circular dependency with the "studyarticle" package.
-	StudyArticleInverseTable = "article_studyarticle"
+	StudyArticleInverseTable = "study_articles"
 	// StudyArticleColumn is the table column denoting the studyArticle relation/edge.
 	StudyArticleColumn = "study_article_id"
 	// ParentTable is the table the holds the parent relation/edge.
-	ParentTable = "comment_comment"
+	ParentTable = "comments"
 	// ParentColumn is the table column denoting the parent relation/edge.
 	ParentColumn = "parent_id"
 	// ChildrenTable is the table the holds the children relation/edge.
-	ChildrenTable = "comment_comment"
+	ChildrenTable = "comments"
 	// ChildrenColumn is the table column denoting the children relation/edge.
 	ChildrenColumn = "parent_id"
 	// LikeTable is the table the holds the like relation/edge.
-	LikeTable = "comment_likecomment"
+	LikeTable = "like_comments"
 	// LikeInverseTable is the table name for the LikeComment entity.
 	// It exists in this package in order to avoid circular dependency with the "likecomment" package.
-	LikeInverseTable = "comment_likecomment"
+	LikeInverseTable = "like_comments"
 	// LikeColumn is the table column denoting the like relation/edge.
 	LikeColumn = "comment_id"
 )
@@ -80,15 +76,13 @@ var Columns = []string{
 	FieldID,
 	FieldState,
 	FieldContent,
-	FieldKind,
-	FieldIsWrittenByArticleAuthor,
 	FieldCreatedAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "comment_comment"
+// ForeignKeys holds the SQL foreign-keys that are owned by the "comments"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"article_id",
+	"article_comments",
 	"parent_id",
 	"author_id",
 	"study_article_id",
@@ -112,10 +106,6 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultState holds the default value on creation for the "state" field.
 	DefaultState string
-	// DefaultKind holds the default value on creation for the "kind" field.
-	DefaultKind string
-	// DefaultIsWrittenByArticleAuthor holds the default value on creation for the "is_written_by_article_author" field.
-	DefaultIsWrittenByArticleAuthor bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 )

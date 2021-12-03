@@ -14,19 +14,19 @@ const (
 	// KhumuUserFieldID holds the string denoting the ID field of the KhumuUser.
 	KhumuUserFieldID = "username"
 	// Table holds the table name of the studyarticle in the database.
-	Table = "article_studyarticle"
+	Table = "study_articles"
 	// CommentsTable is the table the holds the comments relation/edge.
-	CommentsTable = "comment_comment"
+	CommentsTable = "comments"
 	// CommentsInverseTable is the table name for the Comment entity.
 	// It exists in this package in order to avoid circular dependency with the "comment" package.
-	CommentsInverseTable = "comment_comment"
+	CommentsInverseTable = "comments"
 	// CommentsColumn is the table column denoting the comments relation/edge.
 	CommentsColumn = "study_article_id"
 	// AuthorTable is the table the holds the author relation/edge.
-	AuthorTable = "article_studyarticle"
+	AuthorTable = "study_articles"
 	// AuthorInverseTable is the table name for the KhumuUser entity.
 	// It exists in this package in order to avoid circular dependency with the "khumuuser" package.
-	AuthorInverseTable = "user_khumuuser"
+	AuthorInverseTable = "khumu_users"
 	// AuthorColumn is the table column denoting the author relation/edge.
 	AuthorColumn = "author_id"
 )
@@ -36,7 +36,7 @@ var Columns = []string{
 	FieldID,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "article_studyarticle"
+// ForeignKeys holds the SQL foreign-keys that are owned by the "study_articles"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"author_id",
