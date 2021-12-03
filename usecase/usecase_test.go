@@ -5,8 +5,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/enttest"
-	"github.com/khu-dev/khumu-comment/infra"
 	"github.com/khu-dev/khumu-comment/infra/khumu"
+	"github.com/khu-dev/khumu-comment/infra/message"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/repository/cache"
 	"github.com/khu-dev/khumu-comment/test"
@@ -16,7 +16,7 @@ import (
 
 var (
 	db                   *ent.Client
-	mockSnsClient        *infra.MockSnsClient
+	mockMessagePublisher *message.MockMessagePublisher
 	mockKhumuApiAdapter  *khumu.MockKhumuAPIAdapter
 	mockCommentCacheRepo *cache.MockCommentCacheRepository
 	mockLikeCacheRepo    *cache.MockLikeCommentCacheRepository
@@ -33,7 +33,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	//db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&_fk=1")
 
-	mockSnsClient = infra.NewMockSnsClient(ctrl)
+	mockMessagePublisher = message.NewMockMessagePublisher(ctrl)
 	mockKhumuApiAdapter = khumu.NewMockKhumuAPIAdapter(ctrl)
 	mockCommentCacheRepo = cache.NewMockCommentCacheRepository(ctrl)
 	mockLikeCacheRepo = cache.NewMockLikeCommentCacheRepository(ctrl)
@@ -43,7 +43,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 	commentUseCase = &CommentUseCase{
 		Repo:            commentRepo,
 		entclient:       db,
-		SnsClient:       mockSnsClient,
+		SnsClient:       mockMessagePublisher,
 		khumuAPIAdapter: mockKhumuApiAdapter,
 		likeRepo:        likeRepo,
 	}
@@ -52,7 +52,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 		CommentRepo: commentRepo,
 	}
 
-	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
+	mockMessagePublisher.EXPECT().Publish(gomock.Any()).DoAndReturn(
 		func(message interface{}) error {
 			tb.Log("그냥 테스트라서 푸시 알림 패스")
 			return nil

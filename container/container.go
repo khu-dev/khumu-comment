@@ -3,6 +3,7 @@ package container
 import (
 	"github.com/khu-dev/khumu-comment/infra"
 	"github.com/khu-dev/khumu-comment/infra/khumu"
+	"github.com/khu-dev/khumu-comment/infra/message"
 	"github.com/khu-dev/khumu-comment/infra/rest"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/khu-dev/khumu-comment/repository/cache"
@@ -26,7 +27,7 @@ func Build() *dig.Container {
 		log.Panic(err)
 	}
 	// sns
-	err = c.Provide(infra.NewSnsClient)
+	err = c.Provide(message.NewSnsClient)
 	if err != nil {
 		log.Panic(err)
 	}

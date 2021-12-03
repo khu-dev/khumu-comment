@@ -8,8 +8,8 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/errorz"
-	"github.com/khu-dev/khumu-comment/infra"
 	"github.com/khu-dev/khumu-comment/infra/khumu"
+	"github.com/khu-dev/khumu-comment/infra/message"
 	"github.com/khu-dev/khumu-comment/repository"
 	"github.com/sirupsen/logrus"
 	"reflect"
@@ -48,7 +48,7 @@ type CommentUseCase struct {
 	Repo            repository.CommentRepository
 	likeRepo        repository.LikeCommentRepository
 	entclient       *ent.Client
-	SnsClient       infra.SnsClient
+	SnsClient       message.MessagePublisher
 	khumuAPIAdapter khumu.KhumuAPIAdapter
 }
 
@@ -61,7 +61,7 @@ func NewCommentUseCase(
 	repo repository.CommentRepository,
 	likeRepo repository.LikeCommentRepository,
 	entclient *ent.Client,
-	snsClient infra.SnsClient,
+	snsClient message.MessagePublisher,
 	khumuAPIAdapter khumu.KhumuAPIAdapter) CommentUseCaseInterface {
 	return &CommentUseCase{
 		Repo:            repo,
@@ -94,7 +94,7 @@ func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInpu
 	// TODO: 이렇게 new comment에 대한 이벤트들은 chan fan in fan out 처럼 구현하는 게 더 Go스럽게 좋을 듯
 	// 현재 같은 절차지향 방식보다는.
 	// 절차지향방식은 의존성 주입도 많이 받아야함.
-	go uc.SnsClient.PublishMessage(uc.modelToOutput(commentInput.Author, newComment, nil))
+	go uc.SnsClient.Publish(uc.modelToOutput(commentInput.Author, newComment, nil))
 	// cache invalidate
 
 	// SNS에 Publish한 output을 hide하면 hide 된 채 Publish 될 수 있다는 이슈가 있어서
