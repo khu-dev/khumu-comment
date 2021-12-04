@@ -9,7 +9,8 @@ import (
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/migrate"
 	"github.com/khu-dev/khumu-comment/errorz"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"os"
 	"time"
 )
 
@@ -26,7 +27,7 @@ func NewEnt() *ent.Client {
 			"Asia%2FSeoul",
 		))
 	if err != nil {
-		logrus.Panic(err)
+		log.Panic(err)
 	}
 	// Get the underlying sql.DB object of the driver.
 	db := drv.DB()
@@ -35,21 +36,27 @@ func NewEnt() *ent.Client {
 
 	conn, err := db.Conn(context.TODO())
 	if err != nil {
-		logrus.Panic(err)
+		log.Panic(err)
 	}
 	conn.Close()
 
 	db.SetConnMaxLifetime(time.Hour)
 	ent.Debug()
 	ent.Log(func(i ...interface{}) {
-		logrus.Warn(i...)
+		log.Warn(i...)
 	})
 	client := ent.NewClient(ent.Driver(drv))
+	if err := client.Schema.WriteTo(context.Background(), os.Stdout); err != nil {
+		log.Fatalf("failed printing schema changes: %v", err)
+	}
 	err = client.Schema.Create(context.TODO(),
 		migrate.WithDropIndex(true),
 		migrate.WithDropColumn(false),
 		migrate.WithForeignKeys(true),
 	)
+	if err != nil {
+		log.Fatalf("failed to migrate: %v", err)
+	}
 
 	return client
 }

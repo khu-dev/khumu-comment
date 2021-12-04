@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -143,11 +144,31 @@ var (
 
 func init() {
 	ArticlesTable.ForeignKeys[0].RefTable = KhumuUsersTable
+	ArticlesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_0900_ai_ci",
+	}
 	CommentsTable.ForeignKeys[0].RefTable = ArticlesTable
 	CommentsTable.ForeignKeys[1].RefTable = CommentsTable
 	CommentsTable.ForeignKeys[2].RefTable = KhumuUsersTable
 	CommentsTable.ForeignKeys[3].RefTable = StudyArticlesTable
+	CommentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_0900_ai_ci",
+	}
+	KhumuUsersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_0900_ai_ci",
+	}
 	LikeCommentsTable.ForeignKeys[0].RefTable = CommentsTable
 	LikeCommentsTable.ForeignKeys[1].RefTable = KhumuUsersTable
+	LikeCommentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_0900_ai_ci",
+	}
 	StudyArticlesTable.ForeignKeys[0].RefTable = KhumuUsersTable
+	StudyArticlesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_0900_ai_ci",
+	}
 }

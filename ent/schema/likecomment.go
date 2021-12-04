@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -14,7 +15,11 @@ type LikeComment struct {
 
 // Annotations of the LikeComment.
 func (LikeComment) Annotations() []schema.Annotation {
-	return nil
+	return []schema.Annotation{
+		entsql.Annotation{
+			Charset:   "utf8mb4",
+			Collation: "utf8mb4_0900_ai_ci",
+		}}
 }
 
 // Fields of the LikeComment.
