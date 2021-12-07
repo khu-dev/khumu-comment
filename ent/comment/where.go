@@ -114,13 +114,6 @@ func Kind(v string) predicate.Comment {
 	})
 }
 
-// IsWrittenByArticleAuthor applies equality check predicate on the "is_written_by_article_author" field. It's identical to IsWrittenByArticleAuthorEQ.
-func IsWrittenByArticleAuthor(v bool) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIsWrittenByArticleAuthor), v))
-	})
-}
-
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {
@@ -458,20 +451,6 @@ func KindEqualFold(v string) predicate.Comment {
 func KindContainsFold(v string) predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldKind), v))
-	})
-}
-
-// IsWrittenByArticleAuthorEQ applies the EQ predicate on the "is_written_by_article_author" field.
-func IsWrittenByArticleAuthorEQ(v bool) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIsWrittenByArticleAuthor), v))
-	})
-}
-
-// IsWrittenByArticleAuthorNEQ applies the NEQ predicate on the "is_written_by_article_author" field.
-func IsWrittenByArticleAuthorNEQ(v bool) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldIsWrittenByArticleAuthor), v))
 	})
 }
 

@@ -16,8 +16,10 @@ type StudyArticle struct {
 // Annotations of the StudyArticle.
 func (StudyArticle) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "article_studyarticle"},
-	}
+		entsql.Annotation{
+			Charset:   "utf8mb4",
+			Collation: "utf8mb4_0900_ai_ci",
+		}}
 }
 
 // Fields of the StudyArticle.

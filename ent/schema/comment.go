@@ -18,8 +18,10 @@ type Comment struct {
 // Annotations of the Comment.
 func (Comment) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "comment_comment"},
-	}
+		entsql.Annotation{
+			Charset:   "utf8mb4",
+			Collation: "utf8mb4_0900_ai_ci",
+		}}
 }
 
 // Fields of the Comment.
@@ -29,7 +31,6 @@ func (Comment) Fields() []ent.Field {
 		field.String("state").Default("exists"),
 		field.String("content"),
 		field.String("kind").Default("anonymous"),
-		field.Bool("is_written_by_article_author").Default(false),
 		field.Time("created_at").Default(func() time.Time {
 			return time.Now()
 		}),

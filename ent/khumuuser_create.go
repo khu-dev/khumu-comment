@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -29,36 +30,30 @@ func (kuc *KhumuUserCreate) SetNickname(s string) *KhumuUserCreate {
 	return kuc
 }
 
-// SetPassword sets the "password" field.
-func (kuc *KhumuUserCreate) SetPassword(s string) *KhumuUserCreate {
-	kuc.mutation.SetPassword(s)
+// SetStatus sets the "status" field.
+func (kuc *KhumuUserCreate) SetStatus(s string) *KhumuUserCreate {
+	kuc.mutation.SetStatus(s)
 	return kuc
 }
 
-// SetStudentNumber sets the "student_number" field.
-func (kuc *KhumuUserCreate) SetStudentNumber(s string) *KhumuUserCreate {
-	kuc.mutation.SetStudentNumber(s)
-	return kuc
-}
-
-// SetNillableStudentNumber sets the "student_number" field if the given value is not nil.
-func (kuc *KhumuUserCreate) SetNillableStudentNumber(s *string) *KhumuUserCreate {
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (kuc *KhumuUserCreate) SetNillableStatus(s *string) *KhumuUserCreate {
 	if s != nil {
-		kuc.SetStudentNumber(*s)
+		kuc.SetStatus(*s)
 	}
 	return kuc
 }
 
-// SetState sets the "state" field.
-func (kuc *KhumuUserCreate) SetState(s string) *KhumuUserCreate {
-	kuc.mutation.SetState(s)
+// SetCreatedAt sets the "created_at" field.
+func (kuc *KhumuUserCreate) SetCreatedAt(t time.Time) *KhumuUserCreate {
+	kuc.mutation.SetCreatedAt(t)
 	return kuc
 }
 
-// SetNillableState sets the "state" field if the given value is not nil.
-func (kuc *KhumuUserCreate) SetNillableState(s *string) *KhumuUserCreate {
-	if s != nil {
-		kuc.SetState(*s)
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (kuc *KhumuUserCreate) SetNillableCreatedAt(t *time.Time) *KhumuUserCreate {
+	if t != nil {
+		kuc.SetCreatedAt(*t)
 	}
 	return kuc
 }
@@ -181,9 +176,13 @@ func (kuc *KhumuUserCreate) SaveX(ctx context.Context) *KhumuUser {
 
 // defaults sets the default values of the builder before save.
 func (kuc *KhumuUserCreate) defaults() {
-	if _, ok := kuc.mutation.State(); !ok {
-		v := khumuuser.DefaultState
-		kuc.mutation.SetState(v)
+	if _, ok := kuc.mutation.Status(); !ok {
+		v := khumuuser.DefaultStatus
+		kuc.mutation.SetStatus(v)
+	}
+	if _, ok := kuc.mutation.CreatedAt(); !ok {
+		v := khumuuser.DefaultCreatedAt()
+		kuc.mutation.SetCreatedAt(v)
 	}
 }
 
@@ -192,11 +191,11 @@ func (kuc *KhumuUserCreate) check() error {
 	if _, ok := kuc.mutation.Nickname(); !ok {
 		return &ValidationError{Name: "nickname", err: errors.New("ent: missing required field \"nickname\"")}
 	}
-	if _, ok := kuc.mutation.Password(); !ok {
-		return &ValidationError{Name: "password", err: errors.New("ent: missing required field \"password\"")}
+	if _, ok := kuc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New("ent: missing required field \"status\"")}
 	}
-	if _, ok := kuc.mutation.State(); !ok {
-		return &ValidationError{Name: "state", err: errors.New("ent: missing required field \"state\"")}
+	if _, ok := kuc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New("ent: missing required field \"created_at\"")}
 	}
 	return nil
 }
@@ -235,29 +234,21 @@ func (kuc *KhumuUserCreate) createSpec() (*KhumuUser, *sqlgraph.CreateSpec) {
 		})
 		_node.Nickname = value
 	}
-	if value, ok := kuc.mutation.Password(); ok {
+	if value, ok := kuc.mutation.Status(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: khumuuser.FieldPassword,
+			Column: khumuuser.FieldStatus,
 		})
-		_node.Password = value
+		_node.Status = value
 	}
-	if value, ok := kuc.mutation.StudentNumber(); ok {
+	if value, ok := kuc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
+			Type:   field.TypeTime,
 			Value:  value,
-			Column: khumuuser.FieldStudentNumber,
+			Column: khumuuser.FieldCreatedAt,
 		})
-		_node.StudentNumber = value
-	}
-	if value, ok := kuc.mutation.State(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: khumuuser.FieldState,
-		})
-		_node.State = value
+		_node.CreatedAt = value
 	}
 	if nodes := kuc.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

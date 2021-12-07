@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -18,10 +17,6 @@ type Article struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Title holds the value of the "title" field.
-	Title string `json:"title,omitempty"`
-	// Images holds the value of the "images" field.
-	Images *[]string `json:"images,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -69,12 +64,8 @@ func (*Article) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case article.FieldImages:
-			values[i] = new([]byte)
 		case article.FieldID:
 			values[i] = new(sql.NullInt64)
-		case article.FieldTitle:
-			values[i] = new(sql.NullString)
 		case article.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		case article.ForeignKeys[0]: // author_id
@@ -100,21 +91,6 @@ func (a *Article) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			a.ID = int(value.Int64)
-		case article.FieldTitle:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field title", values[i])
-			} else if value.Valid {
-				a.Title = value.String
-			}
-		case article.FieldImages:
-
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field images", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &a.Images); err != nil {
-					return fmt.Errorf("unmarshal field images: %w", err)
-				}
-			}
 		case article.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -166,10 +142,6 @@ func (a *Article) String() string {
 	var builder strings.Builder
 	builder.WriteString("Article(")
 	builder.WriteString(fmt.Sprintf("id=%v", a.ID))
-	builder.WriteString(", title=")
-	builder.WriteString(a.Title)
-	builder.WriteString(", images=")
-	builder.WriteString(fmt.Sprintf("%v", a.Images))
 	builder.WriteString(", created_at=")
 	builder.WriteString(a.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

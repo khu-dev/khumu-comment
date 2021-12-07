@@ -10,7 +10,6 @@ import (
 	"github.com/khu-dev/khumu-comment/util"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/meehow/go-django-hashers"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -64,11 +63,13 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 						"statusCode": 401,
 						"body":       "Request with a non-existing user.",
 					})
-
 				})(ctx)
 		} else if strings.HasPrefix(ctx.Request().Header.Get("Authorization"), "Basic") {
 			logger.Debug("Try Basic Authentication")
-			return middleware.BasicAuth(a.KhumuBasicAuth)(handlerFunc)(ctx)
+			return ctx.JSON(401, map[string]interface{}{
+				"statusCode": 401,
+				"body":       "Basic authentication is not supported",
+			})
 		}
 
 		return handlerFunc(ctx)
@@ -87,24 +88,26 @@ var KhumuJWTConfig = middleware.JWTConfig{
 	Claims:        jwt.MapClaims{},
 }
 
-func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context) (bool, error) {
-	background := context.Background()
-	user, err := a.Repo.KhumuUser.Query().
-		Select("username").
-		Where(khumuuser.ID(username)).
-		Only(background)
-	if err != nil {
-		logrus.Error(err, "Basic 인증 도중 에러 발생")
-		return false, err
-	}
-	if user == nil {
-		return false, nil
-	} else {
-		found, err := hashers.CheckPassword(password, user.Password)
-		c.Set("user_id", username)
-		return found, err
-	}
-}
+// 이제 basic auth를 지원할 수 없음. 댓글 서버가 자체적으로 인증을 해줄 수 없기 때문
+// 댓글 서버는 인증을 할 수 있는 credential이 존재하지 않음.
+//func (a *Authenticator) KhumuBasicAuth(username, password string, c echo.Context) (bool, error) {
+//	background := context.Background()
+//	user, err := a.Repo.KhumuUser.Query().
+//		Select("username").
+//		Where(khumuuser.ID(username)).
+//		Only(background)
+//	if err != nil {
+//		logrus.Error(err, "Basic 인증 도중 에러 발생")
+//		return false, err
+//	}
+//	if user == nil {
+//		return false, nil
+//	} else {
+//		found, err := hashers.CheckPassword(password, user.Password)
+//		c.Set("user_id", username)
+//		return found, err
+//	}
+//}
 
 // application/json 요청인 경우 바디를 출력.
 func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {

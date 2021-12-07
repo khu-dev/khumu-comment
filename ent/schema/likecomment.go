@@ -16,8 +16,10 @@ type LikeComment struct {
 // Annotations of the LikeComment.
 func (LikeComment) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "comment_likecomment"},
-	}
+		entsql.Annotation{
+			Charset:   "utf8mb4",
+			Collation: "utf8mb4_0900_ai_ci",
+		}}
 }
 
 // Fields of the LikeComment.

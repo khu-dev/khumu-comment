@@ -17,7 +17,7 @@ import (
 )
 
 type CommentRepository interface {
-	Create(createInput *data.CommentInput, isWrittenByArticleAuthor bool) (com *ent.Comment, err error)
+	Create(createInput *data.CommentInput) (com *ent.Comment, err error)
 	FindAllParentCommentsByAuthorID(authorID string) (coms []*ent.Comment, err error)
 	FindAllParentCommentsByArticleID(articleID int) (coms []*ent.Comment, err error)
 	//FindAllParentCommentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error)
@@ -41,7 +41,7 @@ func NewCommentRepository(client *ent.Client, cache cache.CommentCacheRepository
 	}
 }
 
-func (repo commentRepository) Create(createInput *data.CommentInput, isWrittenByArticleAuthor bool) (newComment *ent.Comment, err error) {
+func (repo commentRepository) Create(createInput *data.CommentInput) (newComment *ent.Comment, err error) {
 	defer func() {
 		err = WrapEntError(err)
 	}()
@@ -51,7 +51,6 @@ func (repo commentRepository) Create(createInput *data.CommentInput, isWrittenBy
 		SetNillableParentID(createInput.Parent).
 		SetAuthorID(createInput.Author).
 		SetContent(createInput.Content).
-		SetIsWrittenByArticleAuthor(isWrittenByArticleAuthor).
 		SetState("exists").
 		SetNillableKind(createInput.Kind).
 		Save(context.TODO())

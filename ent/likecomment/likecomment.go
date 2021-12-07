@@ -14,19 +14,19 @@ const (
 	// KhumuUserFieldID holds the string denoting the ID field of the KhumuUser.
 	KhumuUserFieldID = "username"
 	// Table holds the table name of the likecomment in the database.
-	Table = "comment_likecomment"
+	Table = "like_comments"
 	// LikedByTable is the table the holds the likedBy relation/edge.
-	LikedByTable = "comment_likecomment"
+	LikedByTable = "like_comments"
 	// LikedByInverseTable is the table name for the KhumuUser entity.
 	// It exists in this package in order to avoid circular dependency with the "khumuuser" package.
-	LikedByInverseTable = "user_khumuuser"
+	LikedByInverseTable = "khumu_users"
 	// LikedByColumn is the table column denoting the likedBy relation/edge.
 	LikedByColumn = "user_id"
 	// AboutTable is the table the holds the about relation/edge.
-	AboutTable = "comment_likecomment"
+	AboutTable = "like_comments"
 	// AboutInverseTable is the table name for the Comment entity.
 	// It exists in this package in order to avoid circular dependency with the "comment" package.
-	AboutInverseTable = "comment_comment"
+	AboutInverseTable = "comments"
 	// AboutColumn is the table column denoting the about relation/edge.
 	AboutColumn = "comment_id"
 )
@@ -36,7 +36,7 @@ var Columns = []string{
 	FieldID,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "comment_likecomment"
+// ForeignKeys holds the SQL foreign-keys that are owned by the "like_comments"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"comment_id",

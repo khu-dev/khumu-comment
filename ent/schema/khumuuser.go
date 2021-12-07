@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"time"
 )
 
 // User holds the schema definition for the User entity.
@@ -16,8 +17,10 @@ type KhumuUser struct {
 // Annotations of the User.
 func (KhumuUser) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "user_khumuuser"},
-	}
+		entsql.Annotation{
+			Charset:   "utf8mb4",
+			Collation: "utf8mb4_0900_ai_ci",
+		}}
 }
 
 // Fields of the KhumuUser.
@@ -25,9 +28,8 @@ func (KhumuUser) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").StorageKey("username"),
 		field.String("nickname"),
-		field.String("password"),
-		field.String("student_number").Optional(),
-		field.String("state").Default("active"),
+		field.String("status").Default("exists"),
+		field.Time("created_at").Default(time.Now),
 	}
 }
 

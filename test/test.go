@@ -40,9 +40,8 @@ func SetUpUsers(client *ent.Client) {
 	var err error
 	UserJinsu, err = client.KhumuUser.Create().
 		SetID("jinsu").
-		SetPassword("123123").
 		SetNickname("진수짱짱맨").
-		SetState("active").
+		SetStatus("active").
 		Save(ctx)
 	if err != nil {
 		logrus.Panic(err)
@@ -50,9 +49,8 @@ func SetUpUsers(client *ent.Client) {
 
 	UserSomebody, err = client.KhumuUser.Create().
 		SetID("somebody").
-		SetPassword("123123").
 		SetNickname("썸바디").
-		SetState("active").
+		SetStatus("active").
 		Save(ctx)
 	if err != nil {
 		logrus.Panic(err)
@@ -60,9 +58,8 @@ func SetUpUsers(client *ent.Client) {
 
 	UserPuppy, err = client.KhumuUser.Create().
 		SetID("puppy").
-		SetPassword("123123").
 		SetNickname("댕댕이").
-		SetState("active").
+		SetStatus("active").
 		Save(ctx)
 	if err != nil {
 		logrus.Panic(err)
@@ -78,8 +75,6 @@ func SetUpArticles(client *ent.Client) {
 	ctx := context.TODO()
 	_, err := client.Article.Create().
 		SetID(1).
-		SetTitle("1번 게시물입니다.").
-		SetImages(&[]string{}).
 		SetAuthor(UserJinsu).
 		Save(ctx)
 	if err != nil {
@@ -87,8 +82,6 @@ func SetUpArticles(client *ent.Client) {
 	}
 	_, err = client.Article.Create().
 		SetID(2).
-		SetTitle("2번 게시물입니다.").
-		SetImages(&[]string{}).
 		SetAuthor(UserSomebody).
 		Save(ctx)
 	if err != nil {
@@ -96,8 +89,6 @@ func SetUpArticles(client *ent.Client) {
 	}
 	_, err = client.Article.Create().
 		SetID(3).
-		SetTitle("3번 게시물입니다.").
-		SetImages(&[]string{}).
 		SetAuthor(UserPuppy).
 		Save(ctx)
 	if err != nil {

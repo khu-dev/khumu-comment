@@ -9,7 +9,7 @@ mock:
 	mockgen -package repository -destination repository/comment_mock.go -source repository/comment.go
 	mockgen -package repository -destination repository/likecoment_mock.go -source repository/likecomment.go
 	mockgen -package cache -destination repository/cache/cache_mock.go -source repository/cache/cache.go
-	mockgen -package infra -destination infra/awssns_mock.go -source infra/awssns.go
+	mockgen -package message -destination infra/message/awssns_mock.go -source infra/message/awssns.go
 	mockgen -package infra -destination infra/redis_mock.go -source infra/redis.go
 	mockgen -package khumu -destination infra/khumu/api_mock.go -source infra/khumu/api.go
 clean:

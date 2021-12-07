@@ -2,6 +2,10 @@
 
 package khumuuser
 
+import (
+	"time"
+)
+
 const (
 	// Label holds the string label denoting the khumuuser type in the database.
 	Label = "khumu_user"
@@ -9,12 +13,10 @@ const (
 	FieldID = "username"
 	// FieldNickname holds the string denoting the nickname field in the database.
 	FieldNickname = "nickname"
-	// FieldPassword holds the string denoting the password field in the database.
-	FieldPassword = "password"
-	// FieldStudentNumber holds the string denoting the student_number field in the database.
-	FieldStudentNumber = "student_number"
-	// FieldState holds the string denoting the state field in the database.
-	FieldState = "state"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
 	// EdgeArticles holds the string denoting the articles edge name in mutations.
@@ -32,33 +34,33 @@ const (
 	// LikeCommentFieldID holds the string denoting the ID field of the LikeComment.
 	LikeCommentFieldID = "id"
 	// Table holds the table name of the khumuuser in the database.
-	Table = "user_khumuuser"
+	Table = "khumu_users"
 	// CommentsTable is the table the holds the comments relation/edge.
-	CommentsTable = "comment_comment"
+	CommentsTable = "comments"
 	// CommentsInverseTable is the table name for the Comment entity.
 	// It exists in this package in order to avoid circular dependency with the "comment" package.
-	CommentsInverseTable = "comment_comment"
+	CommentsInverseTable = "comments"
 	// CommentsColumn is the table column denoting the comments relation/edge.
 	CommentsColumn = "author_id"
 	// ArticlesTable is the table the holds the articles relation/edge.
-	ArticlesTable = "article_article"
+	ArticlesTable = "articles"
 	// ArticlesInverseTable is the table name for the Article entity.
 	// It exists in this package in order to avoid circular dependency with the "article" package.
-	ArticlesInverseTable = "article_article"
+	ArticlesInverseTable = "articles"
 	// ArticlesColumn is the table column denoting the articles relation/edge.
 	ArticlesColumn = "author_id"
 	// StudyArticlesTable is the table the holds the studyArticles relation/edge.
-	StudyArticlesTable = "article_studyarticle"
+	StudyArticlesTable = "study_articles"
 	// StudyArticlesInverseTable is the table name for the StudyArticle entity.
 	// It exists in this package in order to avoid circular dependency with the "studyarticle" package.
-	StudyArticlesInverseTable = "article_studyarticle"
+	StudyArticlesInverseTable = "study_articles"
 	// StudyArticlesColumn is the table column denoting the studyArticles relation/edge.
 	StudyArticlesColumn = "author_id"
 	// LikeTable is the table the holds the like relation/edge.
-	LikeTable = "comment_likecomment"
+	LikeTable = "like_comments"
 	// LikeInverseTable is the table name for the LikeComment entity.
 	// It exists in this package in order to avoid circular dependency with the "likecomment" package.
-	LikeInverseTable = "comment_likecomment"
+	LikeInverseTable = "like_comments"
 	// LikeColumn is the table column denoting the like relation/edge.
 	LikeColumn = "user_id"
 )
@@ -67,9 +69,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldNickname,
-	FieldPassword,
-	FieldStudentNumber,
-	FieldState,
+	FieldStatus,
+	FieldCreatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -83,6 +84,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultState holds the default value on creation for the "state" field.
-	DefaultState string
+	// DefaultStatus holds the default value on creation for the "status" field.
+	DefaultStatus string
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
 )

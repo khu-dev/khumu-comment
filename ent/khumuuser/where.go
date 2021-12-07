@@ -3,6 +3,8 @@
 package khumuuser
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/khu-dev/khumu-comment/ent/predicate"
@@ -98,24 +100,17 @@ func Nickname(v string) predicate.KhumuUser {
 	})
 }
 
-// Password applies equality check predicate on the "password" field. It's identical to PasswordEQ.
-func Password(v string) predicate.KhumuUser {
+// Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
+func Status(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPassword), v))
+		s.Where(sql.EQ(s.C(FieldStatus), v))
 	})
 }
 
-// StudentNumber applies equality check predicate on the "student_number" field. It's identical to StudentNumberEQ.
-func StudentNumber(v string) predicate.KhumuUser {
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldStudentNumber), v))
-	})
-}
-
-// State applies equality check predicate on the "state" field. It's identical to StateEQ.
-func State(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldState), v))
+		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
@@ -230,22 +225,22 @@ func NicknameContainsFold(v string) predicate.KhumuUser {
 	})
 }
 
-// PasswordEQ applies the EQ predicate on the "password" field.
-func PasswordEQ(v string) predicate.KhumuUser {
+// StatusEQ applies the EQ predicate on the "status" field.
+func StatusEQ(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPassword), v))
+		s.Where(sql.EQ(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordNEQ applies the NEQ predicate on the "password" field.
-func PasswordNEQ(v string) predicate.KhumuUser {
+// StatusNEQ applies the NEQ predicate on the "status" field.
+func StatusNEQ(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldPassword), v))
+		s.Where(sql.NEQ(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordIn applies the In predicate on the "password" field.
-func PasswordIn(vs ...string) predicate.KhumuUser {
+// StatusIn applies the In predicate on the "status" field.
+func StatusIn(vs ...string) predicate.KhumuUser {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -257,12 +252,12 @@ func PasswordIn(vs ...string) predicate.KhumuUser {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.In(s.C(FieldPassword), v...))
+		s.Where(sql.In(s.C(FieldStatus), v...))
 	})
 }
 
-// PasswordNotIn applies the NotIn predicate on the "password" field.
-func PasswordNotIn(vs ...string) predicate.KhumuUser {
+// StatusNotIn applies the NotIn predicate on the "status" field.
+func StatusNotIn(vs ...string) predicate.KhumuUser {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -274,89 +269,89 @@ func PasswordNotIn(vs ...string) predicate.KhumuUser {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.NotIn(s.C(FieldPassword), v...))
+		s.Where(sql.NotIn(s.C(FieldStatus), v...))
 	})
 }
 
-// PasswordGT applies the GT predicate on the "password" field.
-func PasswordGT(v string) predicate.KhumuUser {
+// StatusGT applies the GT predicate on the "status" field.
+func StatusGT(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldPassword), v))
+		s.Where(sql.GT(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordGTE applies the GTE predicate on the "password" field.
-func PasswordGTE(v string) predicate.KhumuUser {
+// StatusGTE applies the GTE predicate on the "status" field.
+func StatusGTE(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldPassword), v))
+		s.Where(sql.GTE(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordLT applies the LT predicate on the "password" field.
-func PasswordLT(v string) predicate.KhumuUser {
+// StatusLT applies the LT predicate on the "status" field.
+func StatusLT(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldPassword), v))
+		s.Where(sql.LT(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordLTE applies the LTE predicate on the "password" field.
-func PasswordLTE(v string) predicate.KhumuUser {
+// StatusLTE applies the LTE predicate on the "status" field.
+func StatusLTE(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldPassword), v))
+		s.Where(sql.LTE(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordContains applies the Contains predicate on the "password" field.
-func PasswordContains(v string) predicate.KhumuUser {
+// StatusContains applies the Contains predicate on the "status" field.
+func StatusContains(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldPassword), v))
+		s.Where(sql.Contains(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordHasPrefix applies the HasPrefix predicate on the "password" field.
-func PasswordHasPrefix(v string) predicate.KhumuUser {
+// StatusHasPrefix applies the HasPrefix predicate on the "status" field.
+func StatusHasPrefix(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldPassword), v))
+		s.Where(sql.HasPrefix(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordHasSuffix applies the HasSuffix predicate on the "password" field.
-func PasswordHasSuffix(v string) predicate.KhumuUser {
+// StatusHasSuffix applies the HasSuffix predicate on the "status" field.
+func StatusHasSuffix(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldPassword), v))
+		s.Where(sql.HasSuffix(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordEqualFold applies the EqualFold predicate on the "password" field.
-func PasswordEqualFold(v string) predicate.KhumuUser {
+// StatusEqualFold applies the EqualFold predicate on the "status" field.
+func StatusEqualFold(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldPassword), v))
+		s.Where(sql.EqualFold(s.C(FieldStatus), v))
 	})
 }
 
-// PasswordContainsFold applies the ContainsFold predicate on the "password" field.
-func PasswordContainsFold(v string) predicate.KhumuUser {
+// StatusContainsFold applies the ContainsFold predicate on the "status" field.
+func StatusContainsFold(v string) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldPassword), v))
+		s.Where(sql.ContainsFold(s.C(FieldStatus), v))
 	})
 }
 
-// StudentNumberEQ applies the EQ predicate on the "student_number" field.
-func StudentNumberEQ(v string) predicate.KhumuUser {
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldStudentNumber), v))
+		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// StudentNumberNEQ applies the NEQ predicate on the "student_number" field.
-func StudentNumberNEQ(v string) predicate.KhumuUser {
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldStudentNumber), v))
+		s.Where(sql.NEQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// StudentNumberIn applies the In predicate on the "student_number" field.
-func StudentNumberIn(vs ...string) predicate.KhumuUser {
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.KhumuUser {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -368,12 +363,12 @@ func StudentNumberIn(vs ...string) predicate.KhumuUser {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.In(s.C(FieldStudentNumber), v...))
+		s.Where(sql.In(s.C(FieldCreatedAt), v...))
 	})
 }
 
-// StudentNumberNotIn applies the NotIn predicate on the "student_number" field.
-func StudentNumberNotIn(vs ...string) predicate.KhumuUser {
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.KhumuUser {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -385,195 +380,35 @@ func StudentNumberNotIn(vs ...string) predicate.KhumuUser {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.NotIn(s.C(FieldStudentNumber), v...))
+		s.Where(sql.NotIn(s.C(FieldCreatedAt), v...))
 	})
 }
 
-// StudentNumberGT applies the GT predicate on the "student_number" field.
-func StudentNumberGT(v string) predicate.KhumuUser {
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldStudentNumber), v))
+		s.Where(sql.GT(s.C(FieldCreatedAt), v))
 	})
 }
 
-// StudentNumberGTE applies the GTE predicate on the "student_number" field.
-func StudentNumberGTE(v string) predicate.KhumuUser {
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldStudentNumber), v))
+		s.Where(sql.GTE(s.C(FieldCreatedAt), v))
 	})
 }
 
-// StudentNumberLT applies the LT predicate on the "student_number" field.
-func StudentNumberLT(v string) predicate.KhumuUser {
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldStudentNumber), v))
+		s.Where(sql.LT(s.C(FieldCreatedAt), v))
 	})
 }
 
-// StudentNumberLTE applies the LTE predicate on the "student_number" field.
-func StudentNumberLTE(v string) predicate.KhumuUser {
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.KhumuUser {
 	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldStudentNumber), v))
-	})
-}
-
-// StudentNumberContains applies the Contains predicate on the "student_number" field.
-func StudentNumberContains(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldStudentNumber), v))
-	})
-}
-
-// StudentNumberHasPrefix applies the HasPrefix predicate on the "student_number" field.
-func StudentNumberHasPrefix(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldStudentNumber), v))
-	})
-}
-
-// StudentNumberHasSuffix applies the HasSuffix predicate on the "student_number" field.
-func StudentNumberHasSuffix(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldStudentNumber), v))
-	})
-}
-
-// StudentNumberIsNil applies the IsNil predicate on the "student_number" field.
-func StudentNumberIsNil() predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldStudentNumber)))
-	})
-}
-
-// StudentNumberNotNil applies the NotNil predicate on the "student_number" field.
-func StudentNumberNotNil() predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldStudentNumber)))
-	})
-}
-
-// StudentNumberEqualFold applies the EqualFold predicate on the "student_number" field.
-func StudentNumberEqualFold(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldStudentNumber), v))
-	})
-}
-
-// StudentNumberContainsFold applies the ContainsFold predicate on the "student_number" field.
-func StudentNumberContainsFold(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldStudentNumber), v))
-	})
-}
-
-// StateEQ applies the EQ predicate on the "state" field.
-func StateEQ(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldState), v))
-	})
-}
-
-// StateNEQ applies the NEQ predicate on the "state" field.
-func StateNEQ(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldState), v))
-	})
-}
-
-// StateIn applies the In predicate on the "state" field.
-func StateIn(vs ...string) predicate.KhumuUser {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldState), v...))
-	})
-}
-
-// StateNotIn applies the NotIn predicate on the "state" field.
-func StateNotIn(vs ...string) predicate.KhumuUser {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldState), v...))
-	})
-}
-
-// StateGT applies the GT predicate on the "state" field.
-func StateGT(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldState), v))
-	})
-}
-
-// StateGTE applies the GTE predicate on the "state" field.
-func StateGTE(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldState), v))
-	})
-}
-
-// StateLT applies the LT predicate on the "state" field.
-func StateLT(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldState), v))
-	})
-}
-
-// StateLTE applies the LTE predicate on the "state" field.
-func StateLTE(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldState), v))
-	})
-}
-
-// StateContains applies the Contains predicate on the "state" field.
-func StateContains(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldState), v))
-	})
-}
-
-// StateHasPrefix applies the HasPrefix predicate on the "state" field.
-func StateHasPrefix(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldState), v))
-	})
-}
-
-// StateHasSuffix applies the HasSuffix predicate on the "state" field.
-func StateHasSuffix(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldState), v))
-	})
-}
-
-// StateEqualFold applies the EqualFold predicate on the "state" field.
-func StateEqualFold(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldState), v))
-	})
-}
-
-// StateContainsFold applies the ContainsFold predicate on the "state" field.
-func StateContainsFold(v string) predicate.KhumuUser {
-	return predicate.KhumuUser(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldState), v))
+		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
 	})
 }
 

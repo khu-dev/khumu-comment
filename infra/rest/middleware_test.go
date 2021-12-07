@@ -35,7 +35,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 //		Repo: repo,
 //	}
 //
-//	mockSnsClient.EXPECT().PublishMessage(gomock.Any()).DoAndReturn(
+//	mockSnsClient.EXPECT().Publish(gomock.Any()).DoAndReturn(
 //		func(message interface{}) {
 //			tb.Log("그냥 테스트라서 푸시 알림 패스")
 //		}).AnyTimes()
