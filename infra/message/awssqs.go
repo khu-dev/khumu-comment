@@ -20,6 +20,7 @@ type MessageHandler interface {
 	OnUserCreated(body *data.CommandCenterKhumuUserDto) (*ent.KhumuUser, error)
 	OnUserUpdated(body *data.CommandCenterKhumuUserDto) (*ent.KhumuUser, error)
 	OnUserDeleted(body *data.CommandCenterKhumuUserDto) (*ent.KhumuUser, error)
+	OnArticleCreated(body *data.CommandCenterArticleDto) (*ent.Article, error)
 }
 
 type Body struct {
@@ -37,6 +38,7 @@ type MessageAttribute struct {
 type SqsMessageHandler struct {
 	sqs        *sqs.SQS
 	userDB     *ent.KhumuUserClient
+	articleDB  *ent.ArticleClient
 	termSignal <-chan os.Signal
 }
 
@@ -54,6 +56,7 @@ func NewSqsMessageHandler(termSignal <-chan os.Signal, db *ent.Client) MessageHa
 	return &SqsMessageHandler{
 		sqs:        sqsClient,
 		userDB:     db.KhumuUser,
+		articleDB:  db.Article,
 		termSignal: termSignal,
 	}
 }
@@ -113,6 +116,20 @@ func (h *SqsMessageHandler) Listen() {
 								log.Errorf("%+v", err)
 							}
 						}
+					case "article":
+						body := new(data.CommandCenterArticleDto)
+						err := json.Unmarshal([]byte(parsedBody.Message), body)
+						if err != nil {
+							log.Errorf("%+v", errors.Wrap(err, "SQS 메시지를 파싱하던 중 에러 발생"))
+							time.Sleep(5 * time.Second)
+							continue
+						}
+						switch eventKind {
+						case "create":
+							if _, err := h.OnArticleCreated(body); err != nil {
+								log.Errorf("%+v", err)
+							}
+						}
 					}
 
 					if _, err := h.sqs.DeleteMessage(&sqs.DeleteMessageInput{QueueUrl: aws.String(config.Config.Sqs.QueueURL), ReceiptHandle: message.ReceiptHandle}); err != nil {
@@ -154,4 +171,14 @@ func (h *SqsMessageHandler) OnUserDeleted(body *data.CommandCenterKhumuUserDto) 
 	}
 
 	return user, nil
+}
+
+func (h *SqsMessageHandler) OnArticleCreated(body *data.CommandCenterArticleDto) (*ent.Article, error) {
+	log.Infof("게시글 %#v 를 생성합니다.\n", body)
+	article, err := h.articleDB.Create().SetID(body.ID).SetAuthorID(body.Author).Save(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "게시글 생성 실패")
+	}
+
+	return article, nil
 }
