@@ -11,8 +11,8 @@ import (
 	"github.com/khu-dev/khumu-comment/infra/khumu"
 	"github.com/khu-dev/khumu-comment/infra/message"
 	"github.com/khu-dev/khumu-comment/repository"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"reflect"
 )
 
 var (
@@ -47,8 +47,8 @@ type LikeCommentUseCaseInterface interface {
 type CommentUseCase struct {
 	Repo            repository.CommentRepository
 	likeRepo        repository.LikeCommentRepository
-	entclient       *ent.Client
-	SnsClient       message.MessagePublisher
+	entClient       *ent.Client
+	snsClient       message.MessagePublisher
 	khumuAPIAdapter khumu.KhumuAPIAdapter
 }
 
@@ -60,41 +60,42 @@ type LikeCommentUseCase struct {
 func NewCommentUseCase(
 	repo repository.CommentRepository,
 	likeRepo repository.LikeCommentRepository,
-	entclient *ent.Client,
+	entClient *ent.Client,
 	snsClient message.MessagePublisher,
 	khumuAPIAdapter khumu.KhumuAPIAdapter) CommentUseCaseInterface {
 	return &CommentUseCase{
 		Repo:            repo,
 		likeRepo:        likeRepo,
-		entclient:       entclient,
-		SnsClient:       snsClient,
+		entClient:       entClient,
+		snsClient:       snsClient,
 		khumuAPIAdapter: khumuAPIAdapter,
 	}
 }
 
 func (uc *CommentUseCase) Create(username string, commentInput *data.CommentInput) (*data.CommentOutput, error) {
-	logrus.Infof("Start Create Comment(%#v)", commentInput)
+	logrus.Infof("Start Create Comment(%+v)", commentInput)
 	//articleId := 1
 	if commentInput.Author == "" {
-		logrus.Error("댓글 생성에 대한 author가 존재하지 않습니다.")
-		return nil, errorz.ErrUnauthorized
+		return nil, errors.WithStack(errorz.ErrNoCommentAuthor)
 	}
 
 	if commentInput.Article == nil && commentInput.StudyArticle == nil {
-		logrus.Error("커뮤니티 게시글 ID나 스터디 게시글 ID가 입력되지 않았습니다.")
-		return nil, errorz.ErrNoArticleIDInput
+		return nil, errors.WithStack(errorz.ErrNoArticleIDInput)
+	}
+
+	if *commentInput.Article <= 0 {
+		return nil, errors.WithStack(errorz.ErrWrongArticle)
 	}
 
 	newComment, err := uc.Repo.Create(commentInput)
 	if err != nil {
-		logrus.Error(err)
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	// TODO: 이렇게 new comment에 대한 이벤트들은 chan fan in fan out 처럼 구현하는 게 더 Go스럽게 좋을 듯
 	// 현재 같은 절차지향 방식보다는.
 	// 절차지향방식은 의존성 주입도 많이 받아야함.
-	go uc.SnsClient.Publish(uc.modelToOutput(commentInput.Author, newComment, nil))
+	go uc.snsClient.Publish(uc.modelToOutput(commentInput.Author, newComment, nil))
 	// cache invalidate
 
 	// SNS에 Publish한 output을 hide하면 hide 된 채 Publish 될 수 있다는 이슈가 있어서
@@ -122,8 +123,9 @@ func (uc *CommentUseCase) List(username string, opt *CommentQueryOption) ([]*dat
 	//}
 
 	if err != nil {
-		logrus.Errorf("comments 쿼리 도중 오류 발생. QueryOption(%+v)", opt)
-		return nil, err
+		e := errors.Wrap(err, "댓글 조회에 실패했습니다.")
+		logrus.Errorf("%+v", e)
+		return nil, e
 	}
 
 	outputs := make([]*data.CommentOutput, 0)
@@ -142,8 +144,9 @@ func (uc *CommentUseCase) Get(username string, id int) (*data.CommentOutput, err
 	com, err := uc.Repo.Get(id)
 
 	if err != nil {
-		logrus.Errorf("comment 쿼리 도중 오류 발생.")
-		return nil, err
+		e := errors.Wrap(err, "댓글 조회에 실패했습니다.")
+		logrus.Errorf("%+v", e)
+		return nil, e
 	}
 
 	output := uc.modelToOutput(username, com, nil)
@@ -155,17 +158,20 @@ func (uc *CommentUseCase) Update(username string, id int, opt map[string]interfa
 	logrus.WithField("username", username).WithField("id", id).Infof("Start Get CommentQueryOption(%#v)", opt)
 	_, err := uc.Repo.Get(id)
 	if err != nil {
-		logrus.Errorf("Comment(%d)를 찾는 도중 에러가 발생했습니다.", id)
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, errors.Wrap(errorz.ErrResourceNotFound, "존재하지 않는 댓글입니다.")
+		}
+
+		return nil, errors.WithStack(err)
 	}
 
 	com, err := uc.Repo.Update(id, opt)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	output := uc.modelToOutput(username, com, nil)
 	uc.hideFieldOfCommentOutput(username, output)
-	return output, err
+	return output, nil
 }
 
 // 실제로 Delete 하지는 않고 State를 "deleted"로 변경
@@ -174,22 +180,22 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 	commentExisting, err := uc.Repo.Get(id)
 	// 해당 아이디의 엔티티 존재 X
 	if err != nil {
-		if reflect.TypeOf(err).ConvertibleTo(reflect.TypeOf(&ent.NotFoundError{})) {
-			logrus.Error("Here!")
-			return errorz.ErrResourceNotFound
+		if ent.IsNotFound(err) {
+			return errors.Wrap(errorz.ErrResourceNotFound, "존재하지 않는 댓글입니다.")
 		}
-		return err
+
+		return errors.WithStack(err)
 	}
 
 	if commentExisting.Edges.Author.ID != username {
-		return errorz.ErrUnauthorized
+		return errors.WithStack(errorz.ErrUnauthorized)
 	}
 
 	// 대댓글이 없는 댓글 => 삭제 가능
 	if len(commentExisting.Edges.Children) == 0 {
 		err = uc.Repo.Delete(id)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		updateInput := map[string]interface{}{
@@ -197,7 +203,7 @@ func (uc *CommentUseCase) Delete(username string, id int) error {
 		}
 		_, err = uc.Repo.Update(id, updateInput)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 
@@ -264,7 +270,7 @@ func (uc *CommentUseCase) hideFieldOfCommentOutput(username string, output *data
 
 func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 	ctx := context.Background()
-	likes, err := uc.entclient.LikeComment.Query().
+	likes, err := uc.entClient.LikeComment.Query().
 		Where(likecomment.HasAboutWith(comment.ID(commentID))).
 		All(ctx)
 	if err != nil {
@@ -276,7 +282,7 @@ func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
 
 func (uc *CommentUseCase) getLiked(commentID int) bool {
 	ctx := context.Background()
-	likes, err := uc.entclient.LikeComment.Query().
+	likes, err := uc.entClient.LikeComment.Query().
 		Where(likecomment.HasAboutWith(comment.ID(commentID))).
 		All(ctx)
 	if err != nil {
@@ -299,8 +305,11 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 	var err error
 	commentExisting, err := uc.CommentRepo.Get(input.Comment)
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		if ent.IsNotFound(err) {
+			return false, errors.Wrap(errorz.ErrResourceNotFound, "존재하지 않는 댓글에 대한 좋아요 작업입니다.")
+		}
+
+		return false, errors.WithStack(err)
 	}
 	if commentExisting.Edges.Author.ID == input.User {
 		return false, errorz.ErrSelfLikeComment
@@ -308,8 +317,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 
 	hisLikes, err := uc.Repo.FindAllByUserIDAndCommentID(input.User, input.Comment)
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return false, errors.WithStack(err)
 	}
 
 	// 길이가 1보다 크거나 같으면 삭제. 1인 경우는 정상적으로 하나만 있을 때,
@@ -319,8 +327,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 		for _, like := range hisLikes {
 			err := uc.Repo.Delete(like.ID)
 			if err != nil {
-				logrus.Error(err)
-				return false, err
+				return false, errors.WithStack(err)
 			}
 		}
 		// 정상적으로 삭제한 경우
@@ -331,7 +338,7 @@ func (uc *LikeCommentUseCase) Toggle(input *data.LikeCommentInput) (bool, error)
 		_, err := uc.Repo.Create(input)
 		if err != nil {
 			logrus.Error(err)
-			return false, err
+			return false, errors.WithStack(err)
 		}
 		// 정상적으로 생성한 경우
 		return true, nil

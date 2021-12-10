@@ -28,7 +28,7 @@ var (
 )
 
 // B는 Before each의 acronym
-func BeforeCommentUseCaseTest(tb testing.TB) {
+func BeforeEach(tb testing.TB) {
 	ctrl = gomock.NewController(tb)
 	db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	//db = enttest.Open(tb, "sqlite3", "file:ent?mode=memory&_fk=1")
@@ -42,8 +42,8 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 
 	commentUseCase = &CommentUseCase{
 		Repo:            commentRepo,
-		entclient:       db,
-		SnsClient:       mockMessagePublisher,
+		entClient:       db,
+		snsClient:       mockMessagePublisher,
 		khumuAPIAdapter: mockKhumuApiAdapter,
 		likeRepo:        likeRepo,
 	}
@@ -77,7 +77,7 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 }
 
 // A는 After each의 acronym
-func A(tb testing.TB) {
+func AfterEach(tb testing.TB) {
 	if err := db.Close(); err != nil {
 		tb.Error(err)
 	}
