@@ -42,8 +42,8 @@ func BeforeCommentUseCaseTest(tb testing.TB) {
 
 	commentUseCase = &CommentUseCase{
 		Repo:            commentRepo,
-		entclient:       db,
-		SnsClient:       mockMessagePublisher,
+		entClient:       db,
+		snsClient:       mockMessagePublisher,
 		khumuAPIAdapter: mockKhumuApiAdapter,
 		likeRepo:        likeRepo,
 	}

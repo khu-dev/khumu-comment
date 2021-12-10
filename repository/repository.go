@@ -8,7 +8,6 @@ import (
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/migrate"
-	"github.com/khu-dev/khumu-comment/errorz"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
@@ -59,17 +58,6 @@ func NewEnt() *ent.Client {
 	}
 
 	return client
-}
-
-// NotFound에 대한 EntError를 우리 도메인의 에러 타입으로 변경
-// 만약 여기서 감지되지 않은 에러 타입 케이스는 그냥 그대로 반환됨
-func WrapEntError(entErr error) error {
-	if entErr != nil {
-		if ent.IsNotFound(entErr) {
-			return errorz.ErrResourceNotFound
-		}
-	}
-	return entErr
 }
 
 type SynchronousCacheWrite bool

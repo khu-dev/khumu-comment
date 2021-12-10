@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func init() {
@@ -44,6 +45,9 @@ func main() {
 	cont := container.Build(termSig)
 
 	go func() {
+		// dig container의 concurrent한 invoke를 방지하기 위해
+		// concurrent하게 invoke 할 경우 Provide에 전달된 메소드가 중복수행될 수 있다.
+		time.Sleep(3 * time.Second)
 		err := cont.Invoke(func(h message.MessageHandler) {
 			h.Listen()
 		})

@@ -1,12 +1,12 @@
 package rest
 
 import (
-	"errors"
 	"github.com/khu-dev/khumu-comment/data"
+	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/khu-dev/khumu-comment/usecase"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -62,8 +62,8 @@ func (r *CommentRouter) Create(c echo.Context) error {
 	commentInput.Author = c.Get("user_id").(string)
 	comment, err := r.commentUC.Create(commentInput.Author, commentInput)
 	if err != nil {
-		log.Error(err)
-		return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
+		//return c.JSON(400, CommentResponse{Data: nil, Message: err.Error()})
+		return err
 	}
 
 	return c.JSON(200, CommentResponse{Data: comment})
@@ -119,11 +119,6 @@ func (r *CommentRouter) Get(c echo.Context) error {
 
 	comment, err := r.commentUC.Get(c.Get("user_id").(string), id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
-		}
-
-		log.Error(err)
 		return err
 	}
 
@@ -158,17 +153,11 @@ func (r *CommentRouter) Delete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Error(err)
-		return err
+		return errors.Wrap(errorz.ErrBadRequest, "올바르지 않은 댓글 아이디입니다")
 	}
 
 	err = r.commentUC.Delete(username, id)
 	if err != nil {
-		// 이제 gorm 안 써서 이 부분도 바꿔야함
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.JSON(http.StatusNotFound, CommentResponse{Data: nil, Message: "No comment with id=" + strconv.Itoa(id)})
-		}
-
-		log.Error(err)
 		return err
 	}
 
@@ -182,7 +171,7 @@ func (r *CommentRouter) LikeToggle(c echo.Context) error {
 	commentId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Error(err)
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "올바른 형태의 댓글 Id를 입력해주세요."})
+		return errors.Wrap(errorz.ErrBadRequest, "올바르지 않은 댓글 아이디입니다")
 	}
 
 	body := &data.LikeCommentInput{
@@ -192,8 +181,7 @@ func (r *CommentRouter) LikeToggle(c echo.Context) error {
 
 	isCreated, err := r.likeUC.Toggle(body)
 	if err != nil {
-		log.Error(err)
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: err.Error()})
+		return err
 	}
 
 	if isCreated {
@@ -219,7 +207,7 @@ func (r *CommentRouter) GetCommentCount(c echo.Context) error {
 	err := c.Bind(body)
 	if err != nil {
 		log.Error(err)
-		return c.JSON(http.StatusBadRequest, LikeCommentResponse{Message: "올바른 형태의 User와 Article을 입력해주세요."})
+		return errors.Wrap(errorz.ErrBadRequest, "올바른 형태로 요청해주세요")
 	}
 
 	comments, err := r.commentUC.List("", &usecase.CommentQueryOption{ArticleID: body.Article})

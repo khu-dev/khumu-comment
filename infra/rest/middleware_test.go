@@ -29,7 +29,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 //	mockSnsClient = external.NewMockSnsClient(ctrl)
 //	commentUseCase = &CommentUseCase{
 //		Repo:      repo,
-//		SnsClient: mockSnsClient,
+//		snsClient: mockSnsClient,
 //	}
 //	likeCommentUseCase = &LikeCommentUseCase{
 //		Repo: repo,

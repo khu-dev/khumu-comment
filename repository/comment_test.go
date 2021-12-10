@@ -4,8 +4,8 @@ import (
 	rcache "github.com/go-redis/cache/v8"
 	"github.com/golang/mock/gomock"
 	"github.com/khu-dev/khumu-comment/data"
+	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/enttest"
-	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/khu-dev/khumu-comment/repository/cache"
 	"github.com/khu-dev/khumu-comment/test"
 	_ "github.com/mattn/go-sqlite3"
@@ -107,6 +107,6 @@ func TestCommentRepository_Get(t *testing.T) {
 		test.SetUpArticles(db)
 		// error type warpping 테스트
 		_, err := repo.Get(10000)
-		assert.ErrorIs(t, err, errorz.ErrResourceNotFound)
+		assert.True(t, ent.IsNotFound(err))
 	})
 }
