@@ -133,6 +133,75 @@ func TestCommentUseCase_List(t *testing.T) {
 	//	assert.Equal(t, results[0].ID, correctComment1.ID)
 	//})
 }
+
+// TODO: 이런 식으로 Unit test로 작성하면 매우 편하당 ㅎㅎ
+func TestCommentUseCase_Get_탈퇴한_유저의_댓글(t *testing.T) {
+	t.Run("탈퇴한 유저의 익명 댓글", func(t *testing.T) {
+		BeforeUnitTest(t)
+		defer AfterUnitTest(t)
+		stub := &ent.Comment{
+			ID:    1,
+			Kind:  "anonymous",
+			State: "exists",
+			Edges: ent.CommentEdges{Author: &ent.KhumuUser{Status: "deleted"}},
+		}
+		mockCommentRepo.EXPECT().Get(1).Return(stub, nil)
+		mockLikeRepo.EXPECT().FindAllByCommentID(1).Return([]*ent.LikeComment{}, nil)
+		com, err := commentUseCase.Get("jinsu", 1)
+		assert.NoError(t, err)
+		assert.Equal(t, com.Author.Username, DeletedUserUsername)
+		assert.Equal(t, com.Author.Nickname, DeletedUserNickname)
+	})
+	t.Run("탈퇴한 유저의 기명 댓글", func(t *testing.T) {
+		BeforeUnitTest(t)
+		defer AfterUnitTest(t)
+		stub := &ent.Comment{
+			ID:    1,
+			Kind:  "named",
+			State: "exists",
+			Edges: ent.CommentEdges{Author: &ent.KhumuUser{Status: "deleted"}},
+		}
+		mockCommentRepo.EXPECT().Get(1).Return(stub, nil)
+		mockLikeRepo.EXPECT().FindAllByCommentID(1).Return([]*ent.LikeComment{}, nil)
+		com, err := commentUseCase.Get("jinsu", 1)
+		assert.NoError(t, err)
+		assert.Equal(t, com.Author.Username, DeletedUserUsername)
+		assert.Equal(t, com.Author.Nickname, DeletedUserNickname)
+	})
+	t.Run("탈퇴한 유저의 삭제된 익명 댓글", func(t *testing.T) {
+		BeforeUnitTest(t)
+		defer AfterUnitTest(t)
+		stub := &ent.Comment{
+			ID:    1,
+			Kind:  "named",
+			State: "deleted",
+			Edges: ent.CommentEdges{Author: &ent.KhumuUser{Status: "deleted"}},
+		}
+		mockCommentRepo.EXPECT().Get(1).Return(stub, nil)
+		mockLikeRepo.EXPECT().FindAllByCommentID(1).Return([]*ent.LikeComment{}, nil)
+		com, err := commentUseCase.Get("jinsu", 1)
+		assert.NoError(t, err)
+		assert.Equal(t, com.Author.Username, DeletedCommentUsername)
+		assert.Equal(t, com.Author.Nickname, DeletedCommentNickname)
+	})
+	t.Run("탈퇴한 유저의 삭제된 기명 댓글", func(t *testing.T) {
+		BeforeUnitTest(t)
+		defer AfterUnitTest(t)
+		stub := &ent.Comment{
+			ID:    1,
+			Kind:  "named",
+			State: "deleted",
+			Edges: ent.CommentEdges{Author: &ent.KhumuUser{Status: "deleted"}},
+		}
+		mockCommentRepo.EXPECT().Get(1).Return(stub, nil)
+		mockLikeRepo.EXPECT().FindAllByCommentID(1).Return([]*ent.LikeComment{}, nil)
+		com, err := commentUseCase.Get("jinsu", 1)
+		assert.NoError(t, err)
+		assert.Equal(t, com.Author.Username, DeletedCommentUsername)
+		assert.Equal(t, com.Author.Nickname, DeletedCommentNickname)
+	})
+}
+
 func TestCommentUseCase_Get(t *testing.T) {
 	t.Run("기명 댓글과 그 대댓글들", func(t *testing.T) {
 		BeforeEach(t)

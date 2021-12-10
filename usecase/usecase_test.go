@@ -20,11 +20,14 @@ var (
 	mockKhumuApiAdapter  *khumu.MockKhumuAPIAdapter
 	mockCommentCacheRepo *cache.MockCommentCacheRepository
 	mockLikeCacheRepo    *cache.MockLikeCommentCacheRepository
-	commentRepo          repository.CommentRepository
-	likeRepo             repository.LikeCommentRepository
-	commentUseCase       *CommentUseCase
-	likeCommentUseCase   *LikeCommentUseCase
-	ctrl                 *gomock.Controller
+	mockCommentRepo      *repository.MockCommentRepository
+	mockLikeRepo         *repository.MockLikeCommentRepository
+
+	commentRepo        repository.CommentRepository
+	likeRepo           repository.LikeCommentRepository
+	commentUseCase     *CommentUseCase
+	likeCommentUseCase *LikeCommentUseCase
+	ctrl               *gomock.Controller
 )
 
 // B는 Before each의 acronym
@@ -76,11 +79,47 @@ func BeforeEach(tb testing.TB) {
 	test.SetUpComments(db)
 }
 
-// A는 After each의 acronym
 func AfterEach(tb testing.TB) {
 	if err := db.Close(); err != nil {
 		tb.Error(err)
 	}
 	ctrl.Finish()
 	//time.Sleep(time.Second)
+}
+
+func BeforeUnitTest(t *testing.T) {
+	ctrl = gomock.NewController(t)
+
+	mockMessagePublisher = message.NewMockMessagePublisher(ctrl)
+	mockKhumuApiAdapter = khumu.NewMockKhumuAPIAdapter(ctrl)
+	mockCommentRepo = repository.NewMockCommentRepository(ctrl)
+	mockLikeRepo = repository.NewMockLikeCommentRepository(ctrl)
+
+	commentUseCase = &CommentUseCase{
+		Repo:            mockCommentRepo,
+		entClient:       nil,
+		snsClient:       mockMessagePublisher,
+		khumuAPIAdapter: mockKhumuApiAdapter,
+		likeRepo:        mockLikeRepo,
+	}
+	likeCommentUseCase = &LikeCommentUseCase{
+		Repo:        mockLikeRepo,
+		CommentRepo: mockCommentRepo,
+	}
+
+	mockMessagePublisher.EXPECT().Publish(gomock.Any()).DoAndReturn(
+		func(message interface{}) error {
+			t.Log("그냥 테스트라서 푸시 알림 패스")
+			return nil
+		}).AnyTimes()
+
+	mockKhumuApiAdapter.EXPECT().IsAuthor(gomock.Any(), gomock.Any()).DoAndReturn(func(articleID int, authorID string) <-chan bool {
+		ch := make(chan bool, 1)
+		ch <- false
+		return ch
+	}).AnyTimes()
+}
+
+func AfterUnitTest(tb testing.TB) {
+	ctrl.Finish()
 }

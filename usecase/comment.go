@@ -1,12 +1,9 @@
 package usecase
 
 import (
-	"context"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/data/mapper"
 	"github.com/khu-dev/khumu-comment/ent"
-	"github.com/khu-dev/khumu-comment/ent/comment"
-	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/errorz"
 	"github.com/khu-dev/khumu-comment/infra/khumu"
 	"github.com/khu-dev/khumu-comment/infra/message"
@@ -21,6 +18,8 @@ var (
 	AnonymousCommentNickname string = "익명"
 	DeletedCommentUsername   string = "삭제된 댓글의 작성자"
 	DeletedCommentNickname   string = "삭제된 댓글의 작성자"
+	DeletedUserUsername      string = "탈퇴한 유저"
+	DeletedUserNickname      string = "탈퇴한 유저"
 )
 
 type CommentQueryOption struct {
@@ -256,6 +255,9 @@ func (uc *CommentUseCase) hideFieldOfCommentOutput(username string, output *data
 		output.Author.Username = DeletedCommentUsername
 		output.Author.Nickname = DeletedCommentNickname
 		output.Content = DeletedCommentContent
+	} else if output.Author.Status == "deleted" {
+		output.Author.Username = DeletedUserUsername
+		output.Author.Nickname = DeletedUserNickname
 	} else if output.Kind == "anonymous" {
 		output.Author.Username = AnonymousCommentUsername
 		output.Author.Nickname = AnonymousCommentNickname
@@ -266,30 +268,6 @@ func (uc *CommentUseCase) hideFieldOfCommentOutput(username string, output *data
 			uc.hideFieldOfCommentOutput(username, child)
 		}
 	}
-}
-
-func (uc *CommentUseCase) getLikeCommentCount(commentID int) int {
-	ctx := context.Background()
-	likes, err := uc.entClient.LikeComment.Query().
-		Where(likecomment.HasAboutWith(comment.ID(commentID))).
-		All(ctx)
-	if err != nil {
-		logrus.Error(err, "그냥 like comment count를 0으로 처리")
-		return 0
-	}
-	return len(likes)
-}
-
-func (uc *CommentUseCase) getLiked(commentID int) bool {
-	ctx := context.Background()
-	likes, err := uc.entClient.LikeComment.Query().
-		Where(likecomment.HasAboutWith(comment.ID(commentID))).
-		All(ctx)
-	if err != nil {
-		logrus.Error(err, "그냥 liked를 false로 처리")
-		return false
-	}
-	return len(likes) != 0
 }
 
 func NewLikeCommentUseCase(
