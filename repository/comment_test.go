@@ -18,7 +18,7 @@ var (
 	commentCacheRepo *cache.MockCommentCacheRepository
 )
 
-func Before(t *testing.T) {
+func BeforeEach(t *testing.T) {
 	ctrl = gomock.NewController(t)
 	commentCacheRepo = cache.NewMockCommentCacheRepository(ctrl)
 	commentCacheRepo.EXPECT().FindAllParentCommentsByArticleID(gomock.Any()).Return(nil, rcache.ErrCacheMiss).AnyTimes()
@@ -27,7 +27,7 @@ func Before(t *testing.T) {
 
 func Test_commentRepository_Create(t *testing.T) {
 	t.Run("성공", func(t *testing.T) {
-		Before(t)
+		BeforeEach(t)
 		db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		defer db.Close()
 		repo := NewCommentRepository(db, commentCacheRepo, true)
@@ -63,7 +63,7 @@ func Test_commentRepository_Create(t *testing.T) {
 
 func TestCommentRepository_FindAllParentsByAuthorID(t *testing.T) {
 	t.Run("성공", func(t *testing.T) {
-		Before(t)
+		BeforeEach(t)
 		db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		defer db.Close()
 		repo := NewCommentRepository(db, commentCacheRepo, true)
@@ -99,7 +99,7 @@ func TestCommentRepository_FindAllParentsByAuthorID(t *testing.T) {
 
 func TestCommentRepository_Get(t *testing.T) {
 	t.Run("ErrResourceNotFound 에러 랩핑", func(t *testing.T) {
-		Before(t)
+		BeforeEach(t)
 		db := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		defer db.Close()
 		repo := NewCommentRepository(db, commentCacheRepo, true)

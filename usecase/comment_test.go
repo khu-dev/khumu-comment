@@ -1,4 +1,4 @@
-// 현재는 거의 usecase level에서 repository 계층까지 테스트하는 셈인데
+// TODO: 현재는 거의 usecase level에서 repository 계층까지 테스트하는 셈인데
 // 좀 더 순수한 service 계층의 logic을 테스트할 수 있도록 바뀌었으면 좋겠다.
 package usecase
 
@@ -16,8 +16,8 @@ import (
 
 func TestCommentUseCase_Create(t *testing.T) {
 	t.Run("jinsu의 익명 Article 댓글", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 
 		tmp, err := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
@@ -36,8 +36,8 @@ func TestCommentUseCase_Create(t *testing.T) {
 	})
 
 	t.Run("jinsu의 기명 Article 댓글", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 
 		tmp, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
@@ -55,8 +55,8 @@ func TestCommentUseCase_Create(t *testing.T) {
 	})
 
 	t.Run("jinsu의 익명 Article 댓글에 대한 익명 대댓글", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 
 		tmp, _ := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
@@ -76,8 +76,8 @@ func TestCommentUseCase_Create(t *testing.T) {
 	})
 
 	t.Run("실패) 커뮤니티 article도 study article도 아닌 경우", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		newComment, err := commentUseCase.Create(test.UserJinsu.ID, &data.CommentInput{
 			Author:  test.UserJinsu.ID,
 			Content: "테스트 댓글",
@@ -89,8 +89,8 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 func TestCommentUseCase_List(t *testing.T) {
 	t.Run("게시글에 대한 댓글 리스트", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		var err error
 		tmpArticle, err := db.Article.Create().SetAuthor(test.UserPuppy).Save(context.TODO())
 		assert.NoError(t, err)
@@ -111,8 +111,8 @@ func TestCommentUseCase_List(t *testing.T) {
 
 	// 스터디 게시글은 개발 중지
 	//t.Run("스터디 게시글에 대한 댓글 리스트", func(t *testing.T) {
-	//	BeforeCommentUseCaseTest(t)
-	//	defer A(t)
+	//	BeforeEach(t)
+	//	defer AfterEach(t)
 	//	var err error
 	//	correctComment1, err := db.Comment.Create().
 	//		SetStudyArticleID(1).
@@ -135,8 +135,8 @@ func TestCommentUseCase_List(t *testing.T) {
 }
 func TestCommentUseCase_Get(t *testing.T) {
 	t.Run("기명 댓글과 그 대댓글들", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		deletedAnonymousCommentFromComment1, err := db.Comment.Create().
 			SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
 			SetAuthorID(test.UserPuppy.ID).
@@ -195,8 +195,8 @@ func TestCommentUseCase_Get(t *testing.T) {
 	})
 
 	t.Run("익명 댓글", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		comment, err := commentUseCase.Get(test.UserJinsu.ID, test.Comment1JinsuAnonymous.ID)
 		assert.NoError(t, err)
 		// 기본적으로는 익명 댓글임.
@@ -205,8 +205,8 @@ func TestCommentUseCase_Get(t *testing.T) {
 	})
 
 	t.Run("삭제된 댓글", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		tmp, err := db.Comment.Create().
 			SetArticleID(1).
 			SetAuthor(test.UserJinsu).
@@ -225,8 +225,8 @@ func TestCommentUseCase_Get(t *testing.T) {
 }
 
 func TestLikeCommentUseCase_List(t *testing.T) {
-	BeforeCommentUseCaseTest(t)
-	defer A(t)
+	BeforeEach(t)
+	defer AfterEach(t)
 	deletedAnonymousCommentFromComment1, err := db.Comment.Create().
 		SetArticle(test.Comment1JinsuAnonymous.QueryArticle().OnlyX(context.TODO())).
 		SetAuthorID(test.UserPuppy.ID).
@@ -308,8 +308,8 @@ func TestLikeCommentUseCase_List(t *testing.T) {
 }
 
 func TestCommentUseCase_Update(t *testing.T) {
-	BeforeCommentUseCaseTest(t)
-	defer A(t)
+	BeforeEach(t)
+	defer AfterEach(t)
 	// Update는 대부분 repository 계층에서만 확인해도 될 듯.
 
 	before := *test.Comment2JinsuNamed
@@ -328,8 +328,8 @@ func TestCommentUseCase_Update(t *testing.T) {
 
 func TestCommentUseCase_Delete(t *testing.T) {
 	t.Run("대댓글이 없는 부모 댓글 삭제", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		parentComment := test.Comment4PuppyAnonymous
 		// 좋아요가 있으면 삭제해야함. 그 기능 테스트를 위해 좋아요도 만들어봄.
 		for i := 0; i < 3; i++ {
@@ -346,8 +346,8 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.IsType(t, &ent.NotFoundError{}, err)
 	})
 	t.Run("대댓글 삭제", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		toDelete := test.Comment5JinsuAnonymousFromComment1
 		err := commentUseCase.Delete(test.UserJinsu.ID, toDelete.ID)
 		assert.NoError(t, err)
@@ -355,8 +355,8 @@ func TestCommentUseCase_Delete(t *testing.T) {
 		assert.IsType(t, &ent.NotFoundError{}, err)
 	})
 	t.Run("대댓글이 있는 부모 댓글 삭제", func(t *testing.T) {
-		BeforeCommentUseCaseTest(t)
-		defer A(t)
+		BeforeEach(t)
+		defer AfterEach(t)
 		toDelete := test.Comment1JinsuAnonymous
 		err := commentUseCase.Delete(test.UserJinsu.ID, toDelete.ID)
 		assert.NoError(t, err)
@@ -368,8 +368,8 @@ func TestCommentUseCase_Delete(t *testing.T) {
 }
 
 func TestLikeCommentUseCase_Toggle(t *testing.T) {
-	BeforeCommentUseCaseTest(t)
-	defer A(t)
+	BeforeEach(t)
+	defer AfterEach(t)
 	commentID := test.Comment1JinsuAnonymous.ID
 	// mock으로 그냥 한 칸 줄이기만함.
 	t.Run("Somebody toggle(create&delete) jinsu's comment", func(t *testing.T) {
