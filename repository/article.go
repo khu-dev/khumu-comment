@@ -23,10 +23,10 @@ func NewArticleRepository(db *gosql.DB, entDB *ent.Client) ArticleRepository {
 	}
 }
 
-func (repo *articleRepository) FindAllIDByAuthorIDAndRecentlyCommented(authorID string, cursor, size int) ([]int, error) {
+func (repo *articleRepository) FindAllIDByAuthorIDAndRecentlyCommented(authorID string, page, size int) ([]int, error) {
 	res, err := repo.db.QueryContext(context.Background(),
-		"select a.id from articles a inner join comments c on a.id = c.article_comments where c.author_id=? and a.id < ? group by a.id, a.created_at order by max(c.created_at) desc limit ?",
-		authorID, cursor, size)
+		"select a.id from articles a inner join comments c on a.id = c.article_comments where c.author_id=? group by a.id, a.created_at order by max(c.created_at) desc limit ? offset ?",
+		authorID, size, (page-1)*size)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

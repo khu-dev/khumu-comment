@@ -3,7 +3,6 @@ package usecase
 import (
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/repository"
-	"math"
 )
 
 type ArticleUseCase interface {
@@ -19,14 +18,14 @@ func NewArticleUseCase(repo repository.ArticleRepository) ArticleUseCase {
 }
 
 func (uc *articleUseCase) List(username string, body *data.GetCommentedArticlesReq) (*data.GetCommentedArticlesResp, error) {
-	if body.Cursor == 0 {
-		body.Cursor = math.MaxInt
+	if body.Page == 0 {
+		body.Page = 1
 	}
 	if body.Size == 0 {
 		body.Size = 20
 	}
 
-	articleIDs, err := uc.repo.FindAllIDByAuthorIDAndRecentlyCommented(username, body.Cursor, body.Size)
+	articleIDs, err := uc.repo.FindAllIDByAuthorIDAndRecentlyCommented(username, body.Page, body.Size)
 	if err != nil {
 		return nil, err
 	}

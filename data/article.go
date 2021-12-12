@@ -6,8 +6,8 @@ type CommandCenterArticleDto struct {
 }
 
 type GetCommentedArticlesReq struct {
-	Cursor int `json:"cursor"`
-	Size   int `json:"size"`
+	Page int `json:"page"`
+	Size int `json:"size"`
 }
 
 type GetCommentedArticlesResp struct {
