@@ -13,6 +13,7 @@ type RootRouter struct{ *echo.Group }
 
 func NewEcho(commentUC usecase.CommentUseCaseInterface,
 	likeUC usecase.LikeCommentUseCaseInterface,
+	articleUC usecase.ArticleUseCase,
 	repo *ent.Client) *echo.Echo {
 	e := echo.New()
 	e.HTTPErrorHandler = CustomHTTPErrorHandler
@@ -32,7 +33,7 @@ func NewEcho(commentUC usecase.CommentUseCaseInterface,
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "OK") })
 	e.GET("/docs/comment/*", echoSwagger.WrapHandler)
 	root := NewRootRouter(e, repo)
-	_ = NewCommentRouter(root, commentUC, likeUC)
+	_ = NewCommentRouter(root, commentUC, likeUC, articleUC)
 	return e
 }
 

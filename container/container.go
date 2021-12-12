@@ -69,6 +69,10 @@ func Build(termSig <-chan os.Signal) *dig.Container {
 	if err != nil {
 		log.Panic(err)
 	}
+	err = c.Provide(repository.NewArticleRepository)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	// Provide usecases
 	err = c.Provide(usecase.NewCommentUseCase)
@@ -77,6 +81,11 @@ func Build(termSig <-chan os.Signal) *dig.Container {
 	}
 
 	err = c.Provide(usecase.NewLikeCommentUseCase)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = c.Provide(usecase.NewArticleUseCase)
 	if err != nil {
 		log.Panic(err)
 	}

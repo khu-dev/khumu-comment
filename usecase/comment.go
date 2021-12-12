@@ -46,7 +46,6 @@ type LikeCommentUseCaseInterface interface {
 type CommentUseCase struct {
 	Repo            repository.CommentRepository
 	likeRepo        repository.LikeCommentRepository
-	entClient       *ent.Client
 	snsClient       message.MessagePublisher
 	khumuAPIAdapter khumu.KhumuAPIAdapter
 }
@@ -59,13 +58,11 @@ type LikeCommentUseCase struct {
 func NewCommentUseCase(
 	repo repository.CommentRepository,
 	likeRepo repository.LikeCommentRepository,
-	entClient *ent.Client,
 	snsClient message.MessagePublisher,
 	khumuAPIAdapter khumu.KhumuAPIAdapter) CommentUseCaseInterface {
 	return &CommentUseCase{
 		Repo:            repo,
 		likeRepo:        likeRepo,
-		entClient:       entClient,
 		snsClient:       snsClient,
 		khumuAPIAdapter: khumuAPIAdapter,
 	}

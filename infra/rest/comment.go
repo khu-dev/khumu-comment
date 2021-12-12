@@ -15,11 +15,16 @@ type CommentRouter struct {
 	*echo.Group
 	commentUC usecase.CommentUseCaseInterface
 	likeUC    usecase.LikeCommentUseCaseInterface
+	articleUC usecase.ArticleUseCase
 }
 
-func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterface, likeUC usecase.LikeCommentUseCaseInterface) *CommentRouter {
+func NewCommentRouter(root *RootRouter,
+	commentUC usecase.CommentUseCaseInterface,
+	likeUC usecase.LikeCommentUseCaseInterface,
+	articleUC usecase.ArticleUseCase) *CommentRouter {
 	group := root.Group.Group("/comments")
-	commentRouter := &CommentRouter{group, commentUC, likeUC}
+
+	commentRouter := &CommentRouter{group, commentUC, likeUC, articleUC}
 
 	// comment는 Update API를 제공하지 않는다.
 	group.POST("", commentRouter.Create)
@@ -28,6 +33,8 @@ func NewCommentRouter(root *RootRouter, commentUC usecase.CommentUseCaseInterfac
 	group.PATCH("/:id", commentRouter.Update)
 	group.DELETE("/:id", commentRouter.Delete)
 	group.POST("/get-comment-count", commentRouter.GetCommentCount)
+	group.POST("/get-commented-articles", commentRouter.GetCommentedArticles)
+
 	group.PATCH("/:id/likes", commentRouter.LikeToggle)
 
 	return commentRouter
@@ -216,4 +223,25 @@ func (r *CommentRouter) GetCommentCount(c echo.Context) error {
 	}
 
 	return c.JSON(200, &GetInfoAboutArticleResp{CommentCount: len(comments)})
+}
+
+// 댓글 달았던 게시글을 조회합니다.
+// command-center가 comment 서버에게 자신이 댓글을 달았던 게시글 ID를 질의하고,
+// command-center는 다시 그 게시글 ID들을 통해 DB에서 내용을 조회합니다.
+func (r *CommentRouter) GetCommentedArticles(c echo.Context) error {
+	log.Debug("CommentRouter_GetCommentedArticles")
+	username := c.Get("user_id").(string)
+
+	body := &data.GetCommentedArticlesReq{}
+	err := c.Bind(body)
+	if err != nil {
+		return err
+	}
+
+	resp, err := r.articleUC.List(username, body)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(200, resp)
 }

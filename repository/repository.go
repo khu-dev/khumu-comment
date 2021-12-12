@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	gosql "database/sql"
 	"entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -13,7 +14,7 @@ import (
 	"time"
 )
 
-func NewEnt() *ent.Client {
+func NewEnt() (*gosql.DB, *ent.Client) {
 	// parseTime=true가 없을 시
 	// Error: unsupported Scan, storing driver.Value type []uint8 into type *time.Time
 	// ref: https://stackoverflow.com/questions/45040319/unsupported-scan-storing-driver-value-type-uint8-into-type-time-time
@@ -57,7 +58,7 @@ func NewEnt() *ent.Client {
 		log.Fatalf("failed to migrate: %v", err)
 	}
 
-	return client
+	return db, client
 }
 
 type SynchronousCacheWrite bool
