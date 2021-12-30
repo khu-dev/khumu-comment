@@ -10,7 +10,8 @@ import (
 	"github.com/khu-dev/khumu-comment/util"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -30,7 +31,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 	// 괜찮으면 받았던 handlerFunc를 수행
 	// 안괜찮으면 error로 응답하는 handlerFunc를 수행하는 방식
 	return func(ctx echo.Context) error {
-		logger := logrus.WithField("middleware", "Authenticator.Authenticate")
+		logger := log.WithField("middleware", "Authenticator.Authenticate")
 		if strings.HasPrefix(ctx.Request().Header.Get("Authorization"), "Bearer") {
 			logger.Debug("Try JWT Authentication")
 			return middleware.JWTWithConfig(KhumuJWTConfig)(
@@ -45,7 +46,7 @@ func (a *Authenticator) Authenticate(handlerFunc echo.HandlerFunc) echo.HandlerF
 								Where(khumuuser.ID(username)).
 								Only(background)
 							if err != nil {
-								logrus.Error(err, "JWT 인증 도중 에러 발생")
+								log.Error(err, "JWT 인증 도중 에러 발생")
 								return ctx.JSON(401, map[string]interface{}{
 									"statusCode": 401,
 									"body":       "Request with a non-existing user.",
@@ -97,7 +98,7 @@ var KhumuJWTConfig = middleware.JWTConfig{
 //		Where(khumuuser.ID(username)).
 //		Only(background)
 //	if err != nil {
-//		logrus.Error(err, "Basic 인증 도중 에러 발생")
+//		log.Error(err, "Basic 인증 도중 에러 발생")
 //		return false, err
 //	}
 //	if user == nil {
@@ -112,7 +113,7 @@ var KhumuJWTConfig = middleware.JWTConfig{
 // application/json 요청인 경우 바디를 출력.
 func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	return func(context echo.Context) error {
-		logger := logrus.WithField("middleware", "KhumuRequestLog")
+		logger := log.WithField("middleware", "KhumuRequestLog")
 		req := context.Request()
 		if req.Header.Get("Content-Type") != "" {
 			logger.Println("Content-Type:", req.Header.Get("Content-Type"))
@@ -146,30 +147,34 @@ func KhumuRequestLog(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 // HTTPErrorHandler 참고
 // https://echo.labstack.com/guide/error-handling/
 func CustomHTTPErrorHandler(err error, c echo.Context) {
-	var (
-		ErrsUnAuthorized = []error{errorz.ErrUnauthorized}
-		ErrsForNotFound  = []error{errorz.ErrResourceNotFound}
-	)
-	if util.ErrorIn(err, ErrsUnAuthorized) {
+	log.Errorf("%+v", err)
+	if errors.Is(err, errorz.ErrBadRequest) {
+		if err := c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"data":    nil,
+			"message": util.GetSimpleErrorMessage(err),
+		}); err != nil {
+			log.Error(err)
+		}
+	} else if errors.Is(err, errorz.ErrUnauthorized) {
 		if respErr := c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"data":    nil,
-			"message": err.Error(),
+			"message": util.GetSimpleErrorMessage(err),
 		}); respErr != nil {
-			logrus.Error(respErr)
+			log.Error(respErr)
 		}
-	} else if util.ErrorIn(err, ErrsForNotFound) {
+	} else if errors.Is(err, errorz.ErrResourceNotFound) {
 		if respErr := c.JSON(http.StatusNotFound, map[string]interface{}{
 			"data":    nil,
-			"message": err.Error(),
+			"message": util.GetSimpleErrorMessage(err),
 		}); respErr != nil {
-			logrus.Error(respErr)
+			log.Error(respErr)
 		}
 	} else {
 		if respErr := c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"data":    nil,
 			"message": "알 수 없는 오류로 작업을 수행하지 못했습니다. 쿠뮤에 문의해주세요.",
 		}); respErr != nil {
-			logrus.Error(respErr)
+			log.Error(respErr)
 		}
 	}
 }

@@ -2,19 +2,19 @@ package repository
 
 import (
 	"context"
+	gosql "database/sql"
 	"entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/migrate"
-	"github.com/khu-dev/khumu-comment/errorz"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 )
 
-func NewEnt() *ent.Client {
+func NewEnt() (*gosql.DB, *ent.Client) {
 	// parseTime=true가 없을 시
 	// Error: unsupported Scan, storing driver.Value type []uint8 into type *time.Time
 	// ref: https://stackoverflow.com/questions/45040319/unsupported-scan-storing-driver-value-type-uint8-into-type-time-time
@@ -58,18 +58,7 @@ func NewEnt() *ent.Client {
 		log.Fatalf("failed to migrate: %v", err)
 	}
 
-	return client
-}
-
-// NotFound에 대한 EntError를 우리 도메인의 에러 타입으로 변경
-// 만약 여기서 감지되지 않은 에러 타입 케이스는 그냥 그대로 반환됨
-func WrapEntError(entErr error) error {
-	if entErr != nil {
-		if ent.IsNotFound(entErr) {
-			return errorz.ErrResourceNotFound
-		}
-	}
-	return entErr
+	return db, client
 }
 
 type SynchronousCacheWrite bool
