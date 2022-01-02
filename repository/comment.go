@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"entgo.io/ent/dialect/sql"
 	rcache "github.com/go-redis/cache/v8"
 	"github.com/khu-dev/khumu-comment/data"
@@ -201,8 +202,10 @@ func (repo commentRepository) Delete(id int) error {
 		return errors.WithStack(err)
 	}
 
-	err = tx.Comment.DeleteOneID(id).Exec(ctx)
-	if err != nil {
+	if err := tx.Comment.DeleteOneID(id).Exec(ctx); err != nil {
+		return errors.WithStack(err)
+	}
+	if err := tx.Commit(); err != nil {
 		return errors.WithStack(err)
 	}
 	log.Infof("Comment(id=%d)를 삭제했습니다.", id)
