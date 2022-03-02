@@ -2,15 +2,17 @@ package repository
 
 import (
 	"context"
+
 	rcache "github.com/go-redis/cache/v8"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/comment"
 	"github.com/khu-dev/khumu-comment/ent/khumuuser"
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/repository/cache"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 type LikeCommentRepository interface {
@@ -38,7 +40,7 @@ func NewLikeCommentRepository(
 		synchronousCacheWrite: synchronousCacheWrite,
 	}
 }
-func (l likeCommentRepository) Create(createInput *data.LikeCommentInput) (like *ent.LikeComment, err error) {
+func (l *likeCommentRepository) Create(createInput *data.LikeCommentInput) (like *ent.LikeComment, err error) {
 	like, err = l.db.LikeComment.Create().SetLikedByID(createInput.User).SetAboutID(createInput.Comment).Save(context.TODO())
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -49,7 +51,7 @@ func (l likeCommentRepository) Create(createInput *data.LikeCommentInput) (like 
 	return
 }
 
-func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.LikeComment, err error) {
+func (l *likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.LikeComment, err error) {
 	cached, err := l.cache.FindAllByCommentID(commentID)
 	if err != nil {
 		if !errors.Is(err, rcache.ErrCacheMiss) {
@@ -70,7 +72,7 @@ func (l likeCommentRepository) FindAllByCommentID(commentID int) (likes []*ent.L
 	return cached, nil
 }
 
-func (l likeCommentRepository) findAllByCommentIDWithoutCache(commentID int) (likes []*ent.LikeComment, err error) {
+func (l *likeCommentRepository) findAllByCommentIDWithoutCache(commentID int) (likes []*ent.LikeComment, err error) {
 	likes, err = l.db.LikeComment.Query().
 		Where(likecomment.HasAboutWith(comment.ID(commentID))).
 		WithLikedBy().
@@ -82,7 +84,7 @@ func (l likeCommentRepository) findAllByCommentIDWithoutCache(commentID int) (li
 	return likes, nil
 }
 
-func (l likeCommentRepository) FindAllByUserIDAndCommentID(userID string, commentID int) (likes []*ent.LikeComment, err error) {
+func (l *likeCommentRepository) FindAllByUserIDAndCommentID(userID string, commentID int) (likes []*ent.LikeComment, err error) {
 	likes, err = l.db.LikeComment.Query().
 		Where(likecomment.HasLikedByWith(khumuuser.ID(userID)), likecomment.HasAboutWith(comment.ID(commentID))).
 		All(context.TODO())
@@ -93,7 +95,7 @@ func (l likeCommentRepository) FindAllByUserIDAndCommentID(userID string, commen
 	return likes, nil
 }
 
-func (l likeCommentRepository) Delete(id int) (err error) {
+func (l *likeCommentRepository) Delete(id int) (err error) {
 	like, err := l.db.LikeComment.Query().WithAbout().Where(likecomment.ID(id)).First(context.TODO())
 	err = l.db.LikeComment.DeleteOneID(id).Exec(context.TODO())
 	if err != nil {
@@ -104,7 +106,7 @@ func (l likeCommentRepository) Delete(id int) (err error) {
 	return nil
 }
 
-func (l likeCommentRepository) DeleteAllByCommentID(commentID int) (err error) {
+func (l *likeCommentRepository) DeleteAllByCommentID(commentID int) (err error) {
 	n, err := l.db.LikeComment.Delete().Where(likecomment.HasAboutWith(comment.ID(commentID))).Exec(context.TODO())
 	if err != nil {
 		return errors.WithStack(err)

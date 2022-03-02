@@ -1,14 +1,16 @@
 package rest
 
 import (
-	"github.com/khu-dev/khumu-comment/data"
-	"github.com/khu-dev/khumu-comment/errorz"
-	"github.com/khu-dev/khumu-comment/usecase"
+	"net/http"
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strconv"
+
+	"github.com/khu-dev/khumu-comment/data"
+	"github.com/khu-dev/khumu-comment/errorz"
+	"github.com/khu-dev/khumu-comment/usecase"
 )
 
 type CommentRouter struct {
@@ -217,12 +219,12 @@ func (r *CommentRouter) GetCommentCount(c echo.Context) error {
 		return errors.Wrap(errorz.ErrBadRequest, "올바른 형태로 요청해주세요")
 	}
 
-	comments, err := r.commentUC.List("", &usecase.CommentQueryOption{ArticleID: body.Article})
+	cnt, err := r.commentUC.CountComment(body.Article)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(200, &GetInfoAboutArticleResp{CommentCount: len(comments)})
+	return c.JSON(200, &GetInfoAboutArticleResp{CommentCount: cnt})
 }
 
 // 댓글 달았던 게시글을 조회합니다.

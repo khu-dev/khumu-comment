@@ -3,13 +3,16 @@ package infra
 import (
 	"context"
 	"fmt"
+
 	rcache "github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/khu-dev/khumu-comment/config"
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/repository/cache"
-	log "github.com/sirupsen/logrus"
 )
 
 type RedisAdapter interface {
@@ -138,4 +141,27 @@ func (a *RedisAdapterImpl) FindAllByCommentID(commentID int) (data.LikeCommentEn
 	}
 
 	return val, nil
+}
+
+func (a *RedisAdapterImpl) SetCommentCountByArticleID(articleID, cnt int) {
+	key := fmt.Sprintf("khumu-comment:comment_counts:article=%d:", articleID)
+	log.Infof("article=%d 의 comment count 개수를 저장합니다. cnt=%d", articleID, cnt)
+	if err := a.client.Set(&rcache.Item{
+		Ctx:   context.TODO(),
+		Key:   key,
+		Value: cnt,
+	}); err != nil {
+		log.Error(err)
+	}
+}
+
+func (a *RedisAdapterImpl) Count(articleID int) (int, error) {
+	key := fmt.Sprintf("khumu-comment:comment_counts:article=%d:", articleID)
+	log.Infof("article=%d 의 comment count 개수를 조회합니다.", articleID)
+	cnt := 0
+	if err := a.client.Get(context.TODO(), key, &cnt); err != nil {
+		return 0, errors.WithStack(err)
+	}
+
+	return cnt, nil
 }

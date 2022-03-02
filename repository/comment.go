@@ -5,6 +5,9 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	rcache "github.com/go-redis/cache/v8"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/ent"
 	"github.com/khu-dev/khumu-comment/ent/article"
@@ -13,14 +16,13 @@ import (
 	"github.com/khu-dev/khumu-comment/ent/likecomment"
 	"github.com/khu-dev/khumu-comment/ent/studyarticle"
 	"github.com/khu-dev/khumu-comment/repository/cache"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 type CommentRepository interface {
 	Create(createInput *data.CommentInput) (com *ent.Comment, err error)
 	FindAllParentCommentsByAuthorID(authorID string) (coms []*ent.Comment, err error)
 	FindAllParentCommentsByArticleID(articleID int) (coms []*ent.Comment, err error)
+	Count(articleID int) (count int, err error)
 	//FindAllParentCommentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error)
 	Get(id int) (com *ent.Comment, err error)
 	Update(id int, updateInput map[string]interface{}) (com *ent.Comment, err error)
@@ -42,7 +44,7 @@ func NewCommentRepository(client *ent.Client, cache cache.CommentCacheRepository
 	}
 }
 
-func (repo commentRepository) Create(createInput *data.CommentInput) (newComment *ent.Comment, err error) {
+func (repo *commentRepository) Create(createInput *data.CommentInput) (newComment *ent.Comment, err error) {
 	newComment, err = repo.db.Comment.Create().
 		SetNillableArticleID(createInput.Article).
 		SetNillableStudyArticleID(createInput.StudyArticle).
@@ -88,11 +90,12 @@ func (repo commentRepository) Create(createInput *data.CommentInput) (newComment
 	}
 
 	repo.setCommentsCacheByArticleID(*createInput.Article)
+	repo.setCommentCountByArticleID(*createInput.Article)
 
 	return newComment, nil
 }
 
-func (repo commentRepository) FindAllParentCommentsByAuthorID(authorID string) (coms []*ent.Comment, err error) {
+func (repo *commentRepository) FindAllParentCommentsByAuthorID(authorID string) (coms []*ent.Comment, err error) {
 	query := repo.db.Comment.Query().Where(comment.HasAuthorWith(khumuuser.ID(authorID)))
 	parents, err := AppendQueryForComment(query).
 		Where(comment.Not(comment.HasParent())).
@@ -104,7 +107,7 @@ func (repo commentRepository) FindAllParentCommentsByAuthorID(authorID string) (
 	return parents, nil
 }
 
-func (repo commentRepository) FindAllParentCommentsByArticleID(articleID int) ([]*ent.Comment, error) {
+func (repo *commentRepository) FindAllParentCommentsByArticleID(articleID int) ([]*ent.Comment, error) {
 	cached, err := repo.cache.FindAllParentCommentsByArticleID(articleID)
 	if err != nil {
 		if !errors.Is(err, rcache.ErrCacheMiss) {
@@ -122,7 +125,25 @@ func (repo commentRepository) FindAllParentCommentsByArticleID(articleID int) ([
 	return cached, nil
 }
 
-func (repo commentRepository) FindAllParentCommentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error) {
+func (repo *commentRepository) Count(articleID int) (count int, err error) {
+	cnt, err := repo.cache.Count(articleID)
+	if err != nil {
+		if !errors.Is(err, rcache.ErrCacheMiss) {
+			log.Error(err)
+		}
+		cnt, err = repo.count(articleID)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		// 캐시 미스 발생 시 캐시를 기록
+		go repo.cache.SetCommentCountByArticleID(articleID, count)
+		return cnt, nil
+	}
+
+	return cnt, nil
+}
+
+func (repo *commentRepository) FindAllParentCommentsByStudyArticleID(articleID int) (coms []*ent.Comment, err error) {
 	query := repo.db.Comment.Query().Where(comment.HasStudyArticleWith(studyarticle.ID(articleID)))
 	parents, err := AppendQueryForComment(query).
 		Where(comment.Not(comment.HasParent())).
@@ -134,7 +155,7 @@ func (repo commentRepository) FindAllParentCommentsByStudyArticleID(articleID in
 	return parents, nil
 }
 
-func (repo commentRepository) Get(id int) (com *ent.Comment, err error) {
+func (repo *commentRepository) Get(id int) (com *ent.Comment, err error) {
 	query := repo.db.Comment.Query().Where(comment.ID(id))
 	com, err = AppendQueryForComment(query).
 		Only(context.TODO())
@@ -145,7 +166,7 @@ func (repo commentRepository) Get(id int) (com *ent.Comment, err error) {
 	return com, nil
 }
 
-func (repo commentRepository) Update(id int, updateInput map[string]interface{}) (com *ent.Comment, err error) {
+func (repo *commentRepository) Update(id int, updateInput map[string]interface{}) (com *ent.Comment, err error) {
 	ctx := context.TODO()
 	query := repo.db.Comment.Update().Where(comment.ID(id))
 	if val, ok := updateInput["state"]; ok {
@@ -176,7 +197,7 @@ func (repo commentRepository) Update(id int, updateInput map[string]interface{})
 	return updated, nil
 }
 
-func (repo commentRepository) Delete(id int) error {
+func (repo *commentRepository) Delete(id int) error {
 	ctx := context.TODO()
 	log.Info("부모 댓글이 없어 댓글 자체를 삭제하는 작업을 시작합니다.")
 	tx, err := repo.db.BeginTx(ctx, new(sql.TxOptions))
@@ -261,7 +282,16 @@ func (repo *commentRepository) findParentCommentsByArticleWithoutCache(articleID
 	return parents, nil
 }
 
-// invalidate 는 부모 댓글에 대한 캐시를 invalidate 합니다.
+func (repo *commentRepository) count(articleID int) (int, error) {
+	cnt, err := repo.db.Comment.Query().Where(comment.HasArticleWith(article.ID(articleID))).Count(context.Background())
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+
+	return cnt, nil
+}
+
+// setCommentsCacheByArticleID 는 articleID에 해당하는 댓글 정보를 cache에 반영합니다.
 func (repo *commentRepository) setCommentsCacheByArticleID(articleID int) {
 	var done chan struct{}
 	if repo.synchronousCacheWrite {
@@ -279,6 +309,32 @@ func (repo *commentRepository) setCommentsCacheByArticleID(articleID int) {
 			log.Error(queryErr)
 		} else {
 			repo.cache.SetCommentsByArticleID(articleID, coms)
+		}
+	}()
+	// synchronous write이 false이면 buffered chan이라 바로 값을 넣을 수 있다.
+	done <- struct{}{}
+
+	return
+}
+
+// setCommentCountByArticleID 는 articleID에 해당하는 댓글들의 개수를 cache에 반영합니다.
+func (repo *commentRepository) setCommentCountByArticleID(articleID int) {
+	var done chan struct{}
+	if repo.synchronousCacheWrite {
+		done = make(chan struct{})
+	} else {
+		done = make(chan struct{}, 1)
+	}
+	go func() {
+		defer func() {
+			<-done
+		}()
+
+		cnt, queryErr := repo.count(articleID)
+		if queryErr != nil {
+			log.Error(queryErr)
+		} else {
+			repo.cache.SetCommentCountByArticleID(articleID, cnt)
 		}
 	}()
 	// synchronous write이 false이면 buffered chan이라 바로 값을 넣을 수 있다.

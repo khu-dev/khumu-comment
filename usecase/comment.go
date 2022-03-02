@@ -1,6 +1,9 @@
 package usecase
 
 import (
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/khu-dev/khumu-comment/data"
 	"github.com/khu-dev/khumu-comment/data/mapper"
 	"github.com/khu-dev/khumu-comment/ent"
@@ -8,8 +11,6 @@ import (
 	"github.com/khu-dev/khumu-comment/infra/khumu"
 	"github.com/khu-dev/khumu-comment/infra/message"
 	"github.com/khu-dev/khumu-comment/repository"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,6 +35,7 @@ type CommentUseCaseInterface interface {
 	Create(username string, commentInput *data.CommentInput) (*data.CommentOutput, error)
 	List(username string, opt *CommentQueryOption) ([]*data.CommentOutput, error)
 	Get(username string, id int) (*data.CommentOutput, error)
+	CountComment(articleID int) (int, error)
 	Update(username string, id int, opt map[string]interface{}) (*data.CommentOutput, error)
 	Delete(username string, id int) error
 }
@@ -132,6 +134,16 @@ func (uc *CommentUseCase) List(username string, opt *CommentQueryOption) ([]*dat
 	}
 
 	return outputs, nil
+}
+
+func (uc *CommentUseCase) CountComment(article int) (int, error) {
+	logrus.WithField("article", article).Infof("Start CountComment")
+	cnt, err := uc.Repo.Count(article)
+	if err != nil {
+		return 0, errors.WithMessage(err, "댓글 개수 조회에 실패했습니다.")
+	}
+
+	return cnt, nil
 }
 
 // 지금의 Get은 Children은 가져오지 못함
