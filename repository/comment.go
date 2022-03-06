@@ -125,7 +125,7 @@ func (repo *commentRepository) FindAllParentCommentsByArticleID(articleID int) (
 	return cached, nil
 }
 
-func (repo *commentRepository) Count(articleID int) (count int, err error) {
+func (repo *commentRepository) Count(articleID int) (int, error) {
 	cnt, err := repo.cache.Count(articleID)
 	if err != nil {
 		if !errors.Is(err, rcache.ErrCacheMiss) {
@@ -136,7 +136,7 @@ func (repo *commentRepository) Count(articleID int) (count int, err error) {
 			return 0, errors.WithStack(err)
 		}
 		// 캐시 미스 발생 시 캐시를 기록
-		go repo.cache.SetCommentCountByArticleID(articleID, count)
+		go repo.cache.SetCommentCountByArticleID(articleID, cnt)
 		return cnt, nil
 	}
 

@@ -144,7 +144,7 @@ func (a *RedisAdapterImpl) FindAllByCommentID(commentID int) (data.LikeCommentEn
 }
 
 func (a *RedisAdapterImpl) SetCommentCountByArticleID(articleID, cnt int) {
-	key := fmt.Sprintf("khumu-comment:comment_counts:article=%d:", articleID)
+	key := fmt.Sprintf("khumu-comment:comment_counts:article=%d", articleID)
 	log.Infof("article=%d 의 comment count 개수를 저장합니다. cnt=%d", articleID, cnt)
 	if err := a.client.Set(&rcache.Item{
 		Ctx:   context.TODO(),
@@ -156,7 +156,7 @@ func (a *RedisAdapterImpl) SetCommentCountByArticleID(articleID, cnt int) {
 }
 
 func (a *RedisAdapterImpl) Count(articleID int) (int, error) {
-	key := fmt.Sprintf("khumu-comment:comment_counts:article=%d:", articleID)
+	key := fmt.Sprintf("khumu-comment:comment_counts:article=%d", articleID)
 	log.Infof("article=%d 의 comment count 개수를 조회합니다.", articleID)
 	cnt := 0
 	if err := a.client.Get(context.TODO(), key, &cnt); err != nil {
